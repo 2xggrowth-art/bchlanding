@@ -1,0 +1,90 @@
+mutation CreateDemoData @transaction @auth(level: USER_ANON, insecureReason: "This operation is for demo purposes") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "demouser1",
+      email: "demouser1@example.com",
+      createdAt: "2024-04-26T12:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "demouser2",
+      email: "demouser2@example.com",
+      createdAt: "2024-04-26T13:00:00Z"
+    }
+  ])
+  route_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      name: "Example Route 1",
+      distance: 10.5,
+      createdAt: "2024-04-27T08:00:00Z",
+      isPublic: true
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      name: "Example Route 2",
+      distance: 5.2,
+      createdAt: "2024-04-27T09:00:00Z",
+      isPublic: false
+    }
+  ])
+  ride_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440004",
+      routeId: "550e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      distance: 10.5,
+      duration: 3600,
+      startTime: "2024-04-27T08:00:00Z",
+      endTime: "2024-04-27T09:00:00Z",
+      createdAt: "2024-04-27T09:00:00Z",
+      isPublic: true
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440005",
+      routeId: "550e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      distance: 5.2,
+      duration: 1800,
+      startTime: "2024-04-27T09:00:00Z",
+      endTime: "2024-04-27T09:30:00Z",
+      createdAt: "2024-04-27T09:30:00Z",
+      isPublic: false
+    }
+  ])
+  routeRating_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440006",
+      routeId: "550e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      rating: 5,
+      createdAt: "2024-04-27T09:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440007",
+      routeId: "550e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      rating: 4,
+      createdAt: "2024-04-27T09:30:00Z"
+    }
+  ])
+  comment_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440008",
+      routeId: "550e8400-e29b-41d4-a716-446655440002",
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      text: "Great route!",
+      createdAt: "2024-04-27T09:00:00Z"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440009",
+      routeId: "550e8400-e29b-41d4-a716-446655440003",
+      userId: "550e8400-e29b-41d4-a716-446655440001",
+      text: "Enjoyed this route.",
+      createdAt: "2024-04-27T09:30:00Z"
+    }
+  ])
+}

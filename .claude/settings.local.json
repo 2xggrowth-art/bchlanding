@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git clone:*)",
+      "Bash(dir:*)",
+      "Bash(git init:*)",
+      "Bash(git remote add:*)",
+      "Bash(git pull:*)",
+      "Bash(npm install)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout:*)",
+      "Bash(vercel --version:*)",
+      "Bash(npm install:*)",
+      "Bash(npx vercel login:*)",
+      "Bash(npx vercel:*)",
+      "Bash(echo:*)",
+      "Bash(curl:*)",
+      "Bash(node -e:*)",
+      "Bash(vercel:*)",
+      "Bash(python:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nFix Firebase Admin SDK auth and complete PhonePe integration setup\n\n- Convert all API files from CommonJS to ES Modules \\(package.json has type:module\\)\n- Fix environment variable handling with trim\\(\\) to remove trailing newlines\n- Add PaymentCallback page for PhonePe redirect handling\n- Update transaction ID format to include leadId for callback extraction\n- Add comprehensive SETUP.md with deployment and configuration instructions\n- Add SECURITY_NOTES.md with credentials management guidelines\n- Enhance firebase-test endpoint with detailed private key diagnostics\n- Add debug logging to PhonePe endpoints for troubleshooting\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(powershell -Command \"\\(Get-Content api/admin/set-admin-role.js\\) -replace \"\"from ''../lib/\"\", \"\"from ''../_lib/\"\" | Set-Content api/admin/set-admin-role.js\")",
+      "Bash(powershell -Command \"\\(Get-Content api/admin/users.js\\) -replace \"\"from ''../lib/\"\", \"\"from ''../_lib/\"\" | Set-Content api/admin/users.js\")",
+      "Bash(powershell -Command:*)",
+      "Bash(powershell -Command \"\\(Get-Content api/leads/index.js\\) -replace \"\"from ''../lib/\"\", \"\"from ''../_lib/\"\" | Set-Content api/leads/index.js\")",
+      "Bash(powershell -Command \"\\(Get-Content ''api/leads/[id].js''\\) -replace \"\"from ''../lib/\"\", \"\"from ''../_lib/\"\" | Set-Content ''api/leads/[id].js''\")",
+      "Bash(powershell -Command \"\\(Get-Content api/debug-auth.js\\) -replace \"\"from ''./lib/\"\", \"\"from ''./_lib/\"\" | Set-Content api/debug-auth.js\")",
+      "Bash(powershell -Command \"\\(Get-Content api/firebase-test.js\\) -replace \"\"from ''./lib/\"\", \"\"from ''./_lib/\"\" | Set-Content api/firebase-test.js\")",
+      "Bash(git commit:*)",
+      "Bash(gh api:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "WebFetch(domain:uiverse.io)"
+    ]
+  }
+}

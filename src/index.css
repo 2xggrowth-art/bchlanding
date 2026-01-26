@@ -1,0 +1,376 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased;
+    overscroll-behavior: none;
+    overflow-x: hidden;
+  }
+
+  button {
+    @apply select-none;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Premium price glow animation - subtle fire/heat effect */
+  @keyframes priceGlow {
+    0%, 100% {
+      text-shadow:
+        0 0 10px rgba(220, 38, 38, 0.4),
+        0 0 20px rgba(220, 38, 38, 0.2),
+        0 0 30px rgba(220, 38, 38, 0.1);
+      transform: scale(1);
+    }
+    50% {
+      text-shadow:
+        0 0 15px rgba(239, 68, 68, 0.6),
+        0 0 30px rgba(239, 68, 68, 0.4),
+        0 0 40px rgba(239, 68, 68, 0.2),
+        0 0 50px rgba(251, 146, 60, 0.1);
+      transform: scale(1.03);
+    }
+  }
+
+  @keyframes priceGlowSubtle {
+    0%, 100% {
+      text-shadow:
+        0 0 8px rgba(220, 38, 38, 0.3),
+        0 0 16px rgba(220, 38, 38, 0.15);
+    }
+    50% {
+      text-shadow:
+        0 0 12px rgba(239, 68, 68, 0.5),
+        0 0 24px rgba(239, 68, 68, 0.3),
+        0 0 32px rgba(251, 146, 60, 0.1);
+    }
+  }
+
+  .price-heat-glow {
+    animation: priceGlow 2s ease-in-out infinite;
+    display: inline-block;
+    will-change: text-shadow, transform;
+  }
+
+  .price-heat-glow-subtle {
+    animation: priceGlowSubtle 2.5s ease-in-out infinite;
+    display: inline-block;
+    will-change: text-shadow;
+  }
+
+  /* Respect user preference for reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .price-heat-glow,
+    .price-heat-glow-subtle {
+      animation: none;
+      text-shadow: 0 0 10px rgba(220, 38, 38, 0.3);
+    }
+  }
+}
+
+/* Payment Button Styles */
+.pay-btn-container {
+  background-color: #ffffff;
+  display: flex;
+  width: 460px;
+  height: 120px;
+  position: relative;
+  border-radius: 6px;
+  transition: 0.3s ease-in-out;
+  cursor: pointer;
+  margin: 0 auto;
+}
+
+.pay-btn-container:hover {
+  transform: scale(1.03);
+  width: 220px;
+}
+
+.pay-btn-container:hover .pay-btn-left-side {
+  width: 100%;
+}
+
+.pay-btn-container.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.pay-btn-container.disabled:hover {
+  transform: none;
+  width: 460px;
+}
+
+.pay-btn-container.disabled:hover .pay-btn-left-side {
+  width: 130px;
+}
+
+.pay-btn-left-side {
+  background-color: #FF4500;
+  width: 130px;
+  height: 120px;
+  border-radius: 4px;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: 0.3s;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.pay-btn-right-side {
+  width: calc(100% - 130px);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  cursor: pointer;
+  justify-content: space-between;
+  white-space: nowrap;
+  transition: 0.3s;
+}
+
+.pay-btn-right-side:hover {
+  background-color: #f9f7f9;
+}
+
+.pay-btn-arrow {
+  width: 20px;
+  height: 20px;
+  margin-right: 20px;
+}
+
+.pay-btn-text {
+  font-size: 23px;
+  font-family: "Lexend Deca", sans-serif;
+  margin-left: 20px;
+  color: #333;
+  font-weight: 500;
+}
+
+.pay-btn-card {
+  width: 70px;
+  height: 46px;
+  background-color: #ffcfbc;
+  border-radius: 6px;
+  position: absolute;
+  display: flex;
+  z-index: 10;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 9px 9px 9px -2px rgba(255, 69, 0, 0.4);
+}
+
+.pay-btn-card-line {
+  width: 65px;
+  height: 13px;
+  background-color: #ff8c69;
+  border-radius: 2px;
+  margin-top: 7px;
+}
+
+.pay-btn-buttons {
+  width: 8px;
+  height: 8px;
+  background-color: #c73500;
+  box-shadow: 0 -10px 0 0 #a82b00, 0 10px 0 0 #ff6b3d;
+  border-radius: 50%;
+  margin-top: 5px;
+  transform: rotate(90deg);
+  margin: 10px 0 0 -30px;
+}
+
+.pay-btn-container:hover .pay-btn-card {
+  animation: pay-slide-top 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) both;
+}
+
+.pay-btn-container:hover .pay-btn-post {
+  animation: pay-slide-post 1s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+}
+
+.pay-btn-container.disabled:hover .pay-btn-card {
+  animation: none;
+}
+
+.pay-btn-container.disabled:hover .pay-btn-post {
+  animation: none;
+}
+
+@keyframes pay-slide-top {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-70px) rotate(90deg);
+  }
+  60% {
+    transform: translateY(-70px) rotate(90deg);
+  }
+  100% {
+    transform: translateY(-8px) rotate(90deg);
+  }
+}
+
+.pay-btn-post {
+  width: 63px;
+  height: 75px;
+  background-color: #dddde0;
+  position: absolute;
+  z-index: 11;
+  bottom: 10px;
+  top: 120px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.pay-btn-post-line {
+  width: 47px;
+  height: 9px;
+  background-color: #545354;
+  position: absolute;
+  border-radius: 0px 0px 3px 3px;
+  right: 8px;
+  top: 8px;
+}
+
+.pay-btn-post-line::before {
+  content: "";
+  position: absolute;
+  width: 47px;
+  height: 9px;
+  background-color: #757375;
+  top: -8px;
+}
+
+.pay-btn-screen {
+  width: 47px;
+  height: 23px;
+  background-color: #ffffff;
+  position: absolute;
+  top: 22px;
+  right: 8px;
+  border-radius: 3px;
+}
+
+.pay-btn-numbers {
+  width: 12px;
+  height: 12px;
+  background-color: #838183;
+  box-shadow: 0 -18px 0 0 #838183, 0 18px 0 0 #838183;
+  border-radius: 2px;
+  position: absolute;
+  transform: rotate(90deg);
+  left: 25px;
+  top: 52px;
+}
+
+.pay-btn-numbers-line2 {
+  width: 12px;
+  height: 12px;
+  background-color: #aaa9ab;
+  box-shadow: 0 -18px 0 0 #aaa9ab, 0 18px 0 0 #aaa9ab;
+  border-radius: 2px;
+  position: absolute;
+  transform: rotate(90deg);
+  left: 25px;
+  top: 68px;
+}
+
+@keyframes pay-slide-post {
+  50% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-70px);
+  }
+}
+
+.pay-btn-dollar {
+  position: absolute;
+  font-size: 16px;
+  font-family: "Lexend Deca", sans-serif;
+  width: 100%;
+  left: 0;
+  top: 0;
+  color: #c73500;
+  text-align: center;
+  font-weight: bold;
+}
+
+.pay-btn-container:hover .pay-btn-dollar {
+  animation: pay-fade-in-fwd 0.3s 1s backwards;
+}
+
+.pay-btn-container.disabled:hover .pay-btn-dollar {
+  animation: none;
+}
+
+@keyframes pay-fade-in-fwd {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive styles for payment button */
+@media only screen and (max-width: 480px) {
+  .pay-btn-container {
+    transform: scale(0.7);
+    transform-origin: center center;
+  }
+
+  .pay-btn-container:hover {
+    transform: scale(0.74);
+  }
+
+  .pay-btn-text {
+    font-size: 18px;
+  }
+}
+
+/* Loading state for payment button */
+.pay-btn-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: white;
+  font-weight: 600;
+}
+
+.pay-btn-spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
