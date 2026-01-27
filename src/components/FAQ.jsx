@@ -3,23 +3,32 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
+  const [showAll, setShowAll] = useState(false);
 
   const faqs = [
     {
-      question: "What if no configuration is suitable?",
-      answer: "Our priority is to ensure the perfect fit for your child. If the initial selection isn't ideal, our expert will assess the feedback and provide alternative recommendations for a follow-up consultation."
+      question: "Is the ₹99 booking fee refundable?",
+      answer: "Yes! If you decide to buy any e-cycle, the ₹99 is adjusted against the price. If you choose not to buy, it's a small service fee for the technician's visit."
     },
     {
-      question: "Is the ₹99 fee refundable?",
-      answer: "The professional consultation fee is non-refundable as it serves to secure your dedicated specialist's time. This fee is fully adjustable against any subsequent bicycle purchase."
+      question: "Do you offer 0% EMI?",
+      answer: "Absolutely. We have partnered with all major banks to offer No Cost EMI options starting from just ₹999/month. You can check your eligibility instantly during the home visit."
     },
     {
-      question: "How are the bicycles selected?",
-      answer: "Utilizing your comprehensive assessment profile, our specialists curate a selection of 5 premium bicycles that align with your specified safety requirements and budget."
+      question: "Are these e-cycles safe for kids?",
+      answer: "Safety is our #1 priority. All our kids' models come with app-based speed limiters (parent controlled), GPS tracking, and safety disconnect brakes. Plus, we include a free ISI-certified helmet with every purchase."
     },
     {
-      question: "What areas do you serve?",
-      answer: "Currently, we serve all major areas across Bangalore. Our expert will confirm coverage when they call to schedule your home visit."
+      question: "What if the cycle breaks down?",
+      answer: "We offer 'Bicycle Care' - comprehensive insurance that covers theft and accidental damage. For repairs, our technicians provide doorstep service within 24 hours in Bangalore."
+    },
+    {
+      question: "Can I test multiple models?",
+      answer: "Yes, our technician brings 5 different models (based on your child's age/height) to your home so you can compare and choose the best one."
+    },
+    {
+      question: "Do you have a physical store?",
+      answer: "Yes, we are located in HSR Layout, Bangalore. You are welcome to visit us, but 90% of our customers prefer the convenience of our Home Test Ride service."
     }
   ];
 
@@ -28,69 +37,89 @@ export default function FAQ() {
   };
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-gray-bg">
+    <section className="py-8 sm:py-12 px-4 sm:px-6 bg-gray-bg">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12"
+          className="text-center mb-8"
         >
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-normal text-dark mb-4 tracking-wider uppercase">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-normal text-dark mb-2 tracking-wider uppercase">
             FURTHER ENQUIRIES
           </h2>
-          <p className="text-lg text-gray-text">
+          <p className="text-base sm:text-lg text-gray-text">
             Comprehensive information for prospective buyers
           </p>
         </motion.div>
 
-        <div className="space-y-4">
-          {faqs.map((faq, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.05 }}
-              className="bg-white rounded-[20px] overflow-hidden shadow-lg border-t-4 border-transparent hover:border-primary transition-all duration-300"
-            >
-              <button
-                onClick={() => toggleFAQ(index)}
-                className="w-full px-6 py-6 flex items-center justify-between text-left gap-4"
-                aria-expanded={openIndex === index}
+        <div className="space-y-3">
+          <AnimatePresence initial={false}>
+            {faqs.slice(0, showAll ? faqs.length : 2).map((faq, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-white rounded-[15px] overflow-hidden shadow-md border-t-2 border-transparent hover:border-primary transition-all duration-300"
               >
-                <span className="font-bold text-dark text-lg pr-4 uppercase tracking-wide">
-                  {faq.question}
-                </span>
-                <motion.div
-                  animate={{ rotate: openIndex === index ? 180 : 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="flex-shrink-0 w-8 h-8 rounded-full bg-primary flex items-center justify-center"
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full px-5 py-4 flex items-center justify-between text-left gap-4"
+                  aria-expanded={openIndex === index}
                 >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </motion.div>
-              </button>
-
-              <AnimatePresence>
-                {openIndex === index && (
+                  <span className="font-bold text-dark text-base sm:text-lg pr-4 uppercase tracking-wide">
+                    {faq.question}
+                  </span>
                   <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.3, ease: "easeInOut" }}
-                    className="overflow-hidden"
+                    animate={{ rotate: openIndex === index ? 180 : 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors duration-300"
                   >
-                    <div className="px-6 pb-6 text-gray-text leading-relaxed">
-                      {faq.answer}
-                    </div>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
+                </button>
+
+                <AnimatePresence>
+                  {openIndex === index && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="px-5 pb-5 pt-0 text-sm sm:text-base text-gray-text leading-relaxed">
+                        {faq.answer}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+
+        {/* Toggle Button */}
+        <div className="flex justify-center mt-8">
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="group flex items-center gap-2 px-6 py-3 rounded-full bg-white border border-gray-200 text-dark font-bold uppercase tracking-wide shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300"
+          >
+            <span>{showAll ? 'View Less Questions' : 'View All Questions'}</span>
+            <svg
+              className={`w-4 h-4 text-primary transition-transform duration-300 ${showAll ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
         </div>
 
         <motion.div

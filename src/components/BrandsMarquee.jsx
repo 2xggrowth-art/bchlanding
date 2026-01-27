@@ -32,8 +32,8 @@ const brands = [
 ];
 
 export default function BrandsMarquee() {
-  // Double the brands array for seamless loop
-  const duplicatedBrands = [...brands, ...brands];
+  // Quadruple the brands array for seamless loop and sufficient width
+  const duplicatedBrands = [...brands, ...brands, ...brands, ...brands];
 
   return (
     <section className="py-8 bg-gray-bg overflow-hidden">
@@ -49,13 +49,13 @@ export default function BrandsMarquee() {
         <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-gray-bg to-transparent z-10" />
 
         <motion.div
-          className="flex items-center gap-8"
+          className="flex items-center"
           animate={{
             x: [0, '-50%']
           }}
           transition={{
             x: {
-              duration: 20,
+              duration: 40,
               repeat: Infinity,
               ease: "linear",
               repeatType: "loop"
@@ -65,7 +65,7 @@ export default function BrandsMarquee() {
           {duplicatedBrands.map((brand, index) => (
             <div
               key={`${brand.name}-${index}`}
-              className="flex-shrink-0 flex items-center justify-center h-12 px-8 grayscale hover:grayscale-0 transition-all duration-300"
+              className="flex-shrink-0 flex items-center justify-center h-12 px-2 mr-16 grayscale hover:grayscale-0 transition-all duration-300"
             >
               <img
                 src={brand.logo}

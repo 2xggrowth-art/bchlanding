@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Hero from '../components/Hero';
 import BrandsMarquee from '../components/BrandsMarquee';
 import ProductShowcase from '../components/ProductShowcase';
@@ -15,6 +16,14 @@ import ExpertPromise from '../components/ExpertPromise';
 import UserDataForm from '../components/UserDataForm';
 import RazorpayPayment from '../components/RazorpayPayment';
 import SuccessScreen from '../components/SuccessScreen';
+import GoogleMapsReviews from '../components/GoogleMapsReviews';
+import BicycleInsurance from '../components/BicycleInsurance';
+import ScreenTimeReplacement from '../components/ScreenTimeReplacement';
+import ProcessVideo from '../components/ProcessVideo';
+import Accessories from '../components/Accessories';
+import Community from '../components/Community';
+import CustomerProfiles from '../components/CustomerProfiles';
+import CTAButton from '../components/CTAButton';
 import { api } from '../utils/api';
 
 export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
@@ -25,6 +34,13 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   const [showStickyCTA, setShowStickyCTA] = useState(false);
   const [ctaSource, setCtaSource] = useState(null);
   const heroRef = useRef(null);
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('open') === 'true') {
+      handleStartQuiz('direct-nav');
+    }
+  }, [searchParams]);
 
   // Sticky CTA visibility on scroll
   useEffect(() => {
@@ -200,54 +216,55 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         <Hero onCTAClick={() => handleStartQuiz('test-ride-hero')} />
       </div>
       <BrandsMarquee />
-      <ProductShowcase onCTAClick={() => handleStartQuiz('test-ride-products')} />
-      <VideoTestimonials onCTAClick={() => handleStartQuiz('test-ride-videos')} />
+
+      {/* Phase 2: Process Video - How Home Test Ride Works */}
+      <ProcessVideo onCTAClick={() => handleStartQuiz('test-ride-process')} />
+
+      {/* <ProductShowcase onCTAClick={() => handleStartQuiz('test-ride-products')} /> */}
+
+      {/* Phase 2: Screen Time Replacement */}
+      <ScreenTimeReplacement />
+
+      {/* Phase 3: Accessories */}
+      <Accessories onCTAClick={() => handleStartQuiz('test-ride-accessories')} />
+
+      {/* <VideoTestimonials onCTAClick={() => handleStartQuiz('test-ride-videos')} /> */}
       <ValueProposition />
+
       {/* <Offers onCTAClick={() => handleStartQuiz('test-ride-offers')} /> */}
       <WhyUs />
-      <HowItWorks />
-      <Testimonials />
-      <SocialProof />
-      <FAQ />
 
-      {/* Final CTA section - Full width red */}
-      <section className="py-16 sm:py-24 px-4 sm:px-6 bg-primary relative overflow-hidden">
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-normal text-white mb-6 tracking-wider uppercase">
-            Give Your Child Their Dream E-Cycle
-          </h2>
-          <p className="text-lg sm:text-xl text-white/90 mb-10 max-w-2xl mx-auto">
-            Book your expert home visit now. Our team will call you within 5 minutes of booking. Join 10,000+ happy Bangalore families today.
-          </p>
-          <button
-            onClick={() => handleStartQuiz('test-ride-final-cta')}
-            className="inline-flex items-center justify-center px-12 py-5 text-lg font-bold text-primary bg-white rounded-[50px] shadow-2xl hover:bg-gray-bg transition-all duration-300 hover:scale-105 uppercase tracking-wide"
-          >
-            <span>BOOK NOW - ONLY ₹99</span>
-            <svg className="w-6 h-6 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </button>
-        </div>
-      </section>
+      {/* Phase 3: Community */}
+      <Community onCTAClick={() => handleStartQuiz('test-ride-community')} />
+
+      {/* Phase 3: Customer Profiles */}
+      {/* <CustomerProfiles /> */}
+
+      {/* Phase 2: Google Maps & Reviews */}
+      {/* <GoogleMapsReviews /> */}
+
+      {/* Phase 2: Insurance */}
+      {/* <BicycleInsurance onCTAClick={() => handleStartQuiz('test-ride-insurance')} /> */}
+
+      {/* <HowItWorks /> */}
+      {/* <Testimonials /> */}
+      <SocialProof onCTAClick={() => handleStartQuiz('test-ride-final-cta')} />
+      <FAQ />
 
       {/* Sticky mobile CTA */}
       {showStickyCTA && (
         <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden safe-bottom">
-          <div className="bg-white border-t border-gray-200 shadow-2xl px-4 py-3">
-            <button
+          <div className="bg-white border-t border-gray-200 shadow-2xl px-4 py-3 flex justify-center">
+            <CTAButton
               onClick={() => handleStartQuiz('test-ride-sticky-cta')}
-              className="w-full flex items-center justify-center gap-2 px-6 py-4 text-base font-bold text-white bg-primary rounded-[50px] shadow-lg hover:bg-primary-dark active:scale-95 transition-all duration-300 uppercase tracking-wide"
+              className="w-full"
             >
-              <span>BOOK NOW</span>
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </button>
-            <p className="text-center text-xs text-gray-text mt-2 font-medium">
-              ₹99 BOOKING FEE • ADJUSTABLE ON PURCHASE
-            </p>
+              BOOK NOW
+            </CTAButton>
           </div>
+          <p className="text-center text-xs text-gray-text mt-2 font-medium">
+            ₹99 BOOKING FEE • ADJUSTABLE ON PURCHASE
+          </p>
         </div>
       )}
     </div>

@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState, useRef } from 'react';
+import CTAButton from './CTAButton';
 
 export default function ProductShowcase({ onCTAClick }) {
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -130,7 +131,7 @@ export default function ProductShowcase({ onCTAClick }) {
           {/* Products Horizontal Scroll */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide"
+            className="flex gap-6 overflow-x-auto py-8 px-4 -mx-4 sm:px-6 sm:-mx-6 snap-x snap-mandatory scrollbar-hide items-stretch"
             style={{
               scrollbarWidth: 'none',
               msOverflowStyle: 'none',
@@ -144,9 +145,7 @@ export default function ProductShowcase({ onCTAClick }) {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                onMouseEnter={() => setHoveredIndex(index)}
-                onMouseLeave={() => setHoveredIndex(null)}
-                className="group relative bg-white rounded-[24px] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-200 hover:border-primary flex-shrink-0 w-[320px] sm:w-[360px] snap-center"
+                className="bg-white rounded-[20px] overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 group border border-gray-100 flex flex-col h-full flex-shrink-0 w-[320px] sm:w-[360px] snap-center"
               >
                 {/* Badge */}
                 {product.badge && (
@@ -156,7 +155,7 @@ export default function ProductShowcase({ onCTAClick }) {
                 )}
 
                 {/* Product Image */}
-                <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200">
+                <div className="relative h-56 overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 flex-shrink-0">
                   <motion.img
                     src={product.image}
                     alt={product.name}
@@ -168,9 +167,9 @@ export default function ProductShowcase({ onCTAClick }) {
                 </div>
 
                 {/* Product Details */}
-                <div className="p-6">
+                <div className="p-6 flex flex-col flex-1">
                   {/* Age Group Tag */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase mb-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase mb-3 self-start">
                     <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
                     </svg>
@@ -196,7 +195,7 @@ export default function ProductShowcase({ onCTAClick }) {
                   </div>
 
                   {/* Price */}
-                  <div className="flex items-baseline gap-3 mb-4">
+                  <div className="flex items-baseline gap-3 mb-4 mt-auto">
                     <span className="text-3xl font-bold text-dark">{product.price}</span>
                     <span className="text-lg text-gray-text line-through">{product.originalPrice}</span>
                   </div>
@@ -216,17 +215,16 @@ export default function ProductShowcase({ onCTAClick }) {
                   </div>
 
                   {/* CTA Button */}
-                  <motion.button
-                    onClick={() => onCTAClick && onCTAClick()}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full py-4 rounded-[50px] font-bold text-base transition-all duration-300 shadow-lg uppercase tracking-wide bg-primary text-white hover:bg-primary-dark hover:shadow-xl flex items-center justify-center gap-2"
+                  <CTAButton
+                    onClick={() => onCTAClick && onCTAClick(product.name)}
+                    className="w-full text-center"
                   >
-                    <span>Test Ride at Home - ₹99</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </motion.button>
+                    Test Ride
+                  </CTAButton>
+
+                  <p className="text-center text-xs text-gray-text mt-3">
+                    Only ₹99 • Fully Refundable
+                  </p>
                 </div>
 
                 {/* Hover Overlay */}
@@ -253,17 +251,12 @@ export default function ProductShowcase({ onCTAClick }) {
           <p className="text-lg text-gray-text mb-6 max-w-2xl mx-auto">
             Can't decide? Book a home test ride and our experts will help your child test 5 different e-cycles to find their perfect match.
           </p>
-          <motion.button
-            onClick={() => onCTAClick && onCTAClick()}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-3 px-10 py-5 text-lg font-bold text-white bg-primary rounded-[50px] shadow-2xl hover:bg-primary-dark transition-all duration-300 uppercase tracking-wide"
+          <CTAButton
+            onClick={() => onCTAClick && onCTAClick('Products Bottom')}
+            className="text-center"
           >
-            <span>Book Expert Home Visit - ₹99</span>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </motion.button>
+            Book Home Visit - ₹99
+          </CTAButton>
         </motion.div>
       </div>
 
@@ -272,6 +265,6 @@ export default function ProductShowcase({ onCTAClick }) {
           display: none;
         }
       `}</style>
-    </section>
+    </section >
   );
 }

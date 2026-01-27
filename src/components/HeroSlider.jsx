@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ContactFormModal from './ContactFormModal';
 
 export default function HeroSlider() {
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
@@ -67,7 +69,7 @@ export default function HeroSlider() {
 
             {/* CTA Button */}
             <motion.button
-              onClick={() => setIsContactFormOpen(true)}
+              onClick={() => navigate('/test-ride?open=true')}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
@@ -152,7 +154,7 @@ export default function HeroSlider() {
 
                 {/* CTA Button */}
                 <motion.button
-                  onClick={() => setIsContactFormOpen(true)}
+                  onClick={() => navigate('/test-ride?open=true')}
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.5, duration: 0.6 }}
@@ -193,11 +195,10 @@ export default function HeroSlider() {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              currentSlide === index
-                ? 'bg-primary w-8'
-                : 'bg-white/30 hover:bg-white/50'
-            }`}
+            className={`w-3 h-3 rounded-full transition-all ${currentSlide === index
+              ? 'bg-primary w-8'
+              : 'bg-white/30 hover:bg-white/50'
+              }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}

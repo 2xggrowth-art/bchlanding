@@ -78,7 +78,7 @@ export default function VideoTestimonials({ onCTAClick }) {
   };
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white overflow-hidden">
+    <section className="py-8 sm:py-12 px-4 sm:px-6 bg-white overflow-hidden">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div
@@ -86,54 +86,39 @@ export default function VideoTestimonials({ onCTAClick }) {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-12 sm:mb-16"
+          className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-red-50 border border-red-200 mb-6">
-            <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-              <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-            </svg>
-            <span className="text-sm font-bold text-red-600 uppercase tracking-wide">Real Stories from BCH Families</span>
-          </div>
-
-          <h2 className="font-display text-4xl sm:text-5xl md:text-6xl font-normal text-dark mb-4 tracking-wider uppercase">
-            See Why 10,000+ Families<br />Trust BCH
-          </h2>
-          <p className="text-lg sm:text-xl text-gray-text max-w-3xl mx-auto mb-6">
-            Watch real parents and kids share their BCH experience. These aren't actors - they're actual Bangalore families who chose BCH for their children's happiness.
-          </p>
-
-          {/* Social Proof Stats */}
-          <div className="flex flex-wrap justify-center gap-6 text-center">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z" />
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6 mb-8">
+            <div className="text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-50 border border-red-200 mb-3">
+                <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                  <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                 </svg>
+                <span className="text-xs font-bold text-red-600 uppercase tracking-wide">Real Stories</span>
               </div>
-              <div className="text-left">
-                <div className="text-2xl font-bold text-dark">750K</div>
-                <div className="text-sm text-gray-text">Instagram Followers</div>
-              </div>
+              <h2 className="font-display text-3xl sm:text-4xl font-normal text-dark tracking-wider uppercase">
+                See Why 10,000+ Families Trust BCH
+              </h2>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
-                <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
-                </svg>
+
+            {/* Social Proof Stats - Compact */}
+            <div className="flex gap-6">
+              <div className="text-center">
+                <div className="text-xl font-bold text-dark">750K</div>
+                <div className="text-xs text-gray-text">Followers</div>
               </div>
-              <div className="text-left">
-                <div className="text-2xl font-bold text-dark">250K</div>
-                <div className="text-sm text-gray-text">YouTube Subscribers</div>
+              <div className="w-px bg-gray-200"></div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-dark">250K</div>
+                <div className="text-xs text-gray-text">Subscribers</div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                <span className="text-2xl">⭐</span>
-              </div>
-              <div className="text-left">
-                <div className="text-2xl font-bold text-dark">4.7/5</div>
-                <div className="text-sm text-gray-text">Google Rating</div>
+              <div className="w-px bg-gray-200"></div>
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-1 text-xl font-bold text-dark">
+                  4.7 <span className="text-yellow-400 text-lg">★</span>
+                </div>
+                <div className="text-xs text-gray-text">Rating</div>
               </div>
             </div>
           </div>
@@ -250,70 +235,9 @@ export default function VideoTestimonials({ onCTAClick }) {
           </div>
         </div>
 
-        {/* Emotional Story Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-[30px] p-8 sm:p-12 my-12 border border-primary/20"
-        >
-          <div className="max-w-3xl mx-auto text-center">
-            <div className="text-5xl mb-6">❤️</div>
-            <h3 className="text-3xl sm:text-4xl font-bold text-dark mb-4">
-              "Your Childhood Had Limits.<br />Theirs Doesn't Have To."
-            </h3>
-            <p className="text-lg text-gray-text leading-relaxed mb-6">
-              Every week, we witness fathers who grew up with struggles gift their children the joy they never had. Like Ramesh, an auto driver who told us: "I never owned a cycle. But my son will have the best e-cycle in Bangalore." That's the BCH promise - helping parents turn their love into their child's happiness.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <div className="flex items-center gap-2 bg-white px-5 py-3 rounded-full shadow-md">
-                <span className="text-2xl">🎁</span>
-                <div className="text-left">
-                  <div className="text-sm font-bold text-dark">Free Gifts Worth ₹5,000</div>
-                  <div className="text-xs text-gray-text">Helmet, Gloves, Knee Pads</div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-white px-5 py-3 rounded-full shadow-md">
-                <span className="text-2xl">💳</span>
-                <div className="text-left">
-                  <div className="text-sm font-bold text-dark">0% EMI from ₹999/month</div>
-                  <div className="text-xs text-gray-text">Make it affordable for every family</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
 
-        {/* Bottom CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center"
-        >
-          <h3 className="text-2xl sm:text-3xl font-bold text-dark mb-6">
-            Join 10,000+ Happy Bangalore Families
-          </h3>
-          <p className="text-lg text-gray-text mb-8 max-w-2xl mx-auto">
-            Book a home test ride now. Let our experts help your child find their perfect e-cycle. Our team will call you within 5 minutes of booking.
-          </p>
-          <motion.button
-            onClick={() => onCTAClick && onCTAClick()}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-3 px-10 py-5 text-lg font-bold text-white bg-primary rounded-[50px] shadow-2xl hover:bg-primary-dark transition-all duration-300 uppercase tracking-wide"
-          >
-            <span>Book Home Visit - ₹99</span>
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </motion.button>
-          <p className="text-sm text-gray-text mt-4 font-medium">
-            ₹99 fully adjustable on purchase • We'll call you in 5 minutes • Bangalore only
-          </p>
-        </motion.div>
+
+
       </div>
 
       {/* Video Modal (Optional - for embedded playback) */}

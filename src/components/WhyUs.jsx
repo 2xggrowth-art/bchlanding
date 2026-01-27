@@ -70,7 +70,7 @@ export default function WhyUs() {
   ];
 
   return (
-    <section id="why-us" className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
+    <section id="why-us" className="py-8 sm:py-16 px-4 sm:px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
           {/* Left side - Image */}
@@ -83,26 +83,31 @@ export default function WhyUs() {
           >
             <div className="relative rounded-[32px] overflow-hidden shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=90"
+                src="/store-hq.png"
                 alt="Bharath Cycle Hub Showroom"
                 className="w-full h-[400px] sm:h-[500px] object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
 
               {/* Floating badge */}
-              <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center">
+              <div className="absolute bottom-6 left-6 right-6 bg-white/95 backdrop-blur-sm rounded-2xl p-4 shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] cursor-pointer group">
+                <a
+                  href="https://www.google.com/maps/search/?api=1&query=Bharath+Cycle+Hub+Main+Road+Chikka+Bommasandra+Yelahanka+Bengaluru+Karnataka+560064"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4"
+                >
+                  <div className="w-14 h-14 bg-primary rounded-full flex items-center justify-center group-hover:bg-primary-dark transition-colors">
                     <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
                     </svg>
                   </div>
                   <div>
-                    <h4 className="font-bold text-dark">Visit Our Showroom</h4>
+                    <h4 className="font-bold text-dark group-hover:text-primary transition-colors">Visit Our Showroom</h4>
                     <p className="text-sm text-gray-text">Chikka Bommasandra, Yelahanka, Bengaluru</p>
                     <p className="text-xs text-primary font-semibold mt-1">Open 7 Days: 10 AM - 8:30 PM</p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </motion.div>
