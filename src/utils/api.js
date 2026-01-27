@@ -55,7 +55,7 @@ export const api = {
   async updateLead(leadId, leadData) {
     try {
       const response = await fetch(`${API_BASE_URL}/leads/${leadId}`, {
-        method: 'PATCH',
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadData)
       });

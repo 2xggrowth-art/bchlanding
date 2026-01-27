@@ -23,9 +23,9 @@ export default async function handler(req, res) {
     const method = req.method.toUpperCase();
 
     // ============================================
-    // PATCH - Update an existing lead
+    // PATCH/POST - Update an existing lead
     // ============================================
-    if (method === 'PATCH') {
+    if (method === 'PATCH' || method === 'POST') {
       const updates = req.body;
       console.log(`\n--- LEAD HANDLER PATCH ---`);
       console.log(`ID from query: ${id}`);
