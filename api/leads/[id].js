@@ -20,7 +20,12 @@ export default async function handler(req, res) {
     // ============================================
     // PATCH - Update an existing lead
     // ============================================
-    if (req.method === 'PATCH') {
+    const method = req.method.toUpperCase();
+
+    // ============================================
+    // PATCH - Update an existing lead
+    // ============================================
+    if (method === 'PATCH') {
       const updates = req.body;
       console.log(`\n--- LEAD HANDLER PATCH ---`);
       console.log(`ID from query: ${id}`);
@@ -59,7 +64,7 @@ export default async function handler(req, res) {
     // ============================================
     // DELETE - Remove a lead
     // ============================================
-    if (req.method === 'DELETE') {
+    if (method === 'DELETE') {
       if (!id) {
         return res.status(400).json({
           success: false,
