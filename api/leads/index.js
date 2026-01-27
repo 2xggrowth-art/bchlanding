@@ -37,7 +37,8 @@ export default async function handler(req, res) {
         category: req.query.category, // 99 Offer, Test Ride, EMI, Exchange, General
         fromDate: req.query.fromDate, // Date range start (ISO string)
         toDate: req.query.toDate, // Date range end (ISO string)
-        limit: parseInt(req.query.limit) || 100,
+        limit: parseInt(req.query.limit) || 20,
+        cursor: req.query.cursor, // Pagination cursor (lead ID)
         orderBy: req.query.orderBy || 'createdAt',
         order: req.query.order || 'desc'
       };
@@ -45,14 +46,17 @@ export default async function handler(req, res) {
       // Get leads from Firestore
       const leads = await getLeads(filters);
 
-      // Get statistics
+      // Get statistics (Optimized with aggregations)
+      // Optional: Only fetch stats if 'includeStats' is true or on first page
+      // For now, it's cheap enough (6 reads) to fetch every time
       const stats = await getLeadsStats();
 
       return res.status(200).json({
         success: true,
         leads,
         stats,
-        total: leads.length
+        total: leads.length,
+        nextCursor: leads.length > 0 ? leads[leads.length - 1].id : null
       });
     }
 

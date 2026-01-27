@@ -113,6 +113,7 @@ export class AdminAPI {
     if (filters.fromDate) queryParams.append('fromDate', filters.fromDate);
     if (filters.toDate) queryParams.append('toDate', filters.toDate);
     if (filters.limit) queryParams.append('limit', filters.limit);
+    if (filters.cursor) queryParams.append('cursor', filters.cursor);
     if (filters.orderBy) queryParams.append('orderBy', filters.orderBy);
     if (filters.order) queryParams.append('order', filters.order);
 

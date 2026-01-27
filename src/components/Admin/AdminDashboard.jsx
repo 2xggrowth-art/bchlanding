@@ -15,28 +15,42 @@ export default function AdminDashboard() {
   });
   const [error, setError] = useState(null);
 
+  const [nextCursor, setNextCursor] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
   const { user, logout, getIdToken } = useAuth();
   const adminAPI = new AdminAPI(getIdToken);
 
   useEffect(() => {
-    fetchLeads();
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchLeads, 30000);
-    return () => clearInterval(interval);
+    fetchLeads(true); // Initial load
   }, []);
 
   // Refetch when filters change
+  // Refetch when filters change
   useEffect(() => {
-    fetchLeads();
+    fetchLeads(true);
   }, [filters]);
 
-  const fetchLeads = async () => {
+  const fetchLeads = async (isReset = false) => {
     try {
-      setLoading(true);
+      if (isReset) {
+        setLoading(true);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
 
       // Build filter object for API
-      const apiFilters = {};
+      const apiFilters = {
+        limit: 20 // Fetch 20 at a time
+      };
+
+      if (!isReset && nextCursor) {
+        apiFilters.cursor = nextCursor;
+      }
+
       if (filters.paymentStatus !== 'all') {
         apiFilters.status = filters.paymentStatus.toUpperCase();
       }
@@ -53,14 +67,28 @@ export default function AdminDashboard() {
       const response = await adminAPI.getLeads(apiFilters);
 
       if (response.success) {
-        setLeads(response.leads || []);
-        setStats(response.stats || { total: 0, paid: 0, unpaid: 0, revenue: 0 });
+        const newLeads = response.leads || [];
+
+        if (isReset) {
+          setLeads(newLeads);
+        } else {
+          setLeads(prev => [...prev, ...newLeads]);
+        }
+
+        setNextCursor(response.nextCursor);
+        setHasMore(!!response.nextCursor && newLeads.length > 0);
+
+        // Always update stats
+        if (response.stats) {
+          setStats(response.stats);
+        }
       }
     } catch (error) {
       console.error('❌ Error fetching leads:', error);
       setError(error.message || 'Failed to fetch leads');
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
@@ -82,7 +110,8 @@ export default function AdminDashboard() {
       const response = await adminAPI.deleteLead(leadId);
       if (response.success) {
         // Refresh leads list
-        await fetchLeads();
+        // Refresh leads list
+        await fetchLeads(true);
         console.log(`✅ Lead deleted: ${leadId}`);
       }
     } catch (error) {
@@ -296,7 +325,7 @@ export default function AdminDashboard() {
               Unpaid ({stats.unpaid || 0})
             </button>
             <button
-              onClick={fetchLeads}
+              onClick={() => fetchLeads(true)}
               disabled={loading}
               className="ml-auto px-4 py-2 rounded-full bg-dark text-white font-bold text-sm uppercase tracking-wide hover:bg-dark/90 transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
             >
@@ -475,6 +504,31 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+
+        {/* Load More Button */}
+        {hasMore && leads.length > 0 && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={() => fetchLeads(false)}
+              disabled={loadingMore}
+              className="px-6 py-3 rounded-full bg-white border border-gray-200 text-dark font-bold text-sm uppercase tracking-wide hover:bg-gray-50 hover:border-primary transition-all duration-300 shadow-sm flex items-center gap-2"
+            >
+              {loadingMore ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-dark border-t-transparent rounded-full animate-spin"></div>
+                  Loading More...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  Load More Leads
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-6 text-center text-sm text-gray-text">
