@@ -61,7 +61,13 @@ export const api = {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData;
+        const text = await response.text();
+        try {
+          errorData = JSON.parse(text);
+        } catch (e) {
+          errorData = { message: `Server Error (${response.status}): ${text}` };
+        }
         throw new Error(errorData.message || 'Failed to update lead');
       }
 
