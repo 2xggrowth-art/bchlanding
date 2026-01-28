@@ -51,37 +51,51 @@ app.post('/api/razorpay/verify-payment', async (req, res) => {
   }
 });
 
-app.all('/api/leads/:id', async (req, res) => {
+// Import Shared Service
+import { createLead, updateLead, getLeads, getLeadsStats } from './api/_lib/firestore-service.js';
+
+// ==========================================
+// Express Routes (mirroring Vercel structure)
+// ==========================================
+
+// Create Lead
+app.post('/api/leads', async (req, res) => {
   try {
-    console.log(`\n--- INCOMING REQUEST ---`);
-    console.log(`Method: ${req.method}`);
-    console.log(`Path: ${req.path}`);
-    console.log(`ID Param: ${req.params.id}`);
-
-    req.query.id = req.params.id;
-    const handler = await loadHandler('./api/leads/[id].js');
-
-    if (!handler) {
-      console.error('❌ Could not load handler for [id].js');
-      return res.status(500).json({ success: false, error: 'Handler not found' });
-    }
-
-    console.log(`🚀 Executing handler for ID: ${req.query.id}`);
-    await handler(req, res);
+    console.log('📨 POST /api/leads (Express)');
+    const result = await createLead(req.body);
+    res.status(201).json(result);
   } catch (error) {
-    console.error(`❌ Error in /api/leads/${req.params.id}:`, error);
+    console.error('❌ Error creating lead:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-app.all('/api/leads', async (req, res) => {
+// Update Lead
+app.post('/api/leads/:id', async (req, res) => {
   try {
-    console.log(`📨 ${req.method} /api/leads - Path: ${req.path}`);
-    console.log(`🔍 Query Parser Check:`, req.query);
-    const handler = await loadHandler('./api/leads/index.js');
-    await handler(req, res);
+    console.log(`📨 POST /api/leads/${req.params.id} (Express)`);
+    const result = await updateLead(req.params.id, req.body);
+    res.status(200).json({ success: true, lead: result });
   } catch (error) {
-    console.error('❌ Error in /api/leads:', error);
+    console.error('❌ Error updating lead:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get Leads (Admin)
+app.get('/api/leads', async (req, res) => {
+  try {
+    console.log('📨 GET /api/leads (Express)');
+    // In dev, we might skip auth or mock it, assuming local dev is safe
+    // If you want robust auth in dev, you need to duplicate the middleware logic here
+
+    // For now, mirroring Vercel's response structure
+    const leads = await getLeads(req.query);
+    const stats = await getLeadsStats();
+
+    res.status(200).json({ success: true, leads, stats, total: leads.length });
+  } catch (error) {
+    console.error('❌ Error fetching leads:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

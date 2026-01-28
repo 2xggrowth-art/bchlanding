@@ -21,6 +21,11 @@ function initializeFirebaseAdmin() {
     return adminInstance;
   }
 
+  if (admin.apps.length > 0) {
+    adminInstance = admin.app();
+    return adminInstance;
+  }
+
   try {
     const requiredEnvVars = [
       'FIREBASE_ADMIN_PROJECT_ID',
