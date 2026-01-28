@@ -7,7 +7,7 @@ export const api = {
   // Save a new lead
   async saveLead(leadData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/leads`, {
+      const response = await fetch(`${API_BASE_URL}/lead`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -54,7 +54,7 @@ export const api = {
   // Update an existing lead
   async updateLead(leadId, leadData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/leads/${leadId}`, {
+      const response = await fetch(`${API_BASE_URL}/lead/${leadId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadData)
@@ -82,7 +82,7 @@ export const api = {
   // Get all leads (admin only)
   async getLeads(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/leads`, {
+      const response = await fetch(`${API_BASE_URL}/lead`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

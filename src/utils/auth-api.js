@@ -7,7 +7,7 @@
  * Usage:
  * import { authenticatedFetch } from './utils/auth-api';
  *
- * const data = await authenticatedFetch('/api/leads', {
+ * const data = await authenticatedFetch('/api/lead', {
  *   method: 'GET',
  *   getIdToken: () => yourTokenGetter()
  * });
@@ -117,7 +117,7 @@ export class AdminAPI {
     if (filters.orderBy) queryParams.append('orderBy', filters.orderBy);
     if (filters.order) queryParams.append('order', filters.order);
 
-    const url = `/api/leads${queryParams.toString() ? `?${queryParams}` : ''}`;
+    const url = `/api/lead${queryParams.toString() ? `?${queryParams}` : ''}`;
 
     return await authenticatedFetch(url, {
       method: 'GET',
@@ -129,7 +129,7 @@ export class AdminAPI {
    * Get single lead by ID
    */
   async getLead(leadId) {
-    return await authenticatedFetch(`/api/leads/${leadId}`, {
+    return await authenticatedFetch(`/api/lead/${leadId}`, {
       method: 'GET',
       getIdToken: this.getIdToken
     });
@@ -139,7 +139,7 @@ export class AdminAPI {
    * Update lead
    */
   async updateLead(leadId, updates) {
-    return await authenticatedFetch(`/api/leads/${leadId}`, {
+    return await authenticatedFetch(`/api/lead/${leadId}`, {
       method: 'PATCH',
       body: updates,
       getIdToken: this.getIdToken
@@ -150,7 +150,7 @@ export class AdminAPI {
    * Delete lead
    */
   async deleteLead(leadId) {
-    return await authenticatedFetch(`/api/leads/${leadId}`, {
+    return await authenticatedFetch(`/api/lead/${leadId}`, {
       method: 'DELETE',
       getIdToken: this.getIdToken
     });
