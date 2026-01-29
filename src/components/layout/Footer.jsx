@@ -97,6 +97,16 @@ export default function Footer() {
           <p className="text-gray-text/60 text-xs mt-2">
             Premium guidance for confident bicycle decisions
           </p>
+          {/* Phone number for ad bot crawling - visually hidden */}
+          <a
+            href="tel:+917996635356"
+            aria-hidden="true"
+            tabIndex={-1}
+            className="absolute overflow-hidden"
+            style={{ width: 1, height: 1, padding: 0, margin: -1, clip: 'rect(0,0,0,0)', border: 0 }}
+          >
+            +91 7996635356
+          </a>
         </div>
       </div>
     </footer>
