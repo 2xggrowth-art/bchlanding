@@ -52,7 +52,7 @@ app.post('/api/razorpay/verify-payment', async (req, res) => {
 });
 
 // Import Shared Service
-import { createLead, updateLead, getLeads, getLeadsStats } from './api/_lib/firestore-service.js';
+import { createLead, updateLead, getLeads, getLeadsStats } from './api/_lib/pg-service.js';
 
 // ==========================================
 // Express Routes (mirroring Vercel structure)

@@ -1,243 +1,121 @@
 /**
- * Authentication Middleware for Vercel Serverless Functions
+ * Authentication Middleware
  *
- * This middleware provides:
- * 1. Firebase ID Token verification
- * 2. Role-based access control (RBAC)
- * 3. Request authentication utilities
- *
- * Usage in API routes:
- *
- * @example
- * const { requireAuth, requireAdmin } = require('./lib/auth-middleware');
- *
- * module.exports = async (req, res) => {
- *   // Verify user is authenticated
- *   const user = await requireAuth(req, res);
- *   if (!user) return; // Response already sent by middleware
- *
- *   // Your protected logic here
- *   res.json({ message: 'Success', user });
- * };
+ * Uses JWT tokens (no Firebase dependency).
+ * Provides role-based access control (RBAC).
  */
 
-import { verifyIdToken } from './firebase-admin.js';
+import { verifyToken } from './jwt-auth.js';
 
 /**
  * Extract Bearer token from Authorization header
- *
- * Supports formats:
- * - Authorization: Bearer <token>
- * - Authorization: <token>
- *
- * @param {Object} req - HTTP request object
- * @returns {string|null} Extracted token or null
  */
 function extractToken(req) {
   const authHeader = req.headers.authorization || req.headers.Authorization;
-
-  if (!authHeader) {
-    return null;
-  }
-
-  // Check if it starts with "Bearer "
-  if (authHeader.startsWith('Bearer ')) {
-    return authHeader.substring(7); // Remove "Bearer " prefix
-  }
-
-  // Return as-is (assume it's just the token)
+  if (!authHeader) return null;
+  if (authHeader.startsWith('Bearer ')) return authHeader.substring(7);
   return authHeader;
 }
 
 /**
- * Middleware: Verify user is authenticated
- * Returns decoded token if valid, sends error response if not
- *
- * @param {Object} req - HTTP request object
- * @param {Object} res - HTTP response object
- * @returns {Promise<Object|null>} Decoded token with user info, or null if auth failed
- *
- * Decoded token structure:
- * {
- *   uid: string,
- *   email: string,
- *   email_verified: boolean,
- *   admin: boolean,  // Custom claim (if set)
- *   role: string,    // Custom claim (if set)
- *   iat: number,
- *   exp: number
- * }
+ * Verify user is authenticated. Returns decoded token or sends 401.
  */
 async function requireAuth(req, res) {
   try {
-    // Extract token from Authorization header
     const token = extractToken(req);
-
     if (!token) {
       res.status(401).json({
         success: false,
         error: 'Unauthorized',
-        message: 'Missing authentication token. Please include Authorization header.'
+        message: 'Missing authentication token.'
       });
       return null;
     }
 
-    // Verify token with Firebase Admin
-    const decodedToken = await verifyIdToken(token);
-
-    // Attach decoded token to request for downstream use
-    req.user = decodedToken;
-
-    return decodedToken;
-
+    const decoded = verifyToken(token);
+    req.user = decoded;
+    return decoded;
   } catch (error) {
-    console.error('❌ Authentication failed:', error.message);
-
+    console.error('Authentication failed:', error.message);
     res.status(401).json({
       success: false,
       error: 'Unauthorized',
-      message: error.message || 'Invalid or expired authentication token'
+      message: error.message || 'Invalid or expired token'
     });
-
     return null;
   }
 }
 
 /**
- * Middleware: Verify user is authenticated AND has admin role
- * Checks for custom claim: admin = true
- *
- * @param {Object} req - HTTP request object
- * @param {Object} res - HTTP response object
- * @returns {Promise<Object|null>} Decoded token if admin, null otherwise
+ * Verify user is authenticated AND has admin role.
  */
 async function requireAdmin(req, res) {
-  // First, verify authentication
-  const decodedToken = await requireAuth(req, res);
+  const decoded = await requireAuth(req, res);
+  if (!decoded) return null;
 
-  if (!decodedToken) {
-    return null; // Auth failed, response already sent
-  }
-
-  // Check for admin custom claim
-  if (!decodedToken.admin) {
+  if (!decoded.admin) {
     res.status(403).json({
       success: false,
       error: 'Forbidden',
-      message: 'Admin access required. You do not have permission to access this resource.'
+      message: 'Admin access required.'
     });
     return null;
   }
 
-  return decodedToken;
+  return decoded;
 }
 
 /**
- * Middleware: Verify user has specific role
- *
- * @param {Object} req - HTTP request object
- * @param {Object} res - HTTP response object
- * @param {string|string[]} allowedRoles - Single role or array of allowed roles
- * @returns {Promise<Object|null>} Decoded token if role matches, null otherwise
- *
- * @example
- * const user = await requireRole(req, res, 'super_admin');
- * const user = await requireRole(req, res, ['admin', 'super_admin']);
+ * Verify user has a specific role.
  */
 async function requireRole(req, res, allowedRoles) {
-  // First, verify authentication
-  const decodedToken = await requireAuth(req, res);
+  const decoded = await requireAuth(req, res);
+  if (!decoded) return null;
 
-  if (!decodedToken) {
-    return null; // Auth failed, response already sent
-  }
-
-  // Normalize to array
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
-
-  // Check if user has one of the allowed roles
-  const userRole = decodedToken.role;
-
-  if (!userRole || !roles.includes(userRole)) {
+  if (!decoded.role || !roles.includes(decoded.role)) {
     res.status(403).json({
       success: false,
       error: 'Forbidden',
-      message: `Required role: ${roles.join(' or ')}. Your role: ${userRole || 'none'}`
+      message: `Required role: ${roles.join(' or ')}. Your role: ${decoded.role || 'none'}`
     });
     return null;
   }
 
-  return decodedToken;
+  return decoded;
 }
 
 /**
- * Middleware: Optional authentication
- * Verifies token if present, but doesn't fail if missing
- * Useful for endpoints that have different behavior for authenticated users
- *
- * @param {Object} req - HTTP request object
- * @returns {Promise<Object|null>} Decoded token if valid, null if not authenticated
+ * Optional auth — verifies if token present, doesn't fail if missing.
  */
 async function optionalAuth(req) {
   try {
     const token = extractToken(req);
-
-    if (!token) {
-      return null; // No token, but that's okay
-    }
-
-    const decodedToken = await verifyIdToken(token);
-    req.user = decodedToken;
-    return decodedToken;
-
-  } catch (error) {
-    // Token was provided but invalid - log but don't fail
-    console.warn('⚠️ Optional auth failed:', error.message);
+    if (!token) return null;
+    const decoded = verifyToken(token);
+    req.user = decoded;
+    return decoded;
+  } catch {
     return null;
   }
 }
 
-/**
- * Utility: Check if request is from admin user
- * Does NOT send response, just returns boolean
- *
- * @param {Object} req - HTTP request object (must have req.user from requireAuth)
- * @returns {boolean} True if user is admin
- */
 function isAdmin(req) {
   return req.user && req.user.admin === true;
 }
 
-/**
- * Utility: Check if request is from user with specific role
- *
- * @param {Object} req - HTTP request object (must have req.user from requireAuth)
- * @param {string|string[]} allowedRoles - Single role or array of allowed roles
- * @returns {boolean} True if user has role
- */
 function hasRole(req, allowedRoles) {
   if (!req.user) return false;
-
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
   return roles.includes(req.user.role);
 }
 
-/**
- * Utility: Get current user ID from request
- *
- * @param {Object} req - HTTP request object (must have req.user from requireAuth)
- * @returns {string|null} User ID or null
- */
 function getCurrentUserId(req) {
   return req.user ? req.user.uid : null;
 }
 
 /**
- * Set CORS headers for API responses
- * Configurable for development vs production
- *
- * @param {Object} res - HTTP response object
- * @param {Object} options - CORS options
+ * Set CORS headers
  */
 function setCorsHeaders(res, options = {}) {
   const {
@@ -248,16 +126,7 @@ function setCorsHeaders(res, options = {}) {
     requestOrigin
   } = options;
 
-  // Determine valid origin
-  let originToSet = '*';
-  if (allowedOrigins.includes(requestOrigin) || !process.env.FRONTEND_URL) {
-    // If explicit match or no env var set (permissive mode), reflect origin
-    // However, for security, if strictly production, we should check allowedOrigins
-    // For this fix, we will be permissive but safe for credentials
-    originToSet = requestOrigin || '*';
-  }
-
-  // If we want to allow everything but still support credentials, we must reflect origin
+  let originToSet = requestOrigin || '*';
   if (originToSet === 'null' || !originToSet) originToSet = '*';
 
   res.setHeader('Access-Control-Allow-Origin', originToSet);
@@ -270,38 +139,26 @@ function setCorsHeaders(res, options = {}) {
 }
 
 /**
- * Handle OPTIONS preflight request
- * Call this at the start of your API handler
- *
- * @param {Object} req - HTTP request object
- * @param {Object} res - HTTP response object
- * @returns {boolean} True if OPTIONS request was handled
+ * Handle OPTIONS preflight
  */
 function handleCors(req, res) {
   setCorsHeaders(res, { requestOrigin: req.headers.origin });
-
   if (req.method === 'OPTIONS') {
     res.status(200).end();
     return true;
   }
-
   return false;
 }
 
 export {
-  // Main middleware functions
   requireAuth,
   requireAdmin,
   requireRole,
   optionalAuth,
-
-  // Utility functions
   extractToken,
   isAdmin,
   hasRole,
   getCurrentUserId,
-
-  // CORS utilities
   setCorsHeaders,
   handleCors
 };

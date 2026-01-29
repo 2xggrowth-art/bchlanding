@@ -1,4 +1,4 @@
-import { createLead, getLeads, getLeadsStats } from '../_lib/firestore-service.js';
+import { createLead, getLeads, getLeadsStats } from '../_lib/pg-service.js';
 import { requireAdmin } from '../_lib/auth-middleware.js';
 
 export default async function handler(req, res) {

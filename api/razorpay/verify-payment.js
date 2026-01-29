@@ -10,7 +10,7 @@
 
 import crypto from 'crypto';
 import { handleCors } from '../_lib/auth-middleware.js';
-import { updateLeadPayment, getLeadById } from '../_lib/firestore-service.js';
+import { updateLeadPayment, getLeadById } from '../_lib/pg-service.js';
 
 export default async function handler(req, res) {
   // Handle CORS

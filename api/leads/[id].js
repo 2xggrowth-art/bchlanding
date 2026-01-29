@@ -1,4 +1,4 @@
-import { updateLead, getLeadById } from '../_lib/firestore-service.js';
+import { updateLead, getLeadById } from '../_lib/pg-service.js';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');

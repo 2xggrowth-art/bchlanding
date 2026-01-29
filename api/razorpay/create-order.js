@@ -12,7 +12,7 @@
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { handleCors } from '../_lib/auth-middleware.js';
-import { getLeadById, updateLeadPayment } from '../_lib/firestore-service.js';
+import { getLeadById, updateLeadPayment } from '../_lib/pg-service.js';
 
 // Initialize Razorpay instance lazily
 let razorpay = null;

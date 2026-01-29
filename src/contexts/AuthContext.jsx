@@ -1,30 +1,14 @@
 /**
  * Authentication Context Provider
  *
- * Provides Firebase Authentication state and methods throughout the app
- *
- * Features:
- * - User authentication state
- * - Login/logout methods
- * - Firebase ID token management
- * - Admin role verification
- * - Automatic token refresh
+ * JWT-based authentication (no Firebase dependency).
+ * Token stored in localStorage for persistence.
  */
 
 import { createContext, useContext, useState, useEffect } from 'react';
-import {
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-  setPersistence,
-  browserLocalPersistence
-} from 'firebase/auth';
-import { auth } from '../config/firebase';
 
-// Create context
 const AuthContext = createContext({});
 
-// Custom hook to use auth context
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -33,10 +17,9 @@ export const useAuth = () => {
   return context;
 };
 
-/**
- * AuthProvider Component
- * Wrap your app with this to provide authentication state
- */
+const TOKEN_KEY = 'bch_admin_token';
+const USER_KEY = 'bch_admin_user';
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -44,122 +27,42 @@ export const AuthProvider = ({ children }) => {
   const [idToken, setIdToken] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  /**
-   * Initialize authentication state
-   * Listen to Firebase auth state changes
-   */
+  // Restore session from localStorage on mount
   useEffect(() => {
-    // Set persistence to LOCAL (survive page reloads)
-    setPersistence(auth, browserLocalPersistence)
-      .then(() => {
-        console.log('✅ Auth persistence set to LOCAL');
-      })
-      .catch((err) => {
-        console.error('❌ Failed to set auth persistence:', err);
-      });
-
-    // Listen to auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const restore = async () => {
       try {
-        if (firebaseUser) {
-          // User is signed in
-          console.log('✅ User authenticated:', firebaseUser.email);
+        const savedToken = localStorage.getItem(TOKEN_KEY);
+        const savedUser = localStorage.getItem(USER_KEY);
 
-          // Get ID token
-          const token = await firebaseUser.getIdToken();
-          setIdToken(token);
-
-          // Get ID token result to check custom claims
-          const tokenResult = await firebaseUser.getIdTokenResult();
-          const adminClaim = tokenResult.claims.admin || false;
-          const roleClaim = tokenResult.claims.role || null;
-
-          setIsAdmin(adminClaim);
-
-          // Set user state
-          setUser({
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName || firebaseUser.email.split('@')[0],
-            emailVerified: firebaseUser.emailVerified,
-            photoURL: firebaseUser.photoURL,
-            admin: adminClaim,
-            role: roleClaim
+        if (savedToken && savedUser) {
+          // Verify token is still valid with backend
+          const response = await fetch('/api/admin/verify', {
+            headers: { 'Authorization': `Bearer ${savedToken}` }
           });
 
-          // Verify with backend
-          await verifyAdminWithBackend(token);
-
-        } else {
-          // User is signed out
-          console.log('ℹ️ User signed out');
-          setUser(null);
-          setIdToken(null);
-          setIsAdmin(false);
+          if (response.ok) {
+            const data = await response.json();
+            const userData = JSON.parse(savedUser);
+            setUser(userData);
+            setIdToken(savedToken);
+            setIsAdmin(data.admin || userData.admin || false);
+          } else {
+            // Token expired or invalid
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(USER_KEY);
+          }
         }
       } catch (err) {
-        console.error('❌ Auth state change error:', err);
-        setError(err.message);
+        console.error('Session restore failed:', err);
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
       } finally {
         setLoading(false);
       }
-    });
+    };
 
-    // Cleanup subscription
-    return () => unsubscribe();
+    restore();
   }, []);
-
-  /**
-   * Refresh ID token periodically
-   * Tokens expire after 1 hour, refresh every 50 minutes
-   */
-  useEffect(() => {
-    if (!user) return;
-
-    const refreshInterval = setInterval(async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          const token = await currentUser.getIdToken(true); // Force refresh
-          setIdToken(token);
-          console.log('✅ ID token refreshed');
-        }
-      } catch (err) {
-        console.error('❌ Token refresh failed:', err);
-      }
-    }, 50 * 60 * 1000); // 50 minutes
-
-    return () => clearInterval(refreshInterval);
-  }, [user]);
-
-  /**
-   * Verify admin role with backend
-   * This ensures the custom claim is actually valid
-   */
-  const verifyAdminWithBackend = async (token) => {
-    try {
-      // Use /api directly - works in both dev (port 5175) and production
-      const response = await fetch('/api/admin/verify', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Admin verification failed');
-      }
-
-      const data = await response.json();
-      console.log('✅ Admin verified with backend:', data.user.role);
-
-    } catch (err) {
-      console.error('❌ Backend admin verification failed:', err);
-      // Don't throw error - user can still be authenticated
-      // Just won't have admin access
-      setIsAdmin(false);
-    }
-  };
 
   /**
    * Login with email and password
@@ -169,53 +72,31 @@ export const AuthProvider = ({ children }) => {
       setError(null);
       setLoading(true);
 
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
+      const response = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-      // Check if user has admin claim
-      const tokenResult = await userCredential.user.getIdTokenResult();
-      const adminClaim = tokenResult.claims.admin || false;
+      const data = await response.json();
 
-      if (!adminClaim) {
-        // User exists but is not an admin
-        await signOut(auth);
-        throw new Error('You do not have admin privileges. Please contact support.');
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Login failed');
       }
 
-      console.log('✅ Login successful:', email);
+      // Store in state and localStorage
+      setUser(data.user);
+      setIdToken(data.token);
+      setIsAdmin(data.user.admin || false);
 
-      return {
-        success: true,
-        user: userCredential.user,
-        token
-      };
+      localStorage.setItem(TOKEN_KEY, data.token);
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
 
+      return { success: true, user: data.user, token: data.token };
     } catch (err) {
-      console.error('❌ Login failed:', err);
-
-      // Handle specific error codes
-      let errorMessage = 'Login failed. Please try again.';
-
-      if (err.code === 'auth/invalid-credential') {
-        errorMessage = 'Invalid email or password.';
-      } else if (err.code === 'auth/user-not-found') {
-        errorMessage = 'No account found with this email.';
-      } else if (err.code === 'auth/wrong-password') {
-        errorMessage = 'Incorrect password.';
-      } else if (err.code === 'auth/too-many-requests') {
-        errorMessage = 'Too many failed attempts. Please try again later.';
-      } else if (err.code === 'auth/network-request-failed') {
-        errorMessage = 'Network error. Please check your internet connection.';
-      } else if (err.message.includes('admin privileges')) {
-        errorMessage = err.message;
-      }
-
+      const errorMessage = err.message || 'Login failed. Please try again.';
       setError(errorMessage);
-
-      return {
-        success: false,
-        error: errorMessage
-      };
+      return { success: false, error: errorMessage };
     } finally {
       setLoading(false);
     }
@@ -226,79 +107,46 @@ export const AuthProvider = ({ children }) => {
    */
   const logout = async () => {
     try {
-      await signOut(auth);
       setUser(null);
       setIdToken(null);
       setIsAdmin(false);
-      console.log('✅ Logout successful');
-
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(USER_KEY);
       return { success: true };
-
     } catch (err) {
-      console.error('❌ Logout failed:', err);
       setError(err.message);
-
-      return {
-        success: false,
-        error: err.message
-      };
+      return { success: false, error: err.message };
     }
   };
 
   /**
-   * Get current ID token
-   * Force refresh if needed
+   * Get current ID token (for API calls)
    */
-  const getIdToken = async (forceRefresh = false) => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        throw new Error('No user is signed in');
-      }
-
-      const token = await currentUser.getIdToken(forceRefresh);
-      setIdToken(token);
-      return token;
-
-    } catch (err) {
-      console.error('❌ Failed to get ID token:', err);
-      throw err;
-    }
+  const getIdToken = async () => {
+    return idToken || localStorage.getItem(TOKEN_KEY);
   };
 
   /**
-   * Refresh custom claims
-   * Call this after admin role is granted
+   * Refresh claims (no-op for JWT — re-verify with backend)
    */
   const refreshClaims = async () => {
     try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
+      const token = idToken || localStorage.getItem(TOKEN_KEY);
+      if (!token) return;
 
-      // Force token refresh to get new claims
-      const token = await currentUser.getIdToken(true);
-      setIdToken(token);
+      const response = await fetch('/api/admin/verify', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
 
-      const tokenResult = await currentUser.getIdTokenResult(true);
-      const adminClaim = tokenResult.claims.admin || false;
-      const roleClaim = tokenResult.claims.role || null;
-
-      setIsAdmin(adminClaim);
-
-      setUser(prev => ({
-        ...prev,
-        admin: adminClaim,
-        role: roleClaim
-      }));
-
-      console.log('✅ Claims refreshed:', { admin: adminClaim, role: roleClaim });
-
+      if (response.ok) {
+        const data = await response.json();
+        setIsAdmin(data.admin || false);
+      }
     } catch (err) {
-      console.error('❌ Failed to refresh claims:', err);
+      console.error('Failed to refresh claims:', err);
     }
   };
 
-  // Context value
   const value = {
     user,
     loading,
