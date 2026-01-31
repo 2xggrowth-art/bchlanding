@@ -39,3 +39,6 @@ local-backend/
 
 .vercel
 .env*.local
+
+# GitHub token (never commit)
+.github-token

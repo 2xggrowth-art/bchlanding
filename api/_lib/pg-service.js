@@ -297,6 +297,10 @@ async function updateLead(leadId, updates) {
       setClauses.push(`payment = $${paramIndex++}`);
       params.push(JSON.stringify(updates.payment));
     }
+    if (updates.quizAnswers !== undefined) {
+      setClauses.push(`quiz_answers = $${paramIndex++}`);
+      params.push(JSON.stringify(updates.quizAnswers));
+    }
 
     setClauses.push(`updated_at = NOW()`);
 
