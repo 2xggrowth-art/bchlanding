@@ -31,6 +31,14 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
   /* Premium price glow animation - subtle fire/heat effect */
   @keyframes priceGlow {
     0%, 100% {

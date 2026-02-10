@@ -66,6 +66,14 @@ export async function authenticatedFetch(url, options = {}) {
     // Make request
     const response = await fetch(url, fetchOptions);
 
+    // Check content type before parsing
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('❌ Expected JSON response but got:', contentType, text.substring(0, 200));
+      throw new Error(`Server returned non-JSON response (${response.status}). Check server logs.`);
+    }
+
     // Parse response
     const data = await response.json();
 
@@ -110,6 +118,7 @@ export class AdminAPI {
     if (filters.status) queryParams.append('status', filters.status);
     if (filters.leadStatus) queryParams.append('leadStatus', filters.leadStatus);
     if (filters.category) queryParams.append('category', filters.category);
+    if (filters.source) queryParams.append('source', filters.source);
     if (filters.fromDate) queryParams.append('fromDate', filters.fromDate);
     if (filters.toDate) queryParams.append('toDate', filters.toDate);
     if (filters.limit) queryParams.append('limit', filters.limit);
@@ -187,6 +196,118 @@ export class AdminAPI {
       getIdToken: this.getIdToken
     });
   }
+
+  // ============================================
+  // PRODUCT MANAGEMENT METHODS
+  // ============================================
+
+  /**
+   * Get all products with optional filters
+   */
+  async getProducts(filters = {}) {
+    const queryParams = new URLSearchParams();
+
+    if (filters.category) queryParams.append('category', filters.category);
+    if (filters.status) queryParams.append('status', filters.status);
+    if (filters.limit) queryParams.append('limit', filters.limit);
+    if (filters.cursor) queryParams.append('cursor', filters.cursor);
+
+    const url = `/api/products${queryParams.toString() ? `?${queryParams}` : ''}`;
+
+    return await authenticatedFetch(url, {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Get single product by ID
+   */
+  async getProduct(productId) {
+    return await authenticatedFetch(`/api/products/${productId}`, {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Create new product
+   */
+  async createProduct(productData) {
+    return await authenticatedFetch('/api/products', {
+      method: 'POST',
+      body: productData,
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Update product
+   */
+  async updateProduct(productId, updates) {
+    return await authenticatedFetch(`/api/products/${productId}`, {
+      method: 'PATCH',
+      body: updates,
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Delete product
+   */
+  async deleteProduct(productId) {
+    return await authenticatedFetch(`/api/products/${productId}`, {
+      method: 'DELETE',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Upload product image
+   */
+  async uploadProductImage(file) {
+    const idToken = await this.getIdToken();
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    const response = await fetch('/api/products/upload-image', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${idToken}`
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to upload image');
+    }
+
+    return data.imageUrl;
+  }
+
+  /**
+   * Bulk import products
+   */
+  async bulkImportProducts(products) {
+    return await authenticatedFetch('/api/products/bulk', {
+      method: 'POST',
+      body: { products },
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Export all products
+   */
+  async exportProducts() {
+    return await authenticatedFetch('/api/products/bulk', {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
 }
 
 /**
@@ -205,10 +326,14 @@ export class AdminAPI {
  *   };
  * }
  */
+import { useAuth } from '../contexts/AuthContext';
+
+/**
+ * React Hook: useAdminAPI
+ * Use this in components to get an AdminAPI instance
+ */
 export function useAdminAPI() {
-  // This needs to be used inside a component with useAuth
-  // Import useAuth from AuthContext
-  const { getIdToken } = require('../contexts/AuthContext').useAuth();
+  const { getIdToken } = useAuth();
   return new AdminAPI(getIdToken);
 }
 

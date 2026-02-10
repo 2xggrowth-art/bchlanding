@@ -49,6 +49,13 @@ export const AuthProvider = ({ children }) => {
    * Listen to Firebase auth state changes
    */
   useEffect(() => {
+    if (!auth) {
+      console.error('❌ Firebase auth not initialized. Check your VITE_FIREBASE_* env variables in .env.local');
+      setLoading(false);
+      setError('Firebase not configured. Please check environment variables.');
+      return;
+    }
+
     // Set persistence to LOCAL (survive page reloads)
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
@@ -154,9 +161,8 @@ export const AuthProvider = ({ children }) => {
       console.log('✅ Admin verified with backend:', data.user.role);
 
     } catch (err) {
-      console.error('❌ Backend admin verification failed:', err);
-      // Don't throw error - user can still be authenticated
-      // Just won't have admin access
+      // Expected to fail if user doesn't have admin role - not an error
+      console.log('ℹ️ Admin verification: user is not admin or token expired');
       setIsAdmin(false);
     }
   };

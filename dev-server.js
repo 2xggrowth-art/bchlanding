@@ -1,137 +1,265 @@
 import express from 'express';
 import { createServer as createViteServer } from 'vite';
-import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
+import http from 'http';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config({ path: '.env.local' });
+// Load environment variables - manually parse to guarantee process.env is set
+const envPath = path.resolve(__dirname, '.env.local');
+try {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  envContent.split('\n').forEach(line => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) return;
+    const eqIndex = trimmed.indexOf('=');
+    if (eqIndex === -1) return;
+    const key = trimmed.substring(0, eqIndex).trim();
+    let value = trimmed.substring(eqIndex + 1).trim();
+    // Remove surrounding quotes
+    if ((value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    process.env[key] = value;
+  });
+  console.log('✅ Env loaded from', envPath);
+  console.log('🔧 FIREBASE_ADMIN_PROJECT_ID:', process.env.FIREBASE_ADMIN_PROJECT_ID ? 'SET' : 'MISSING');
+  console.log('🔧 FIREBASE_ADMIN_PRIVATE_KEY:', process.env.FIREBASE_ADMIN_PRIVATE_KEY ? 'SET' : 'MISSING');
+  console.log('🔧 FIREBASE_ADMIN_CLIENT_EMAIL:', process.env.FIREBASE_ADMIN_CLIENT_EMAIL ? 'SET' : 'MISSING');
+} catch (err) {
+  console.error('❌ Failed to load .env.local:', err.message);
+}
+
+// Global Error Handlers
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('💥 UNHANDLED REJECTION:', reason);
+});
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Test route to verify API routing works
+// Request Logger Middleware
+app.use((req, res, next) => {
+  if (!req.url.startsWith('/@vite') && !req.url.startsWith('/src') && !req.url.includes('.')) {
+    console.log(`🕒 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  }
+  next();
+});
+
+// Test route
 app.get('/api/test', (req, res) => {
-  console.log('✅ API test route hit');
-  res.json({ success: true, message: 'API is working!' });
+  res.json({ success: true, message: 'API is working!', timestamp: new Date().toISOString() });
 });
 
 // Import API handlers with cache busting
 const loadHandler = async (handlerPath) => {
-  // Add timestamp to prevent caching during development
-  const cacheBuster = `?t=${Date.now()}`;
-  const module = await import(handlerPath + cacheBuster);
-  return module.default;
+  try {
+    const cacheBuster = `?t=${Date.now()}`;
+    const module = await import(handlerPath + cacheBuster);
+    return module.default;
+  } catch (err) {
+    console.error(`❌ Failed to load handler ${handlerPath}:`, err);
+    throw err;
+  }
 };
 
-// API Routes with error handling
+// API Routes
 app.post('/api/razorpay/create-order', async (req, res) => {
   try {
-    console.log('📨 POST /api/razorpay/create-order');
     const handler = await loadHandler('./api/razorpay/create-order.js');
     await handler(req, res);
   } catch (error) {
-    console.error('❌ Error in /api/razorpay/create-order:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 app.post('/api/razorpay/verify-payment', async (req, res) => {
   try {
-    console.log('📨 POST /api/razorpay/verify-payment');
     const handler = await loadHandler('./api/razorpay/verify-payment.js');
     await handler(req, res);
   } catch (error) {
-    console.error('❌ Error in /api/razorpay/verify-payment:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Import Shared Service
-import { createLead, updateLead, getLeads, getLeadsStats } from './api/_lib/firestore-service.js';
-
-// ==========================================
-// Express Routes (mirroring Vercel structure)
-// ==========================================
-
-// Create Lead
-app.post('/api/leads', async (req, res) => {
+// Route all /api/lead requests (POST, GET) through the Vercel handler
+// This ensures validation, auth, and full filter support work locally
+app.all('/api/lead', async (req, res) => {
   try {
-    console.log('📨 POST /api/leads (Express)');
-    const result = await createLead(req.body);
-    res.status(201).json(result);
+    const handler = await loadHandler('./api/lead/index.js');
+    await handler(req, res);
   } catch (error) {
-    console.error('❌ Error creating lead:', error);
+    console.error('❌ /api/lead error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Update Lead
-app.post('/api/leads/:id', async (req, res) => {
+// Route PATCH, DELETE, GET for /api/lead/:id through the handler
+app.all('/api/lead/:id', async (req, res) => {
   try {
-    console.log(`📨 POST /api/leads/${req.params.id} (Express)`);
-    const result = await updateLead(req.params.id, req.body);
-    res.status(200).json({ success: true, lead: result });
+    req.query = { ...req.query, id: req.params.id };
+    const handler = await loadHandler('./api/lead/[id].js');
+    await handler(req, res);
   } catch (error) {
-    console.error('❌ Error updating lead:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Get Leads (Admin)
-app.get('/api/leads', async (req, res) => {
+// Product API routes
+app.all('/api/products/bulk', async (req, res) => {
   try {
-    console.log('📨 GET /api/leads (Express)');
-    // In dev, we might skip auth or mock it, assuming local dev is safe
-    // If you want robust auth in dev, you need to duplicate the middleware logic here
-
-    // For now, mirroring Vercel's response structure
-    const leads = await getLeads(req.query);
-    const stats = await getLeadsStats();
-
-    res.status(200).json({ success: true, leads, stats, total: leads.length });
+    const handler = await loadHandler('./api/products/bulk.js');
+    await handler(req, res);
   } catch (error) {
-    console.error('❌ Error fetching leads:', error);
+    console.error('❌ /api/products/bulk error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/products/upload-image', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/products/upload-image.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/products/upload-image error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/products/import-excel', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/products/import-excel.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/products/import-excel error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/products/:id', async (req, res) => {
+  try {
+    req.query = { ...req.query, id: req.params.id };
+    const handler = await loadHandler('./api/products/[id].js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/products/:id error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/products', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/products/index.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/products error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Category API routes
+app.all('/api/categories/:slug', async (req, res) => {
+  try {
+    req.query = { ...req.query, slug: req.params.slug };
+    const handler = await loadHandler('./api/categories/[slug].js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/categories/:slug error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/categories', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/categories/index.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/categories error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 app.get('/api/admin/verify', async (req, res) => {
   try {
-    console.log('📨 GET /api/admin/verify');
     const handler = await loadHandler('./api/admin/verify.js');
     await handler(req, res);
   } catch (error) {
-    console.error('❌ Error in /api/admin/verify:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
 
 // Start server
 const PORT = 5175;
+const HOST = '0.0.0.0'; // Listen on all interfaces
 
 async function startServer() {
-  // Create Vite server in middleware mode
+  console.log('🚀 Starting Development Server...');
+
   const vite = await createViteServer({
-    server: { middlewareMode: true },
-    appType: 'spa'
+    server: {
+      middlewareMode: true
+    },
+    appType: 'custom'
   });
 
-  // Use vite's connect instance as middleware
   app.use(vite.middlewares);
 
-  app.listen(PORT, () => {
-    console.log(`\n  ✅ Server running at http://localhost:${PORT}\n`);
-    console.log(`  Frontend: http://localhost:${PORT}`);
-    console.log(`  API: http://localhost:${PORT}/api/*\n`);
+  app.use('*', async (req, res, next) => {
+    const url = req.originalUrl;
+    // Skip API, Vite internal files, and files with extensions
+    if (url.startsWith('/api') || url.startsWith('/@') || url.includes('.')) {
+      return next();
+    }
+
+    try {
+      console.log(`🌐 Rendering SPA Page: ${url}`);
+      let template = fs.readFileSync(path.resolve(__dirname, 'index.html'), 'utf-8');
+      template = await vite.transformIndexHtml(url, template);
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+    } catch (e) {
+      vite.ssrFixStacktrace(e);
+      console.error('❌ Rendering Error:', e);
+      res.status(500).end(e.stack);
+    }
+  });
+
+  const server = http.createServer(app);
+
+  server.on('upgrade', (req, socket, head) => {
+    if (req.url === '/@vite/client' || req.headers['sec-websocket-protocol'] === 'vite-hmr') {
+      vite.ws.handleUpgrade(req, socket, head, (ws) => {
+        vite.ws.emit('connection', ws, req);
+      });
+    }
+  });
+
+  server.listen(PORT, HOST, () => {
+    console.log(`\n  ✅ SERVER READY`);
+    console.log(`  🔗 Local:   http://localhost:${PORT}`);
+    console.log(`  🔗 Network: http://127.0.0.1:${PORT}`);
+    console.log(`  🔗 Admin:   http://localhost:${PORT}/admin\n`);
+  });
+
+  server.on('error', (e) => {
+    if (e.code === 'EADDRINUSE') {
+      console.error(`❌ Port ${PORT} is already in use. Try running: npx kill-port ${PORT}`);
+      process.exit(1);
+    } else {
+      console.error('❌ Server Listen Error:', e);
+    }
   });
 }
 
 startServer().catch((err) => {
-  console.error('Error starting server:', err);
+  console.error('❌ FAILED TO START SERVER:', err);
   process.exit(1);
 });

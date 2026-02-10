@@ -288,12 +288,36 @@ function handleCors(req, res) {
   return false;
 }
 
+/**
+ * Verify admin without sending response (for API handlers that manage their own responses)
+ * Returns decoded token if admin, null otherwise
+ *
+ * @param {Object} req - HTTP request object
+ * @returns {Promise<Object|null>} Decoded token if admin, null otherwise
+ */
+async function verifyAdmin(req) {
+  try {
+    const token = extractToken(req);
+    if (!token) return null;
+
+    const decodedToken = await verifyIdToken(token);
+    if (!decodedToken || !decodedToken.admin) return null;
+
+    req.user = decodedToken;
+    return decodedToken;
+  } catch (error) {
+    console.error('⚠️ verifyAdmin failed:', error.message);
+    return null;
+  }
+}
+
 export {
   // Main middleware functions
   requireAuth,
   requireAdmin,
   requireRole,
   optionalAuth,
+  verifyAdmin,
 
   // Utility functions
   extractToken,

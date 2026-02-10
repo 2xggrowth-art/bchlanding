@@ -1,9 +1,159 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
 import SocialMediaShowcase from '../components/SocialMediaShowcase';
 import ContactFormModal from '../components/ContactFormModal';
+import ProductCard from '../components/ProductCard';
+import { products, categories } from '../data/products';
+
+const containerVariants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.08 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
+const marqueeVariants = {
+  animate: (isPaused) => ({
+    x: [0, -2432], // (8 items * 280px) + (8 gaps * 24px) = 2240 + 192 = 2432
+    transition: {
+      x: {
+        repeat: Infinity,
+        repeatType: "loop",
+        duration: 30,
+        ease: "linear",
+        paused: isPaused,
+      },
+    },
+  }),
+};
+
+function ExploreCollection() {
+  const [isPaused, setIsPaused] = useState(false);
+  const navigate = useNavigate();
+
+  const featuredProducts = products.filter(
+    (p) => p.badge === 'Bestseller' || p.badge === 'Top Pick' || p.badge === 'New Arrival' || p.badge === 'Value Pick'
+  ).slice(0, 8);
+
+  const featuredFallback = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 8);
+
+  // Double the products to create a seamless loop
+  const loopProducts = [...featuredFallback, ...featuredFallback];
+
+  const handleEnquire = () => {
+    window.location.href = '/products';
+  };
+
+  const handleDetail = (product) => {
+    navigate(`/products/${product.id}`);
+  };
+
+  return (
+    <section
+      id="collection"
+      className="py-16 sm:py-20 bg-gray-bg overflow-hidden"
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="font-display text-3xl sm:text-4xl tracking-wider uppercase mb-2">
+            Explore Our Collection
+          </h2>
+          <div className="w-16 h-1 bg-primary mx-auto mb-4" />
+          <p className="text-gray-text text-lg max-w-xl mx-auto">
+            50+ bicycles across 5 categories for every rider
+          </p>
+        </motion.div>
+
+        {/* Category Quick-Links */}
+        <div className="mb-12 overflow-x-auto scrollbar-hide">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+            className="flex gap-3 justify-center min-w-max sm:min-w-0 sm:flex-wrap"
+          >
+            {categories.map((cat) => (
+              <motion.div key={cat.slug} variants={itemVariants} className="flex items-center gap-1.5">
+                <Link
+                  to={`/products?category=${cat.slug}`}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-dark text-white text-sm font-semibold whitespace-nowrap border border-white/10 hover:bg-primary hover:text-white transition-colors duration-200"
+                >
+                  <span className="text-base">{cat.icon}</span>
+                  {cat.name}
+                </Link>
+                {cat.subCategories?.map((sub) => (
+                  <Link
+                    key={sub.slug}
+                    to={`/products?category=${cat.slug}&sub=${sub.slug}`}
+                    className="px-3 py-2 rounded-full bg-primary/10 text-primary text-xs font-semibold whitespace-nowrap border border-primary/20 hover:bg-primary hover:text-white transition-colors duration-200"
+                  >
+                    {sub.name}
+                  </Link>
+                ))}
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* Infinite Marquee Products */}
+        <div
+          className="relative group"
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+        >
+          <motion.div
+            className="flex gap-6 pointer-events-auto items-stretch"
+            variants={marqueeVariants}
+            custom={isPaused}
+            animate="animate"
+            style={{ width: "fit-content" }}
+          >
+            {loopProducts.map((product, index) => (
+              <div
+                key={`${product.id}-${index}`}
+                className="w-[280px] sm:w-[320px] flex-shrink-0 flex flex-col"
+              >
+                <ProductCard product={product} onEnquire={handleEnquire} onClick={handleDetail} />
+              </div>
+            ))}
+          </motion.div>
+        </div>
+
+        {/* View All CTA */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mt-10"
+        >
+          <Link
+            to="/products"
+            className="inline-flex items-center gap-2 bg-dark text-white font-bold text-lg px-8 py-4 rounded-full shadow-lg hover:bg-primary transition-colors duration-200"
+          >
+            View All Products
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
 
 export default function MainLandingPage() {
   const [isContactFormOpen, setIsContactFormOpen] = useState(false);
@@ -210,6 +360,9 @@ export default function MainLandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Explore Our Collection */}
+      <ExploreCollection />
 
       {/* Social Media Showcase */}
       <SocialMediaShowcase />

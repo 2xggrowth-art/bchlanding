@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
   "permissions": {
     "allow": [
       "Bash(git clone:*)",
@@ -33,7 +36,14 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(netstat:*)",
       "Bash(findstr:*)",
-      "WebFetch(domain:uiverse.io)"
+      "WebFetch(domain:uiverse.io)",
+      "Bash(npm run build:*)",
+      "Bash(npm run preview:*)",
+      "Bash(npx kill-port:*)",
+      "WebFetch(domain:www.emotorad.com)",
+      "WebFetch(domain:www.zigwheels.com)",
+      "WebFetch(domain:www.bikedekho.com)",
+      "Bash(node scripts/migrate-products.js:*)"
     ]
   }
 }

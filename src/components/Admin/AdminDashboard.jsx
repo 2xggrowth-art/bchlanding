@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminAPI } from '../../utils/auth-api';
+import ProductsTab from './ProductsTab';
+import LeadsTable from './LeadsTable';
 
 export default function AdminDashboard() {
   const [leads, setLeads] = useState([]);
@@ -10,10 +12,13 @@ export default function AdminDashboard() {
   const [filters, setFilters] = useState({
     paymentStatus: 'all',      // all, paid, unpaid
     category: 'all',           // all, Contact, Test Ride, EMI, Exchange, General
+    source: 'all',             // all, product, test-ride-landing, etc.
     fromDate: '',              // Date string (YYYY-MM-DD)
     toDate: ''                 // Date string (YYYY-MM-DD)
   });
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'product', or 'products'
   const [error, setError] = useState(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -24,13 +29,21 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchLeads(true); // Initial load
+
+    // Update time every minute
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+
+    return () => clearInterval(timer);
   }, []);
 
   // Refetch when filters change
   // Refetch when filters change
+  // Refetch when filters or activeTab change
   useEffect(() => {
     fetchLeads(true);
-  }, [filters]);
+  }, [filters, activeTab]);
 
   const fetchLeads = async (isReset = false) => {
     try {
@@ -57,6 +70,16 @@ export default function AdminDashboard() {
       if (filters.category !== 'all') {
         apiFilters.category = filters.category;
       }
+
+      // Handle source filtering based on active tab
+      if (activeTab === 'product') {
+        apiFilters.source = 'product';
+      } else if (activeTab === 'all') {
+        // Show ALL leads (no source filter) so contact, test-ride, and other leads are visible
+      } else if (filters.source !== 'all') {
+        apiFilters.source = filters.source;
+      }
+
       if (filters.fromDate) {
         apiFilters.fromDate = filters.fromDate;
       }
@@ -194,13 +217,28 @@ export default function AdminDashboard() {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="font-display text-2xl sm:text-3xl font-normal text-dark uppercase tracking-wider">
-                CRM Dashboard
-              </h1>
-              <p className="text-sm text-gray-text mt-1">
-                Welcome, {user?.displayName || user?.email}
-              </p>
+            <div className="flex flex-col md:flex-row md:items-end gap-2 md:gap-6">
+              <div>
+                <p className="text-sm font-bold text-primary uppercase tracking-wide mb-1">
+                  Welcome, {user?.displayName || (user?.email?.split('@')[0])}
+                </p>
+                <h1 className="font-display text-2xl sm:text-3xl font-normal text-dark uppercase tracking-wider">
+                  CRM Dashboard
+                </h1>
+              </div>
+              <div className="hidden sm:block border-l border-gray-200 h-10 mx-2"></div>
+              <div className="flex flex-col">
+                <p className="text-[10px] font-bold text-gray-text uppercase tracking-widest">
+                  Current Session
+                </p>
+                <p className="text-sm font-bold text-dark flex items-center gap-2">
+                  <span className="text-primary">📅</span>
+                  {currentTime.toLocaleDateString('en-IN', { weekday: 'short', day: '2-digit', month: 'short' })}
+                  <span className="mx-1 opacity-20">|</span>
+                  <span className="text-primary">🕒</span>
+                  {currentTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                </p>
+              </div>
             </div>
             <button
               onClick={handleLogout}
@@ -283,230 +321,163 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
-        {/* Advanced Filters */}
-        <div className="bg-white rounded-[20px] p-6 mb-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-bold text-dark uppercase tracking-wide">Filters</h3>
-            <button
-              onClick={() => setFilters({ paymentStatus: 'all', category: 'all', fromDate: '', toDate: '' })}
-              className="text-sm text-primary hover:underline font-medium"
-            >
-              Clear All
-            </button>
-          </div>
 
-          {/* Row 1: Payment Status Pills */}
-          <div className="flex flex-wrap gap-3 mb-4">
-            <button
-              onClick={() => setFilters({ ...filters, paymentStatus: 'all' })}
-              className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'all'
-                ? 'bg-primary text-white'
-                : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                }`}
-            >
-              All ({stats.total || 0})
-            </button>
-            <button
-              onClick={() => setFilters({ ...filters, paymentStatus: 'paid' })}
-              className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'paid'
-                ? 'bg-green-600 text-white'
-                : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                }`}
-            >
-              Paid ({stats.paid || 0})
-            </button>
-            <button
-              onClick={() => setFilters({ ...filters, paymentStatus: 'unpaid' })}
-              className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'unpaid'
-                ? 'bg-orange-600 text-white'
-                : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                }`}
-            >
-              Unpaid ({stats.unpaid || 0})
-            </button>
-            <button
-              onClick={() => fetchLeads(true)}
-              disabled={loading}
-              className="ml-auto px-4 py-2 rounded-full bg-dark text-white font-bold text-sm uppercase tracking-wide hover:bg-dark/90 transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
-            >
-              <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
 
-          {/* Row 2: Category Dropdown + Date Range */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Category Filter */}
-            <div>
-              <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
-                Category
-              </label>
-              <select
-                value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
+        {/* Tabs */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setActiveTab('all')}
+            className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'all'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-text hover:text-dark'
+              }`}
+          >
+            All Leads
+          </button>
+          <button
+            onClick={() => setActiveTab('product')}
+            className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'product'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-text hover:text-dark'
+              }`}
+          >
+            Product Leads
+          </button>
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`px-6 py-3 font-bold text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'products'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-text hover:text-dark'
+              }`}
+          >
+            Products
+          </button>
+        </div>
+
+        {/* Products Tab Content */}
+        {activeTab === 'products' && (
+          <ProductsTab />
+        )}
+
+        {/* Advanced Filters (Only show for leads tabs) */}
+        {activeTab !== 'products' && (
+          <div className="bg-white rounded-[20px] p-6 mb-6 shadow-sm border border-gray-200">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-dark uppercase tracking-wide">Filters</h3>
+              <button
+                onClick={() => setFilters({ paymentStatus: 'all', category: 'all', fromDate: '', toDate: '' })}
+                className="text-sm text-primary hover:underline font-medium"
               >
-                <option value="all">All Categories</option>
-                <option value="Test Ride">Test Ride</option>
-                <option value="Contact">Contact</option>
-                <option value="EMI">EMI Inquiry</option>
-                <option value="Exchange">Exchange</option>
-                <option value="General">General</option>
-              </select>
+                Clear All
+              </button>
             </div>
 
-            {/* From Date */}
-            <div>
-              <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
-                From Date
-              </label>
-              <input
-                type="date"
-                value={filters.fromDate}
-                onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
-                className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
-              />
+            {/* Row 1: Payment Status Pills */}
+            <div className="flex flex-wrap gap-3 mb-4">
+              <button
+                onClick={() => setFilters({ ...filters, paymentStatus: 'all' })}
+                className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'all'
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-text hover:bg-gray-200'
+                  }`}
+              >
+                All ({stats.total || 0})
+              </button>
+              <button
+                onClick={() => setFilters({ ...filters, paymentStatus: 'paid' })}
+                className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'paid'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-gray-100 text-gray-text hover:bg-gray-200'
+                  }`}
+              >
+                Paid ({stats.paid || 0})
+              </button>
+              <button
+                onClick={() => setFilters({ ...filters, paymentStatus: 'unpaid' })}
+                className={`px-4 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'unpaid'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 text-gray-text hover:bg-gray-200'
+                  }`}
+              >
+                Unpaid ({stats.unpaid || 0})
+              </button>
+              <button
+                onClick={() => fetchLeads(true)}
+                disabled={loading}
+                className="ml-auto px-4 py-2 rounded-full bg-dark text-white font-bold text-sm uppercase tracking-wide hover:bg-dark/90 transition-all duration-300 flex items-center gap-2 disabled:opacity-50"
+              >
+                <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
             </div>
 
-            {/* To Date */}
-            <div>
-              <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
-                To Date
-              </label>
-              <input
-                type="date"
-                value={filters.toDate}
-                onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
-                className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
-              />
+            {/* Row 2: Category Dropdown + Date Range */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Category Filter */}
+              <div>
+                <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
+                  Category
+                </label>
+                <select
+                  value={filters.category}
+                  onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+                  className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
+                >
+                  <option value="all">All Categories</option>
+                  <option value="Test Ride">Test Ride</option>
+                  <option value="Contact">Contact</option>
+                  <option value="EMI">EMI Inquiry</option>
+                  <option value="Exchange">Exchange</option>
+                  <option value="General">General</option>
+                </select>
+              </div>
+
+              {/* From Date */}
+              <div>
+                <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
+                  From Date
+                </label>
+                <input
+                  type="date"
+                  value={filters.fromDate}
+                  onChange={(e) => setFilters({ ...filters, fromDate: e.target.value })}
+                  className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
+                />
+              </div>
+
+              {/* To Date */}
+              <div>
+                <label className="block text-xs font-bold text-gray-text uppercase tracking-wide mb-2">
+                  To Date
+                </label>
+                <input
+                  type="date"
+                  value={filters.toDate}
+                  onChange={(e) => setFilters({ ...filters, toDate: e.target.value })}
+                  className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
+                />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Leads Table */}
-        <div className="bg-white rounded-[20px] shadow-sm overflow-hidden">
-          {loading && leads.length === 0 ? (
-            <div className="p-12 text-center">
-              <div className="inline-block w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <p className="mt-4 text-gray-text font-medium">Loading leads...</p>
-            </div>
-          ) : leads.length === 0 ? (
-            <div className="p-12 text-center">
-              <svg className="w-16 h-16 mx-auto text-gray-text mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-              <p className="text-gray-text font-medium">No leads found</p>
-              <p className="text-sm text-gray-text mt-2">
-                {filters.paymentStatus !== 'all' || filters.category !== 'all' ? 'Try changing the filters' : 'Leads will appear here once customers book test rides'}
-              </p>
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-bg border-b border-gray-200">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Name</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Phone</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Source</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Requirements</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Payment ID</th>
-                    <th className="px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-4 text-right text-xs font-bold text-dark uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {leads.map((lead, index) => (
-                    <motion.tr
-                      key={lead.id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`
-                        hover:bg-gray-50 transition-colors duration-200
-                        ${lead.category === 'Test Ride' || lead.category === '99 Offer' ? 'bg-blue-50/30 border-l-4 border-blue-500' : ''}
-                        ${lead.category === 'Contact' ? 'bg-red-50/30 border-l-4 border-red-500' : ''}
-                      `}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-text">
-                        {formatDate(lead.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-bold text-dark">{lead.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <a
-                          href={`tel:${lead.phone}`}
-                          className="text-primary hover:text-primary-dark font-medium flex items-center gap-2 group"
-                        >
-                          <svg className="w-4 h-4 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
-                          </svg>
-                          {lead.phone}
-                        </a>
-                      </td>
-                      {/* Category Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getCategoryBadge(lead.category || 'General', lead)}
-                      </td>
-                      {/* Source Column */}
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-text">
-                          {lead.source || 'unknown'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {lead.quizAnswers && Object.entries(lead.quizAnswers).map(([key, value]) => (
-                            <span
-                              key={key}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-dark/5 text-dark border border-dark/10"
-                            >
-                              {value}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {lead.payment?.transactionId ? (
-                          <span className="font-mono text-xs text-gray-600">
-                            {lead.payment.transactionId.substring(0, 12)}...
-                          </span>
-                        ) : (
-                          <span className="text-gray-text italic">No payment</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border ${getStatusBadge(lead.payment?.status || 'UNPAID')
-                          }`}>
-                          {lead.payment?.status || 'UNPAID'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => handleDeleteLead(lead.id, lead.name)}
-                          disabled={loading}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 disabled:opacity-50"
-                          title="Delete Lead"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+        {/* Leads Table - Responsive (Only show for leads tabs) */}
+        {activeTab !== 'products' && (
+          <LeadsTable
+            leads={leads}
+            loading={loading && leads.length === 0}
+            activeTab={activeTab}
+            formatDate={formatDate}
+            getCategoryBadge={getCategoryBadge}
+            getStatusBadge={getStatusBadge}
+            handleDeleteLead={handleDeleteLead}
+          />
+        )}
 
-        {/* Load More Button */}
-        {hasMore && leads.length > 0 && (
+        {/* Load More Button (Only show for leads tabs) */}
+        {activeTab !== 'products' && hasMore && leads.length > 0 && (
           <div className="mt-8 flex justify-center">
             <button
               onClick={() => fetchLeads(false)}
@@ -530,13 +501,15 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-6 text-center text-sm text-gray-text">
-          <p>Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}</p>
-          <p className="mt-2">
-            🔒 Secured with Firebase Authentication
-          </p>
-        </div>
+        {/* Footer (Only show for leads tabs) */}
+        {activeTab !== 'products' && (
+          <div className="mt-6 text-center text-sm text-gray-text">
+            <p>Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}</p>
+            <p className="mt-2">
+              🔒 Secured with Firebase Authentication
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

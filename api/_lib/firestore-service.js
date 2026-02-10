@@ -134,18 +134,42 @@ async function getLeads(filters = {}) {
     // Apply Filters directly in Firestore Query
     // Note: This may require composite indexes in Firestore Console
 
+    // Track if we're using any filter that requires client-side sorting
+    // (to avoid composite index requirements)
+    let usingInFilter = false;
+
     // 1. Status Filter (Payment Status)
     if (filters.status && filters.status !== 'all') {
       const targetStatus = filters.status.toUpperCase();
       query = query.where('payment.status', '==', targetStatus);
+      usingInFilter = true; // Skip orderBy to avoid composite index
     }
 
     // 2. Lead Status Filter
     if (filters.leadStatus && filters.leadStatus !== 'all') {
       query = query.where('status', '==', filters.leadStatus);
+      usingInFilter = true; // Skip orderBy to avoid composite index
     }
 
-    // 3. Category Filter
+    // 3. Source Filter (e.g., 'product-catalog', 'product-detail', 'test-ride-landing')
+    if (filters.source && filters.source !== 'all') {
+      if (filters.source === 'product') {
+        // Match both product-catalog and product-detail sources
+        // Note: IN filter with orderBy requires composite index
+        // We'll use IN but skip orderBy in Firestore, sort client-side instead
+        query = query.where('source', 'in', ['product-catalog', 'product-detail']);
+        usingInFilter = true;
+      } else {
+        // Even equality filter on source + orderBy requires composite index
+        // Skip orderBy and sort client-side instead
+        query = query.where('source', '==', filters.source);
+        usingInFilter = true;
+      }
+    }
+
+    // 4. Category Filter
+    // Note: To avoid composite index requirements, we skip orderBy when category filter is used
+    // and sort client-side instead
     if (filters.category && filters.category !== 'all') {
       if (filters.category === 'Test Ride') {
         // 'Test Ride' is a complex condition in the old code...
@@ -154,44 +178,75 @@ async function getLeads(filters = {}) {
         // Assuming 'category' field is reliably populated now (or we should migrate data).
         // Using 'in' operator to catch multiple variations
         query = query.where('category', 'in', ['Test Ride', '99 Offer']);
+        usingInFilter = true;
       } else {
         query = query.where('category', '==', filters.category);
+        // Even with equality filter, if combined with other filters, may need index
+        // Skip orderBy to avoid index requirement
+        usingInFilter = true;
       }
     }
 
-    // 4. Date Range Filters
+    // 5. Date Range Filters
+    // When combined with other where() filters, do date filtering client-side
+    // to avoid composite index requirements
+    let clientFromDate = null;
+    let clientToDate = null;
+
     if (filters.fromDate) {
       const fromDate = new Date(filters.fromDate);
       fromDate.setHours(0, 0, 0, 0);
-      query = query.where('createdAt', '>=', admin.firestore.Timestamp.fromDate(fromDate));
+      if (usingInFilter) {
+        clientFromDate = fromDate;
+      } else {
+        query = query.where('createdAt', '>=', admin.firestore.Timestamp.fromDate(fromDate));
+      }
     }
 
     if (filters.toDate) {
       const toDate = new Date(filters.toDate);
       toDate.setHours(23, 59, 59, 999);
-      query = query.where('createdAt', '<=', admin.firestore.Timestamp.fromDate(toDate));
+      if (usingInFilter) {
+        clientToDate = toDate;
+      } else {
+        query = query.where('createdAt', '<=', admin.firestore.Timestamp.fromDate(toDate));
+      }
     }
 
     // Default Ordering
-    // Note: If using equality filter (==) on a field, you can order by another field.
-    // But if using range filter (>, <) on createdAt, you MUST order by createdAt first.
-    // Safe default: always order by createdAt desc unless specified otherwise.
+    // Note: If using IN filter, we skip orderBy in Firestore to avoid composite index requirement
+    // We'll sort client-side instead after fetching the data
     const orderByField = filters.orderBy || 'createdAt';
     const orderDir = filters.order || 'desc';
 
-    query = query.orderBy(orderByField, orderDir);
+    console.log('🔍 Query Debug:', {
+      filters: JSON.stringify(filters),
+      usingInFilter,
+      willUseOrderBy: !usingInFilter
+    });
+
+    if (!usingInFilter) {
+      // Safe to use orderBy in Firestore
+      console.log('⚠️ Using Firestore orderBy - may require composite index!');
+      query = query.orderBy(orderByField, orderDir);
+    } else {
+      console.log('✅ Skipping Firestore orderBy - will sort client-side');
+    }
 
     // Pagination: Start After Cursor
-    if (filters.cursor) {
+    // Note: Skip cursor pagination when using IN filter with client-side sorting
+    if (filters.cursor && !usingInFilter) {
       const cursorDoc = await db.collection('leads').doc(filters.cursor).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
     }
 
-    // Limit Result Set (Drastically reduce from 500)
+    // Limit Result Set
     const limit = parseInt(filters.limit) || 20;
-    query = query.limit(limit);
+    // Fetch more if we need to do client-side date filtering
+    const fetchLimit = (clientFromDate || clientToDate) ? limit * 5 : limit;
+    query = query.limit(fetchLimit);
 
     const snapshot = await query.get();
 
@@ -199,7 +254,7 @@ async function getLeads(filters = {}) {
       return [];
     }
 
-    return snapshot.docs.map(doc => {
+    let results = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         id: doc.id,
@@ -212,6 +267,35 @@ async function getLeads(filters = {}) {
         }
       };
     });
+
+    // Client-side date filtering when combined with other where() filters
+    if (clientFromDate) {
+      results = results.filter(r => r.createdAt && new Date(r.createdAt) >= clientFromDate);
+    }
+    if (clientToDate) {
+      results = results.filter(r => r.createdAt && new Date(r.createdAt) <= clientToDate);
+    }
+
+    // Client-side sorting when we skipped Firestore orderBy (due to IN filter)
+    if (usingInFilter) {
+      results.sort((a, b) => {
+        const aValue = a[orderByField] || '';
+        const bValue = b[orderByField] || '';
+
+        if (orderDir === 'desc') {
+          // Newest first: larger date string = newer
+          if (aValue > bValue) return -1;
+          if (aValue < bValue) return 1;
+          return 0;
+        } else {
+          if (aValue > bValue) return 1;
+          if (aValue < bValue) return -1;
+          return 0;
+        }
+      });
+    }
+
+    return results;
 
   } catch (error) {
     console.error('❌ Failed to get leads:', error);
@@ -407,8 +491,8 @@ async function getLeadsStats() {
     const db = getFirestore();
     const leadsRef = db.collection('leads');
 
-    // Use Aggregation Queries (Cost: 1 read batch per aggregation = very cheap)
-    const { AggregateField } = admin.firestore;
+    // Use Aggregation Queries for counts (Cost: 1 read batch per aggregation = very cheap)
+    // Note: We avoid aggregation with where clause to prevent composite index requirements
 
     // 1. Total Leads
     const totalQuery = leadsRef.count();
@@ -419,40 +503,39 @@ async function getLeadsStats() {
     const pendingQuery = leadsRef.where('payment.status', '==', 'PENDING').count();
     const failedQuery = leadsRef.where('payment.status', '==', 'FAILED').count();
 
-    // 3. Revenue Sum (Only for PAID leads)
-    // IMPORTANT: 'payment.amount' must be a number field in Firestore
-    const revenueQuery = leadsRef
-      .where('payment.status', '==', 'PAID')
-      .aggregate({
-        totalRevenue: AggregateField.sum('payment.amount')
-      });
-
-    // Run aggregations in parallel
+    // Run count aggregations in parallel
     const [
       totalSnap,
       paidSnap,
       unpaidSnap,
       pendingSnap,
-      failedSnap,
-      revenueSnap
+      failedSnap
     ] = await Promise.all([
       totalQuery.get(),
       paidQuery.get(),
       unpaidQuery.get(),
       pendingQuery.get(),
-      failedQuery.get(),
-      revenueQuery.get()
+      failedQuery.get()
     ]);
 
-    const revenue = revenueSnap.data().totalRevenue || 0;
+    // 3. Revenue Calculation (fetch PAID leads and sum client-side)
+    // This avoids composite index requirement for aggregation with where clause
+    let revenue = 0;
+    const paidCount = paidSnap.data().count;
 
-    // Normalize revenue (handle legacy rupee vs paise storage if needed)
-    // Note: Sum aggregation just sums the field. 
-    // If you have mixed units (rupees vs paise), the sum will be mixed.
-    // Assuming mostly consistent data now. 
-    // If the amount is > 500, we treat it as paise.
+    if (paidCount > 0) {
+      // Only fetch if there are paid leads
+      const paidLeadsSnap = await leadsRef
+        .where('payment.status', '==', 'PAID')
+        .select('payment.amount') // Only fetch amount field for efficiency
+        .get();
 
-    // We will assume the sum logic here mirrors the previous logic roughly
+      // Sum revenue client-side
+      paidLeadsSnap.forEach(doc => {
+        const amount = doc.data()?.payment?.amount || 0;
+        revenue += amount;
+      });
+    }
 
     return {
       total: totalSnap.data().count,
@@ -460,13 +543,13 @@ async function getLeadsStats() {
       unpaid: unpaidSnap.data().count,
       pending: pendingSnap.data().count,
       failed: failedSnap.data().count,
-      revenue: revenue, // Aggregate sum
-      revenueInRupees: revenue / 100 // Approximation
+      revenue: revenue, // Sum in paise
+      revenueInRupees: revenue / 100 // Convert to rupees
     };
 
   } catch (error) {
     console.error('❌ Failed to get leads stats:', error);
-    // Fallback? Returing zeros is better than crashing
+    // Fallback: Return zeros is better than crashing
     return {
       total: 0, paid: 0, unpaid: 0, pending: 0, failed: 0, revenue: 0, revenueInRupees: 0
     };
@@ -593,6 +676,470 @@ async function updateUserLastLogin(uid) {
   }
 }
 
+// ============================================
+// PRODUCTS COLLECTION OPERATIONS
+// ============================================
+
+/**
+ * Create a new product in Firestore
+ *
+ * @param {Object} productData - Product information
+ * @returns {Promise<string>} Product ID
+ */
+async function createProduct(productData) {
+  try {
+    const db = getFirestore();
+    const productsRef = db.collection('products');
+
+    // Generate product ID
+    const productId = productData.id || `${productData.category}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+
+    const product = {
+      id: productId,
+      name: productData.name,
+      category: productData.category,
+      price: productData.price,
+      mrp: productData.mrp,
+      image: productData.image,
+      specs: productData.specs || {},
+      badge: productData.badge || null,
+      shortDescription: productData.shortDescription || '',
+      sizeGuide: productData.sizeGuide || null,
+      warranty: productData.warranty || null,
+      accessories: productData.accessories || [],
+      stock: productData.stock || {
+        quantity: 0,
+        status: 'out_of_stock'
+      },
+      createdAt: getTimestamp(),
+      updatedAt: getTimestamp()
+    };
+
+    await productsRef.doc(productId).set(product);
+
+    console.log(`✅ Product created: ${productId}`);
+
+    return productId;
+
+  } catch (error) {
+    console.error('❌ Failed to create product:', error);
+    throw new Error(`Failed to create product: ${error.message}`);
+  }
+}
+
+/**
+ * Get a single product by ID
+ *
+ * @param {string} productId - Product ID
+ * @returns {Promise<Object|null>} Product data or null
+ */
+async function getProduct(productId) {
+  try {
+    const db = getFirestore();
+    const productDoc = await db.collection('products').doc(productId).get();
+
+    if (!productDoc.exists) {
+      return null;
+    }
+
+    const data = productDoc.data();
+    return {
+      ...data,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to get product:', error);
+    throw new Error(`Failed to get product: ${error.message}`);
+  }
+}
+
+/**
+ * List products with optional filters and pagination
+ *
+ * @param {Object} options - Query options
+ * @param {string} [options.category] - Filter by category
+ * @param {string} [options.status] - Filter by stock status
+ * @param {number} [options.limit=50] - Number of results per page
+ * @param {string} [options.cursor] - Pagination cursor (product ID)
+ * @returns {Promise<Object>} { products, nextCursor, total }
+ */
+async function listProducts(options = {}) {
+  try {
+    const db = getFirestore();
+    const {
+      category,
+      status,
+      limit = 50,
+      cursor
+    } = options;
+
+    let query = db.collection('products');
+    let useClientSort = false;
+
+    // Apply where filters BEFORE orderBy to avoid composite index issues
+    if (category) {
+      query = query.where('category', '==', category);
+      useClientSort = true;
+    }
+
+    if (status) {
+      query = query.where('stock.status', '==', status);
+      useClientSort = true;
+    }
+
+    // Only use Firestore orderBy when no where filters (avoids composite index requirement)
+    if (!useClientSort) {
+      query = query.orderBy('createdAt', 'desc');
+    }
+
+    query = query.limit(limit);
+
+    // Apply cursor for pagination (only when using Firestore orderBy)
+    if (cursor && !useClientSort) {
+      const cursorDoc = await db.collection('products').doc(cursor).get();
+      if (cursorDoc.exists) {
+        query = query.startAfter(cursorDoc);
+      }
+    }
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      return {
+        products: [],
+        nextCursor: null,
+        total: 0
+      };
+    }
+
+    let products = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
+      };
+    });
+
+    // Client-side sort when we skipped Firestore orderBy
+    if (useClientSort) {
+      products.sort((a, b) => {
+        const aDate = a.createdAt || '';
+        const bDate = b.createdAt || '';
+        return bDate > aDate ? 1 : bDate < aDate ? -1 : 0;
+      });
+    }
+
+    // Get total count
+    const countSnapshot = await db.collection('products').count().get();
+    const total = countSnapshot.data().count;
+
+    // Next cursor is the last document's ID
+    const nextCursor = snapshot.docs.length === limit
+      ? snapshot.docs[snapshot.docs.length - 1].id
+      : null;
+
+    return {
+      products,
+      nextCursor,
+      total
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to list products:', error);
+    throw new Error(`Failed to list products: ${error.message}`);
+  }
+}
+
+/**
+ * Update a product
+ *
+ * @param {string} productId - Product ID
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<void>}
+ */
+async function updateProduct(productId, updates) {
+  try {
+    const db = getFirestore();
+    const productRef = db.collection('products').doc(productId);
+
+    // Check if product exists
+    const productDoc = await productRef.get();
+    if (!productDoc.exists) {
+      throw new Error(`Product not found: ${productId}`);
+    }
+
+    const updateData = {
+      ...updates,
+      updatedAt: getTimestamp()
+    };
+
+    await productRef.update(updateData);
+
+    console.log(`✅ Product updated: ${productId}`);
+
+  } catch (error) {
+    console.error('❌ Failed to update product:', error);
+    throw new Error(`Failed to update product: ${error.message}`);
+  }
+}
+
+/**
+ * Delete a product
+ *
+ * @param {string} productId - Product ID
+ * @returns {Promise<Object>} Success response
+ */
+async function deleteProduct(productId) {
+  try {
+    const db = getFirestore();
+    await db.collection('products').doc(productId).delete();
+
+    console.log(`✅ Product deleted: ${productId}`);
+
+    return {
+      success: true,
+      message: `Product ${productId} deleted successfully`
+    };
+
+  } catch (error) {
+    console.error('❌ Failed to delete product:', error);
+    throw new Error(`Failed to delete product: ${error.message}`);
+  }
+}
+
+/**
+ * Bulk import products
+ *
+ * @param {Array} products - Array of product objects
+ * @returns {Promise<Object>} Import results
+ */
+async function bulkImportProducts(products) {
+  try {
+    const db = getFirestore();
+    const batch = db.batch();
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (const productData of products) {
+      try {
+        const productId = productData.id || `${productData.category}-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
+        const productRef = db.collection('products').doc(productId);
+
+        const product = {
+          ...productData,
+          id: productId,
+          createdAt: getTimestamp(),
+          updatedAt: getTimestamp()
+        };
+
+        batch.set(productRef, product, { merge: true });
+        results.success++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push({
+          product: productData.name || 'Unknown',
+          error: error.message
+        });
+      }
+    }
+
+    await batch.commit();
+
+    console.log(`✅ Bulk import completed: ${results.success} success, ${results.failed} failed`);
+
+    return results;
+
+  } catch (error) {
+    console.error('❌ Failed to bulk import products:', error);
+    throw new Error(`Failed to bulk import products: ${error.message}`);
+  }
+}
+
+// ============================================
+// CATEGORIES COLLECTION OPERATIONS
+// ============================================
+
+/**
+ * List all categories
+ * @returns {Promise<Array>} Array of categories
+ */
+async function listCategories() {
+  try {
+    const db = getFirestore();
+    const snapshot = await db.collection('categories').orderBy('order', 'asc').get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    return snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
+      };
+    });
+  } catch (error) {
+    console.error('❌ Failed to list categories:', error);
+    throw new Error(`Failed to list categories: ${error.message}`);
+  }
+}
+
+/**
+ * Create a new category
+ * @param {Object} categoryData - Category information
+ * @returns {Promise<string>} Category slug
+ */
+async function createCategory(categoryData) {
+  try {
+    const db = getFirestore();
+    const slug = categoryData.slug || categoryData.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const existing = await db.collection('categories').doc(slug).get();
+    if (existing.exists) {
+      throw new Error(`Category with slug "${slug}" already exists`);
+    }
+
+    const category = {
+      slug,
+      name: categoryData.name,
+      icon: categoryData.icon || '🚲',
+      description: categoryData.description || '',
+      order: categoryData.order || 99,
+      createdAt: getTimestamp(),
+      updatedAt: getTimestamp()
+    };
+
+    await db.collection('categories').doc(slug).set(category);
+    console.log(`✅ Category created: ${slug}`);
+    return slug;
+  } catch (error) {
+    console.error('❌ Failed to create category:', error);
+    throw new Error(`Failed to create category: ${error.message}`);
+  }
+}
+
+/**
+ * Update a category
+ * @param {string} slug - Category slug
+ * @param {Object} updates - Fields to update
+ * @returns {Promise<void>}
+ */
+async function updateCategory(slug, updates) {
+  try {
+    const db = getFirestore();
+    const catRef = db.collection('categories').doc(slug);
+    const catDoc = await catRef.get();
+    if (!catDoc.exists) {
+      throw new Error(`Category not found: ${slug}`);
+    }
+
+    const updateData = { ...updates, updatedAt: getTimestamp() };
+    delete updateData.slug; // Don't allow slug change
+    await catRef.update(updateData);
+    console.log(`✅ Category updated: ${slug}`);
+  } catch (error) {
+    console.error('❌ Failed to update category:', error);
+    throw new Error(`Failed to update category: ${error.message}`);
+  }
+}
+
+/**
+ * Delete a category
+ * @param {string} slug - Category slug
+ * @returns {Promise<Object>} Success response
+ */
+async function deleteCategory(slug) {
+  try {
+    const db = getFirestore();
+
+    // Check if any products use this category
+    const productsSnap = await db.collection('products').where('category', '==', slug).limit(1).get();
+    if (!productsSnap.empty) {
+      throw new Error(`Cannot delete category "${slug}" - it has products. Move or delete them first.`);
+    }
+
+    await db.collection('categories').doc(slug).delete();
+    console.log(`✅ Category deleted: ${slug}`);
+    return { success: true, message: `Category ${slug} deleted successfully` };
+  } catch (error) {
+    console.error('❌ Failed to delete category:', error);
+    throw new Error(`Failed to delete category: ${error.message}`);
+  }
+}
+
+/**
+ * Seed default categories if none exist
+ * @returns {Promise<void>}
+ */
+async function seedDefaultCategories() {
+  try {
+    const db = getFirestore();
+    const snapshot = await db.collection('categories').limit(1).get();
+    if (!snapshot.empty) return; // Already has categories
+
+    const defaults = [
+      { slug: 'kids', name: 'Kids Cycles', icon: '🚲', description: 'Safe, colourful cycles for children aged 3–12', order: 1 },
+      { slug: 'geared', name: 'Geared Cycles', icon: '⚙️', description: 'Multi-speed bicycles with 21–27 gears', order: 2 },
+      { slug: 'mountain', name: 'Mountain Bikes', icon: '⛰️', description: 'Rugged trail-ready MTBs with suspension', order: 3 },
+      { slug: 'city', name: 'City / Commuter', icon: '🏙️', description: 'Comfortable everyday bicycles for urban commutes', order: 4 },
+      { slug: 'electric', name: 'Electric Bikes', icon: '⚡', description: 'Pedal-assist and throttle e-bikes', order: 5 },
+    ];
+
+    const batch = db.batch();
+    for (const cat of defaults) {
+      const ref = db.collection('categories').doc(cat.slug);
+      batch.set(ref, { ...cat, createdAt: getTimestamp(), updatedAt: getTimestamp() });
+    }
+    await batch.commit();
+    console.log('✅ Default categories seeded');
+  } catch (error) {
+    console.error('❌ Failed to seed categories:', error);
+  }
+}
+
+export class FirestoreService {
+  // Utility
+  getTimestamp = getTimestamp;
+
+  // Lead operations
+  createLead = createLead;
+  getLeads = getLeads;
+  getLeadById = getLeadById;
+  updateLeadPayment = updateLeadPayment;
+  updateLead = updateLead;
+  deleteLead = deleteLead;
+  getLeadsStats = getLeadsStats;
+
+  // User operations
+  createOrUpdateUser = createOrUpdateUser;
+  getUserById = getUserById;
+  getAllUsers = getAllUsers;
+  updateUserLastLogin = updateUserLastLogin;
+
+  // Product operations
+  createProduct = createProduct;
+  getProduct = getProduct;
+  listProducts = listProducts;
+  updateProduct = updateProduct;
+  deleteProduct = deleteProduct;
+  bulkImportProducts = bulkImportProducts;
+
+  // Category operations
+  listCategories = listCategories;
+  createCategory = createCategory;
+  updateCategory = updateCategory;
+  deleteCategory = deleteCategory;
+  seedDefaultCategories = seedDefaultCategories;
+}
+
 export {
   // Utility
   getTimestamp,
@@ -610,5 +1157,20 @@ export {
   createOrUpdateUser,
   getUserById,
   getAllUsers,
-  updateUserLastLogin
+  updateUserLastLogin,
+
+  // Product operations
+  createProduct,
+  getProduct,
+  listProducts,
+  updateProduct,
+  deleteProduct,
+  bulkImportProducts,
+
+  // Category operations
+  listCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
+  seedDefaultCategories
 };

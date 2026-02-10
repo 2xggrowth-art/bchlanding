@@ -314,6 +314,6 @@ Success screen with WhatsApp redirect
 ## Additional Resources
 
 - [README.md](README.md) - Project overview and features
-- [SETUP.md](SETUP.md) - Detailed setup instructions
-- [SECURITY_NOTES.md](SECURITY_NOTES.md) - Credential management
-- [DROPDOWN_DOCS.md](DROPDOWN_DOCS.md) - Dropdown component usage
+- [SETUP.md](docs/SETUP.md) - Detailed setup instructions
+- [SECURITY_NOTES.md](docs/SECURITY_NOTES.md) - Credential management
+- [DROPDOWN_DOCS.md](docs/DROPDOWN_DOCS.md) - Dropdown component usage

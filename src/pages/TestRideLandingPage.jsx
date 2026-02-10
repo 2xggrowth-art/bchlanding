@@ -1,30 +1,35 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { api } from '../utils/api';
+
+// Critical above-the-fold components (load immediately)
 import Hero from '../components/Hero';
 import BrandsMarquee from '../components/BrandsMarquee';
-import ProductShowcase from '../components/ProductShowcase';
-import VideoTestimonials from '../components/VideoTestimonials';
-import Offers from '../components/Offers';
-import WhyUs from '../components/WhyUs';
-import ValueProposition from '../components/ValueProposition';
-import HowItWorks from '../components/HowItWorks';
-import Testimonials from '../components/Testimonials';
-import SocialProof from '../components/SocialProof';
-import FAQ from '../components/FAQ';
-import QuizContainer from '../components/Quiz/QuizContainer';
-import ExpertPromise from '../components/ExpertPromise';
-import UserDataForm from '../components/UserDataForm';
-import RazorpayPayment from '../components/RazorpayPayment';
-import SuccessScreen from '../components/SuccessScreen';
-import GoogleMapsReviews from '../components/GoogleMapsReviews';
-import BicycleInsurance from '../components/BicycleInsurance';
-import ScreenTimeReplacement from '../components/ScreenTimeReplacement';
-import ProcessVideo from '../components/ProcessVideo';
-import Accessories from '../components/Accessories';
-import Community from '../components/Community';
-import CustomerProfiles from '../components/CustomerProfiles';
 import CTAButton from '../components/CTAButton';
-import { api } from '../utils/api';
+
+// Lazy load conditional components (only shown when needed)
+const QuizContainer = lazy(() => import('../components/Quiz/QuizContainer'));
+const ExpertPromise = lazy(() => import('../components/ExpertPromise'));
+const UserDataForm = lazy(() => import('../components/UserDataForm'));
+const RazorpayPayment = lazy(() => import('../components/RazorpayPayment'));
+const SuccessScreen = lazy(() => import('../components/SuccessScreen'));
+
+// Lazy load below-the-fold components (visible after scroll)
+const ProcessVideo = lazy(() => import('../components/ProcessVideo'));
+const ScreenTimeReplacement = lazy(() => import('../components/ScreenTimeReplacement'));
+const Accessories = lazy(() => import('../components/Accessories'));
+const ValueProposition = lazy(() => import('../components/ValueProposition'));
+const WhyUs = lazy(() => import('../components/WhyUs'));
+const Community = lazy(() => import('../components/Community'));
+const SocialProof = lazy(() => import('../components/SocialProof'));
+const FAQ = lazy(() => import('../components/FAQ'));
+
+// Loading fallback component
+const ComponentLoader = () => (
+  <div className="flex items-center justify-center py-12">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   const [currentStage, setCurrentStage] = useState('landing'); // landing, quiz, expertPromise, userdata, payment, success
@@ -169,7 +174,11 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
 
   // Render success screen as full page replacement (optional, but keeps it clean)
   if (currentStage === 'success') {
-    return <SuccessScreen userData={userData} />;
+    return (
+      <Suspense fallback={<ComponentLoader />}>
+        <SuccessScreen userData={userData} />
+      </Suspense>
+    );
   }
 
   // Landing page (with layout) - Quiz shows as overlay on top
@@ -177,39 +186,47 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
     <div className="relative">
       {/* Modal Overlays */}
       {currentStage === 'expertPromise' && (
-        <ExpertPromise
-          quizAnswers={quizAnswers}
-          onContinue={handleContinueToUserData}
-        />
+        <Suspense fallback={<ComponentLoader />}>
+          <ExpertPromise
+            quizAnswers={quizAnswers}
+            onContinue={handleContinueToUserData}
+          />
+        </Suspense>
       )}
 
       {currentStage === 'userdata' && (
-        <UserDataForm
-          onSubmit={handleUserDataSubmit}
-          onBack={() => setCurrentStage('landing')}
-          skipConfirmation={true}
-          submitLabel="Continue"
-          stepLabel="Step 1 of 3"
-        />
+        <Suspense fallback={<ComponentLoader />}>
+          <UserDataForm
+            onSubmit={handleUserDataSubmit}
+            onBack={() => setCurrentStage('landing')}
+            skipConfirmation={true}
+            submitLabel="Continue"
+            stepLabel="Step 1 of 3"
+          />
+        </Suspense>
       )}
 
       {currentStage === 'quiz' && (
-        <QuizContainer
-          onComplete={handleQuizComplete}
-          onBack={() => setCurrentStage('userdata')}
-        />
+        <Suspense fallback={<ComponentLoader />}>
+          <QuizContainer
+            onComplete={handleQuizComplete}
+            onBack={() => setCurrentStage('userdata')}
+          />
+        </Suspense>
       )}
 
       {currentStage === 'payment' && (
-        <RazorpayPayment
-          userData={userData}
-          quizAnswers={quizAnswers}
-          leadId={leadId}
-          onSuccess={handlePaymentSuccess}
-          onError={handlePaymentError}
-          onBack={() => setCurrentStage('quiz')}
-          onCancel={() => setCurrentStage('landing')}
-        />
+        <Suspense fallback={<ComponentLoader />}>
+          <RazorpayPayment
+            userData={userData}
+            quizAnswers={quizAnswers}
+            leadId={leadId}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+            onBack={() => setCurrentStage('quiz')}
+            onCancel={() => setCurrentStage('landing')}
+          />
+        </Suspense>
       )}
       {/* Main landing sections */}
       <div ref={heroRef}>
@@ -217,39 +234,28 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
       </div>
       <BrandsMarquee />
 
-      {/* Phase 2: Process Video - How Home Test Ride Works */}
-      <ProcessVideo onCTAClick={() => handleStartQuiz('test-ride-process')} />
+      {/* Below-the-fold sections - lazy loaded */}
+      <Suspense fallback={<ComponentLoader />}>
+        {/* Phase 2: Process Video - How Home Test Ride Works */}
+        <ProcessVideo onCTAClick={() => handleStartQuiz('test-ride-process')} />
 
-      {/* <ProductShowcase onCTAClick={() => handleStartQuiz('test-ride-products')} /> */}
+        {/* Phase 2: Screen Time Replacement */}
+        <ScreenTimeReplacement />
 
-      {/* Phase 2: Screen Time Replacement */}
-      <ScreenTimeReplacement />
+        {/* Phase 3: Accessories */}
+        <Accessories onCTAClick={() => handleStartQuiz('test-ride-accessories')} />
 
-      {/* Phase 3: Accessories */}
-      <Accessories onCTAClick={() => handleStartQuiz('test-ride-accessories')} />
+        <ValueProposition />
 
-      {/* <VideoTestimonials onCTAClick={() => handleStartQuiz('test-ride-videos')} /> */}
-      <ValueProposition />
+        <WhyUs />
 
-      {/* <Offers onCTAClick={() => handleStartQuiz('test-ride-offers')} /> */}
-      <WhyUs />
+        {/* Phase 3: Community */}
+        <Community onCTAClick={() => handleStartQuiz('test-ride-community')} />
 
-      {/* Phase 3: Community */}
-      <Community onCTAClick={() => handleStartQuiz('test-ride-community')} />
+        <SocialProof onCTAClick={() => handleStartQuiz('test-ride-final-cta')} />
 
-      {/* Phase 3: Customer Profiles */}
-      {/* <CustomerProfiles /> */}
-
-      {/* Phase 2: Google Maps & Reviews */}
-      {/* <GoogleMapsReviews /> */}
-
-      {/* Phase 2: Insurance */}
-      {/* <BicycleInsurance onCTAClick={() => handleStartQuiz('test-ride-insurance')} /> */}
-
-      {/* <HowItWorks /> */}
-      {/* <Testimonials /> */}
-      <SocialProof onCTAClick={() => handleStartQuiz('test-ride-final-cta')} />
-      <FAQ />
+        <FAQ />
+      </Suspense>
 
       {/* Sticky mobile CTA */}
       {showStickyCTA && (

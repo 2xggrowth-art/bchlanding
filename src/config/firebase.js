@@ -45,7 +45,8 @@ if (missingVars.length > 0) {
     '❌ Missing required Firebase environment variables:',
     missingVars
   );
-  console.error('Please add these to your .env file');
+  console.error('Please add these to your .env.local file. See .env.example for template.');
+  throw new Error(`Missing Firebase config: ${missingVars.join(', ')}`);
 }
 
 // Initialize Firebase
