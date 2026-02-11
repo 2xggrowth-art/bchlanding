@@ -52,10 +52,11 @@ export async function authenticatedFetch(url, options = {}) {
       ...options.headers
     };
 
-    // Prepare fetch options
+    // Prepare fetch options — always bypass browser HTTP cache for admin calls
     const fetchOptions = {
       method: options.method || 'GET',
-      headers
+      headers,
+      cache: 'no-store'
     };
 
     // Add body if provided (for POST, PATCH, etc.)

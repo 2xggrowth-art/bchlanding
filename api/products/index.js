@@ -34,9 +34,14 @@ export default async function handler(req, res) {
         cursor,
       });
 
+      // Cache at CDN only (s-maxage), never in browser (max-age=0) so client-side
+      // cache invalidation (productsCache.js) works correctly after admin mutations.
+      res.setHeader('Cache-Control', 'public, s-maxage=300, max-age=0, must-revalidate');
+
       return res.status(200).json({
         success: true,
         products: result.products,
+        deletedIds: result.deletedIds || [],
         nextCursor: result.nextCursor,
         total: result.total,
       });

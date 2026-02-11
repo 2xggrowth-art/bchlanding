@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import LazyImage from './LazyImage';
 
@@ -6,11 +7,22 @@ const badgeStyles = {
   'New Arrival': 'bg-green-500 text-white',
   'Top Pick': 'bg-primary-dark text-white',
   'Value Pick': 'bg-orange-500 text-white',
+  'Top Rated': 'bg-blue-600 text-white',
 };
 
 export default function ProductCard({ product, onEnquire, onClick }) {
-  const { name, price, mrp, image, specs, badge, shortDescription } = product;
+  const { name, price, mrp, image, specs, badge, shortDescription, colors, subCategory } = product;
   const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
+
+  const [selectedColor, setSelectedColor] = useState(0);
+
+  // Use per-color image if available, otherwise default image
+  const displayImage = colors?.length > 0 && colors[selectedColor]?.image
+    ? colors[selectedColor].image
+    : image;
+
+  // Check if this is a Hercules product (uses illustration-style images)
+  const isHercules = subCategory === 'hercules';
 
   const displaySpecs = [
     { label: specs.wheelSize, key: 'wheelSize' },
@@ -27,11 +39,12 @@ export default function ProductCard({ product, onEnquire, onClick }) {
       onClick={() => onClick && onClick(product)}
     >
       {/* Image */}
-      <div className="relative">
+      <div className={`relative ${isHercules ? 'bg-gray-50' : 'bg-white'}`}>
         <LazyImage
-          src={image}
+          src={displayImage}
           alt={name}
-          className="w-full aspect-[4/3]"
+          className={`w-full aspect-[4/3] ${isHercules ? 'p-4' : ''}`}
+          objectFit={isHercules ? "contain" : "cover"}
         />
         {badge && (
           <span className={`absolute top-2 left-2 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${badgeStyles[badge] || 'bg-gray-500 text-white'}`}>
@@ -71,6 +84,31 @@ export default function ProductCard({ product, onEnquire, onClick }) {
           )}
         </div>
 
+        {/* Color swatches */}
+        {colors?.length > 0 && (
+          <div className="flex items-center gap-2 mt-0.5">
+            {colors.map((color, idx) => (
+              <button
+                key={color.name}
+                title={color.name}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedColor(idx);
+                }}
+                className={`w-6 h-6 sm:w-6 sm:h-6 rounded-full border-2 transition-all duration-200 flex-shrink-0 ${
+                  selectedColor === idx
+                    ? 'border-dark scale-110 ring-1 ring-dark/20'
+                    : 'border-gray-200 hover:border-gray-400'
+                }`}
+                style={{ backgroundColor: color.hex }}
+              />
+            ))}
+            <span className="text-[10px] sm:text-xs text-gray-text ml-0.5 truncate">
+              {colors[selectedColor]?.name}
+            </span>
+          </div>
+        )}
+
         {/* Specs chips */}
         <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-1">
           {displaySpecs.slice(0, 3).map((spec) => (
@@ -87,13 +125,13 @@ export default function ProductCard({ product, onEnquire, onClick }) {
         <div className="flex-1" />
 
         {/* CTAs */}
-        <div className="mt-2 flex gap-2">
+        <div className="mt-2 flex gap-1.5 sm:gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onClick && onClick(product);
             }}
-            className="flex-1 py-2 sm:py-2.5 rounded-full border-2 border-dark text-dark text-xs sm:text-sm font-bold transition-colors duration-200 hover:bg-dark hover:text-white"
+            className="flex-1 py-2.5 sm:py-2.5 rounded-full border-2 border-dark text-dark text-[11px] sm:text-sm font-bold transition-colors duration-200 hover:bg-dark hover:text-white active:bg-dark active:text-white min-h-[40px]"
           >
             Details
           </button>
@@ -102,9 +140,9 @@ export default function ProductCard({ product, onEnquire, onClick }) {
               e.stopPropagation();
               onEnquire(product);
             }}
-            className="flex-1 py-2 sm:py-2.5 rounded-full bg-dark text-white text-xs sm:text-sm font-bold transition-colors duration-200 hover:bg-primary active:bg-primary-dark"
+            className="flex-1 py-2.5 sm:py-2.5 rounded-full bg-dark text-white text-[11px] sm:text-sm font-bold transition-colors duration-200 hover:bg-primary active:bg-primary min-h-[40px]"
           >
-            Enquire Now
+            Enquire
           </button>
         </div>
       </div>

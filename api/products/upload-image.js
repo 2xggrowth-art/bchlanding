@@ -60,7 +60,8 @@ export default async function handler(req, res) {
 
     // Parse form data
     const { fields, files } = await parseForm(req);
-    const imageFile = files.image;
+    // Formidable v3 returns arrays for file fields
+    const imageFile = Array.isArray(files.image) ? files.image[0] : files.image;
 
     if (!imageFile) {
       return res.status(400).json({

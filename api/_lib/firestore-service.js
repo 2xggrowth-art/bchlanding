@@ -680,6 +680,10 @@ async function updateUserLastLogin(uid) {
 // PRODUCTS COLLECTION OPERATIONS
 // ============================================
 
+// Server-side cache for soft-deleted product IDs (avoids extra Firestore read per request)
+let _deletedIdsCache = { ids: null, ts: 0 };
+const DELETED_IDS_TTL = 5 * 60 * 1000; // 5 minutes
+
 /**
  * Create a new product in Firestore
  *
@@ -711,6 +715,7 @@ async function createProduct(productData) {
         quantity: 0,
         status: 'out_of_stock'
       },
+      deleted: false,
       createdAt: getTimestamp(),
       updatedAt: getTimestamp()
     };
@@ -806,15 +811,26 @@ async function listProducts(options = {}) {
 
     const snapshot = await query.get();
 
+    // Fetch soft-deleted IDs with server-side caching (avoids extra Firestore read per request)
+    let deletedIds;
+    if (_deletedIdsCache.ids && Date.now() - _deletedIdsCache.ts < DELETED_IDS_TTL) {
+      deletedIds = _deletedIdsCache.ids;
+    } else {
+      const deletedSnap = await db.collection('products').where('deleted', '==', true).select('id').get();
+      deletedIds = deletedSnap.docs.map(doc => doc.data().id || doc.id);
+      _deletedIdsCache = { ids: deletedIds, ts: Date.now() };
+    }
+
     if (snapshot.empty) {
       return {
         products: [],
+        deletedIds,
         nextCursor: null,
         total: 0
       };
     }
 
-    let products = snapshot.docs.map(doc => {
+    const allProducts = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         ...data,
@@ -822,6 +838,9 @@ async function listProducts(options = {}) {
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
       };
     });
+
+    // Filter out soft-deleted products from results (deletedIds already fetched above)
+    let products = allProducts.filter(p => p.deleted !== true);
 
     // Client-side sort when we skipped Firestore orderBy
     if (useClientSort) {
@@ -832,9 +851,8 @@ async function listProducts(options = {}) {
       });
     }
 
-    // Get total count
-    const countSnapshot = await db.collection('products').count().get();
-    const total = countSnapshot.data().count;
+    // Get total count (active products only)
+    const total = products.length;
 
     // Next cursor is the last document's ID
     const nextCursor = snapshot.docs.length === limit
@@ -843,6 +861,7 @@ async function listProducts(options = {}) {
 
     return {
       products,
+      deletedIds,
       nextCursor,
       total
     };
@@ -865,14 +884,43 @@ async function updateProduct(productId, updates) {
     const db = getFirestore();
     const productRef = db.collection('products').doc(productId);
 
-    // Check if product exists
+    // Check if product exists — if not, create it (upsert)
     const productDoc = await productRef.get();
+
     if (!productDoc.exists) {
-      throw new Error(`Product not found: ${productId}`);
+      // Product only exists locally (products.js) — create it in Firestore
+      const product = {
+        id: productId,
+        name: updates.name || '',
+        category: updates.category || '',
+        price: updates.price || 0,
+        mrp: updates.mrp || 0,
+        image: updates.image || '',
+        subCategory: updates.subCategory || '',
+        cardImage: updates.cardImage || '',
+        inStock: updates.inStock !== undefined ? updates.inStock : true,
+        specs: updates.specs || {},
+        badge: updates.badge || null,
+        shortDescription: updates.shortDescription || '',
+        sizeGuide: updates.sizeGuide || null,
+        warranty: updates.warranty || null,
+        accessories: updates.accessories || [],
+        colors: updates.colors || [],
+        gallery: updates.gallery || [],
+        stock: updates.stock || { quantity: 0, status: 'out_of_stock' },
+        deleted: false,
+        createdAt: getTimestamp(),
+        updatedAt: getTimestamp()
+      };
+
+      await productRef.set(product);
+      console.log(`✅ Product created (upsert): ${productId}`);
+      return;
     }
 
     const updateData = {
       ...updates,
+      deleted: false,
       updatedAt: getTimestamp()
     };
 
@@ -895,9 +943,19 @@ async function updateProduct(productId, updates) {
 async function deleteProduct(productId) {
   try {
     const db = getFirestore();
-    await db.collection('products').doc(productId).delete();
+    const productRef = db.collection('products').doc(productId);
 
-    console.log(`✅ Product deleted: ${productId}`);
+    // Soft-delete: mark as deleted (upsert) so local-only products are also tracked
+    await productRef.set({
+      id: productId,
+      deleted: true,
+      updatedAt: getTimestamp()
+    }, { merge: true });
+
+    // Invalidate deletedIds cache
+    _deletedIdsCache = { ids: null, ts: 0 };
+
+    console.log(`✅ Product soft-deleted: ${productId}`);
 
     return {
       success: true,

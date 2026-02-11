@@ -71,7 +71,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ duration: 0.2 }}
-            className="relative bg-white rounded-[30px] shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto z-10"
+            className="relative bg-white rounded-2xl sm:rounded-[30px] shadow-2xl max-w-md w-full max-h-[85vh] overflow-y-auto z-10"
           >
             {/* Close Button */}
             <button
@@ -86,7 +86,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
             </button>
 
             {/* Content */}
-            <div className="p-8">
+            <div className="p-5 sm:p-8">
               {/* Header */}
               <div className="text-center mb-6">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
@@ -94,10 +94,10 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h2 className="font-display text-3xl text-dark mb-2 tracking-wider uppercase">
+                <h2 className="font-display text-2xl sm:text-3xl text-dark mb-2 tracking-wider uppercase">
                   {title}
                 </h2>
-                <p className="text-gray-text">
+                <p className="text-gray-text text-sm sm:text-base">
                   Fill in your details and we'll get back to you shortly
                 </p>
               </div>
@@ -141,7 +141,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base sm:text-sm"
                     placeholder="Enter your name"
                   />
                 </div>
@@ -158,7 +158,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                     onChange={handleChange}
                     required
                     pattern="[0-9]{10}"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base sm:text-sm"
                     placeholder="10-digit mobile number"
                   />
                 </div>
@@ -173,7 +173,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all text-base sm:text-sm"
                     placeholder="your.email@example.com"
                   />
                 </div>
@@ -187,8 +187,8 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                     name="message"
                     value={formData.message}
                     onChange={handleChange}
-                    rows="4"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none"
+                    rows="3"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none text-base sm:text-sm"
                     placeholder="Tell us what you're looking for..."
                   />
                 </div>
@@ -197,7 +197,7 @@ export default function ContactFormModal({ isOpen, onClose, title = "Get In Touc
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide shadow-lg hover:shadow-xl"
+                  className="w-full bg-primary text-white font-bold py-4 rounded-full hover:bg-primary-dark active:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide shadow-lg hover:shadow-xl min-h-[48px]"
                 >
                   {isSubmitting ? (
                     <span className="flex items-center justify-center gap-2">

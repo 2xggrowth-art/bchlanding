@@ -81,6 +81,26 @@ export default function Header({ transparent = false, onCTAClick }) {
     navigate(`/products?category=${catSlug}&sub=${subSlug}`);
   }, [navigate]);
 
+  const handleSectionClick = useCallback((e, sectionId) => {
+    e.preventDefault();
+    setMobileMenuOpen(false);
+
+    if (location.pathname === '/') {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        const headerOffset = 80;
+        const elementPosition = element.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      }
+    } else {
+      navigate(`/#${sectionId}`);
+    }
+  }, [location.pathname, navigate]);
+
   // Get products for a category (limit for mega menu)
   const getCategoryProducts = (categorySlug, subCategorySlug) => {
     let filtered = products.filter((p) => p.category === categorySlug);
@@ -120,6 +140,8 @@ export default function Header({ transparent = false, onCTAClick }) {
     ? 'text-white/90 hover:text-white'
     : 'text-gray-text hover:text-dark';
 
+  const hoverBgClass = transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100';
+
   // Use different logo based on background
   const logoSrc = transparent ? '/logo1.png' : '/BCHwebsitelogo.png';
 
@@ -128,11 +150,11 @@ export default function Header({ transparent = false, onCTAClick }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
+          <Link to="/" className="flex items-center flex-shrink-0">
             <img
               src={logoSrc}
               alt="Bharath Cycle Hub Logo"
-              className="h-12 sm:h-14 w-auto"
+              className="h-10 sm:h-14 w-auto"
             />
           </Link>
 
@@ -167,9 +189,8 @@ export default function Header({ transparent = false, onCTAClick }) {
               {/* Mega Menu Dropdown */}
               {megaMenuOpen && (
                 <div
-                  className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden ${
-                    hasSubCategories ? 'w-[820px]' : 'w-[700px]'
-                  }`}
+                  className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden ${hasSubCategories ? 'w-[820px]' : 'w-[700px]'
+                    }`}
                   onMouseEnter={openMegaMenu}
                   onMouseLeave={closeMegaMenu}
                 >
@@ -187,16 +208,14 @@ export default function Header({ transparent = false, onCTAClick }) {
                           key={cat.slug}
                           onMouseEnter={() => handleCategoryHover(cat.slug)}
                           onClick={() => handleCategoryClick(cat.slug)}
-                          className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${
-                            activeMenuCategory === cat.slug
-                              ? 'bg-white text-dark font-semibold shadow-sm'
-                              : 'text-gray-text hover:bg-white/60 hover:text-dark'
-                          }`}
+                          className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${activeMenuCategory === cat.slug
+                            ? 'bg-white text-dark font-semibold shadow-sm'
+                            : 'text-gray-text hover:bg-white/60 hover:text-dark'
+                            }`}
                         >
                           <span className="truncate flex-1">{cat.name}</span>
-                          <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-opacity duration-150 ${
-                            activeMenuCategory === cat.slug ? 'opacity-100 text-primary' : 'opacity-0'
-                          }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className={`w-3.5 h-3.5 flex-shrink-0 transition-opacity duration-150 ${activeMenuCategory === cat.slug ? 'opacity-100 text-primary' : 'opacity-0'
+                            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                           </svg>
                         </button>
@@ -221,11 +240,10 @@ export default function Header({ transparent = false, onCTAClick }) {
                         <button
                           onMouseEnter={() => setActiveMenuSubCategory('')}
                           onClick={() => handleCategoryClick(activeMenuCategory)}
-                          className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${
-                            !activeMenuSubCategory
-                              ? 'bg-gray-bg text-dark font-semibold'
-                              : 'text-gray-text hover:bg-gray-bg/50 hover:text-dark'
-                          }`}
+                          className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${!activeMenuSubCategory
+                            ? 'bg-gray-bg text-dark font-semibold'
+                            : 'text-gray-text hover:bg-gray-bg/50 hover:text-dark'
+                            }`}
                         >
                           <span className="truncate flex-1">All {activeCat?.name}</span>
                         </button>
@@ -234,11 +252,10 @@ export default function Header({ transparent = false, onCTAClick }) {
                             key={sub.slug}
                             onMouseEnter={() => setActiveMenuSubCategory(sub.slug)}
                             onClick={() => handleSubCategoryClick(activeMenuCategory, sub.slug)}
-                            className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${
-                              activeMenuSubCategory === sub.slug
-                                ? 'bg-gray-bg text-dark font-semibold'
-                                : 'text-gray-text hover:bg-gray-bg/50 hover:text-dark'
-                            }`}
+                            className={`w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm transition-colors duration-150 ${activeMenuSubCategory === sub.slug
+                              ? 'bg-gray-bg text-dark font-semibold'
+                              : 'text-gray-text hover:bg-gray-bg/50 hover:text-dark'
+                              }`}
                           >
                             <span className="truncate flex-1">{sub.name}</span>
                             {activeMenuSubCategory === sub.slug && (
@@ -312,10 +329,18 @@ export default function Header({ transparent = false, onCTAClick }) {
             <Link to="/test-ride" className={`font-medium transition-colors px-4 py-2 ${linkClass}`}>
               Test Ride
             </Link>
-            <a href="#offers" className={`font-medium transition-colors px-4 py-2 ${linkClass}`}>
+            <a
+              href="#offers"
+              onClick={(e) => handleSectionClick(e, 'offers')}
+              className={`font-medium transition-colors px-4 py-2 ${linkClass}`}
+            >
               Offers
             </a>
-            <a href="#why-us" className={`font-medium transition-colors px-4 py-2 ${linkClass}`}>
+            <a
+              href="#why-us"
+              onClick={(e) => handleSectionClick(e, 'why-us')}
+              className={`font-medium transition-colors px-4 py-2 ${linkClass}`}
+            >
               Why Us
             </a>
 
@@ -343,12 +368,12 @@ export default function Header({ transparent = false, onCTAClick }) {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-3">
+          <div className="md:hidden flex items-center gap-2">
             <button
               onClick={() => setIsContactFormOpen(true)}
-              className="flex items-center gap-1 bg-green-600 text-white font-bold px-4 py-2 rounded-full text-sm"
+              className="flex items-center gap-1 bg-green-600 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
@@ -371,11 +396,11 @@ export default function Header({ transparent = false, onCTAClick }) {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4 border-t border-white/20">
+          <div className={`md:hidden mt-4 pb-4 border-t max-h-[calc(100vh-80px)] overflow-y-auto ${transparent ? 'border-white/20' : 'border-gray-200'}`}>
             <div className="flex flex-col gap-1 pt-4">
               <Link
                 to="/"
-                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} hover:bg-white/10`}
+                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Home
@@ -385,7 +410,7 @@ export default function Header({ transparent = false, onCTAClick }) {
               <div>
                 <button
                   onClick={() => setMobileProductsOpen(!mobileProductsOpen)}
-                  className={`w-full font-medium px-4 py-2.5 rounded-lg flex items-center justify-between ${linkClass} hover:bg-white/10`}
+                  className={`w-full font-medium px-4 py-2.5 rounded-lg flex items-center justify-between ${linkClass} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                 >
                   <span>Products</span>
                   <svg
@@ -403,9 +428,8 @@ export default function Header({ transparent = false, onCTAClick }) {
                     {/* View All */}
                     <Link
                       to="/products"
-                      className={`block px-3 py-2 rounded-lg text-sm font-semibold ${
-                        transparent ? 'text-white' : 'text-primary'
-                      } hover:bg-white/10`}
+                      className={`block px-3 py-2 rounded-lg text-sm font-semibold ${transparent ? 'text-white' : 'text-primary'
+                        } hover:bg-white/10`}
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       View All Products
@@ -423,11 +447,10 @@ export default function Header({ transparent = false, onCTAClick }) {
                               setMobileActiveCategory(isCatExpanded ? '' : cat.slug);
                               setMobileActiveSubCategory('');
                             }}
-                            className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors ${
-                              isCatExpanded
-                                ? transparent ? 'text-white font-semibold' : 'text-dark font-semibold'
-                                : transparent ? 'text-white/70' : 'text-gray-text'
-                            } hover:bg-white/10`}
+                            className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors ${isCatExpanded
+                              ? transparent ? 'text-white font-semibold' : 'text-dark font-semibold'
+                              : transparent ? 'text-white/70' : 'text-gray-text'
+                              } ${hoverBgClass}`}
                           >
                             <span className="flex-1 truncate">{cat.name}</span>
                             <svg
@@ -454,11 +477,10 @@ export default function Header({ transparent = false, onCTAClick }) {
                                           onClick={() =>
                                             setMobileActiveSubCategory(isSubExpanded ? '' : sub.slug)
                                           }
-                                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors ${
-                                            isSubExpanded
-                                              ? transparent ? 'text-white font-semibold' : 'text-dark font-semibold'
-                                              : transparent ? 'text-white/70' : 'text-gray-text'
-                                          } hover:bg-white/10`}
+                                          className={`w-full text-left px-3 py-2 rounded-lg flex items-center gap-2 text-sm transition-colors ${isSubExpanded
+                                            ? transparent ? 'text-white font-semibold' : 'text-dark font-semibold'
+                                            : transparent ? 'text-white/70' : 'text-gray-text'
+                                            } ${hoverBgClass}`}
                                         >
                                           <span className="flex-1 truncate">{sub.name}</span>
                                           <svg
@@ -477,7 +499,7 @@ export default function Header({ transparent = false, onCTAClick }) {
                                               <button
                                                 key={product.id}
                                                 onClick={() => handleProductClick(product)}
-                                                className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                                                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg ${hoverBgClass} transition-colors`}
                                               >
                                                 <div className="w-10 h-8 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
                                                   <img
@@ -521,7 +543,7 @@ export default function Header({ transparent = false, onCTAClick }) {
                                     <button
                                       key={product.id}
                                       onClick={() => handleProductClick(product)}
-                                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg ${hoverBgClass} transition-colors`}
                                     >
                                       <div className="w-10 h-8 rounded-md overflow-hidden bg-gray-200 flex-shrink-0">
                                         <img
@@ -560,15 +582,23 @@ export default function Header({ transparent = false, onCTAClick }) {
 
               <Link
                 to="/test-ride"
-                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} hover:bg-white/10`}
+                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Test Ride
               </Link>
-              <a href="#offers" className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} hover:bg-white/10`}>
+              <a
+                href="#offers"
+                onClick={(e) => handleSectionClick(e, 'offers')}
+                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+              >
                 Offers
               </a>
-              <a href="#why-us" className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} hover:bg-white/10`}>
+              <a
+                href="#why-us"
+                onClick={(e) => handleSectionClick(e, 'why-us')}
+                className={`font-medium px-4 py-2.5 rounded-lg ${linkClass} ${transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+              >
                 Why Us
               </a>
               {isTestRidePage && onCTAClick && (

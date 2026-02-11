@@ -43,7 +43,25 @@
       "WebFetch(domain:www.emotorad.com)",
       "WebFetch(domain:www.zigwheels.com)",
       "WebFetch(domain:www.bikedekho.com)",
-      "Bash(node scripts/migrate-products.js:*)"
+      "Bash(node scripts/migrate-products.js:*)",
+      "WebFetch(domain:emotorad.com)",
+      "Bash(pip install:*)",
+      "Bash(node scripts/cleanup-firestore-products.cjs:*)",
+      "WebFetch(domain:ar-euro.s3.ap-south-1.amazonaws.com)",
+      "Bash(del \"c:\\\\Users\\\\user\\\\Documents\\\\2XG\\\\BCH store web\\\\scripts\\\\dry_run_output.json\" \"c:\\\\Users\\\\user\\\\Documents\\\\2XG\\\\BCH store web\\\\scripts\\\\dry_run_log.txt\")",
+      "WebFetch(domain:heroelectro.com)",
+      "WebFetch(domain:backend.heroelectro.com)",
+      "WebFetch(domain:www.herolectro.com)",
+      "WebFetch(domain:www.heroelectric.in)",
+      "Bash(del \"c:\\\\Users\\\\user\\\\Documents\\\\2XG\\\\BCH store web\\\\scripts\\\\probe_api.py\")",
+      "Bash(node:*)",
+      "WebFetch(domain:outdoors91.com)",
+      "WebFetch(domain:hercules.in)",
+      "WebFetch(domain:www.hercules.in)",
+      "Bash(npx vite build:*)",
+      "WebFetch(domain:suncrossbikes.com)",
+      "WebFetch(domain:www.suncrossbikes.com)",
+      "Bash(del:*)"
     ]
   }
 }

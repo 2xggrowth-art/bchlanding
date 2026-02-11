@@ -7,6 +7,7 @@ import ProductForm from './ProductForm';
 import CategoryManager from './CategoryManager';
 import ProductDataGrid from './ProductDataGrid';
 import { categories as localCategories, products as localProducts } from '../../data/products';
+import { invalidateProductsCache } from '../../utils/productsCache';
 
 export default function ProductsTab() {
   const [products, setProducts] = useState([]);
@@ -65,10 +66,13 @@ export default function ProductsTab() {
 
       try {
         const response = await adminAPI.getProducts(filterParams);
-        if (response.success && response.products?.length > 0) {
-          filteredProducts = response.products;
+        const deletedIds = response.deletedIds || [];
+        if (response.success && (response.products?.length > 0 || deletedIds.length > 0)) {
+          // Merge: API products override local, but local-only products are included
+          // Products in deletedIds are excluded from both sources
+          filteredProducts = mergeProducts(response.products || [], getLocalFilteredProducts(), deletedIds);
         } else {
-          // Fallback to local products
+          // No API products — use local catalog as source of truth
           filteredProducts = getLocalFilteredProducts();
         }
       } catch {
@@ -97,6 +101,24 @@ export default function ProductsTab() {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Merge API (Firestore) products with local products.js catalog.
+  // API products take priority for matching IDs (they have real-time data).
+  // Local-only products (new additions) get included so they always appear.
+  // Products whose IDs are in deletedIds are excluded from both sources.
+  const mergeProducts = (apiProducts, localProds, deletedIds = []) => {
+    const deletedSet = new Set(deletedIds);
+    const apiMap = new Map(apiProducts.map(p => [p.id, p]));
+    const merged = [...apiProducts];
+
+    for (const local of localProds) {
+      if (!apiMap.has(local.id) && !deletedSet.has(local.id)) {
+        merged.push(local);
+      }
+    }
+
+    return merged;
   };
 
   // Get filtered products from local data
@@ -128,10 +150,13 @@ export default function ProductsTab() {
 
     try {
       setLoading(true);
+      setError(null);
       const response = await adminAPI.deleteProduct(productId);
       if (response.success) {
+        invalidateProductsCache();
         await fetchProducts();
-        console.log(`✅ Product deleted: ${productId}`);
+        setSuccess(`Product "${productName}" deleted successfully!`);
+        setTimeout(() => setSuccess(null), 3000);
       }
     } catch (error) {
       console.error('❌ Error deleting product:', error);
@@ -144,6 +169,7 @@ export default function ProductsTab() {
   const handleFormClose = () => {
     setShowForm(false);
     setEditingProduct(null);
+    invalidateProductsCache();
     fetchProducts();
   };
 
@@ -183,6 +209,7 @@ export default function ProductsTab() {
       const data = await response.json();
 
       if (data.success) {
+        invalidateProductsCache();
         setSuccess(`✅ Successfully imported ${data.data.created} products!`);
         if (data.data.failed > 0) {
           setError(`⚠️ ${data.data.failed} products failed to import. Check console for details.`);
@@ -210,8 +237,16 @@ export default function ProductsTab() {
   // Handle inline product update (for DataGrid)
   const handleUpdateProduct = async (productId, updates) => {
     try {
-      const response = await adminAPI.updateProduct(productId, updates);
+      // Merge full product data with updates so backend upsert has complete data
+      const fullProduct = products.find(p => p.id === productId);
+      const payload = fullProduct ? { ...fullProduct, ...updates } : updates;
+      // Remove timestamp fields that shouldn't be overwritten
+      delete payload.createdAt;
+      delete payload.updatedAt;
+
+      const response = await adminAPI.updateProduct(productId, payload);
       if (response.success) {
+        invalidateProductsCache();
         setSuccess('Product updated successfully!');
         await fetchProducts();
         setTimeout(() => setSuccess(null), 3000);
@@ -232,6 +267,7 @@ export default function ProductsTab() {
       const deletePromises = productIds.map(id => adminAPI.deleteProduct(id));
       await Promise.all(deletePromises);
 
+      invalidateProductsCache();
       setSuccess(`Successfully deleted ${productIds.length} products!`);
       await fetchProducts();
       setTimeout(() => setSuccess(null), 3000);
@@ -541,16 +577,48 @@ export default function ProductsTab() {
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg font-bold text-primary">₹{product.price.toLocaleString()}</span>
                         <span className="text-sm text-gray-text line-through">₹{product.mrp.toLocaleString()}</span>
-                        <span className="text-xs font-bold text-green-600 ml-auto">
-                          {Math.round((1 - product.price / product.mrp) * 100)}% OFF
-                        </span>
+                        {product.mrp > product.price && (
+                          <span className="text-xs font-bold text-green-600 ml-auto">
+                            {Math.round((1 - product.price / product.mrp) * 100)}% OFF
+                          </span>
+                        )}
                       </div>
+
+                      {/* Color Swatches */}
+                      {product.colors && product.colors.length > 0 && (
+                        <div className="flex items-center gap-1.5 mb-3">
+                          {product.colors.slice(0, 6).map((c, ci) => (
+                            <span
+                              key={ci}
+                              title={c.name}
+                              className="w-5 h-5 rounded-full border border-gray-300"
+                              style={{
+                                background: c.hex?.startsWith('linear') ? c.hex : c.hex || '#ccc',
+                                opacity: c.inStock === false ? 0.4 : 1,
+                              }}
+                            />
+                          ))}
+                          {product.colors.length > 6 && (
+                            <span className="text-[10px] text-gray-text font-bold">+{product.colors.length - 6}</span>
+                          )}
+                        </div>
+                      )}
 
                       {/* Stock Badge */}
                       <div className="mb-3">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${stockBadge.color}`}>
-                          {stockBadge.label}
-                        </span>
+                        {product.stock ? (
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${stockBadge.color}`}>
+                            {stockBadge.label}
+                          </span>
+                        ) : (
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                            product.inStock !== false
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {product.inStock !== false ? 'In Stock' : 'Out of Stock'}
+                          </span>
+                        )}
                       </div>
 
                       {/* Actions */}

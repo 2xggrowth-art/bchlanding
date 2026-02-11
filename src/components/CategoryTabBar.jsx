@@ -19,7 +19,7 @@ export default function CategoryTabBar({ categories, activeCategory, onCategoryC
   }, [activeCategory]);
 
   return (
-    <div className="sticky top-0 z-40 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+    <div className="sticky top-[72px] sm:top-[80px] z-30 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
       <div
         ref={scrollRef}
         className="flex overflow-x-auto scrollbar-hide max-w-6xl mx-auto px-2 sm:px-0"

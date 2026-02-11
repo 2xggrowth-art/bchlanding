@@ -132,12 +132,48 @@ export default function ProductDataGrid({
         cell: ({ row }) => {
           const category = categories.find(c => c.slug === row.original.category);
           return (
-            <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-sm font-medium">
-              {category?.name || row.original.category}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-sm font-medium w-fit">
+                {category?.name || row.original.category}
+              </span>
+              {row.original.subCategory && (
+                <span className="text-[10px] text-gray-text uppercase tracking-wider pl-1">
+                  {row.original.subCategory}
+                </span>
+              )}
+            </div>
           );
         },
         size: 150,
+      },
+      // Colors column
+      {
+        id: 'colors',
+        header: 'Colors',
+        cell: ({ row }) => {
+          const colors = row.original.colors || [];
+          if (colors.length === 0) return <span className="text-xs text-gray-text">—</span>;
+          return (
+            <div className="flex items-center gap-1 flex-wrap">
+              {colors.slice(0, 5).map((c, i) => (
+                <span
+                  key={i}
+                  title={`${c.name}${c.inStock === false ? ' (Out of stock)' : ''}`}
+                  className="w-5 h-5 rounded-full border border-gray-300 shrink-0"
+                  style={{
+                    background: c.hex?.startsWith('linear') ? c.hex : c.hex || '#ccc',
+                    opacity: c.inStock === false ? 0.4 : 1,
+                  }}
+                />
+              ))}
+              {colors.length > 5 && (
+                <span className="text-[10px] text-gray-text font-bold">+{colors.length - 5}</span>
+              )}
+            </div>
+          );
+        },
+        size: 120,
+        enableSorting: false,
       },
       // Price column (inline editable)
       {
@@ -219,7 +255,7 @@ export default function ProductDataGrid({
         ),
         size: 120,
       },
-      // Stock column (inline editable)
+      // Stock column (inline editable, supports both stock object and inStock boolean)
       {
         accessorKey: 'stock.quantity',
         header: ({ column }) => {
@@ -240,8 +276,27 @@ export default function ProductDataGrid({
           );
         },
         cell: ({ row }) => {
+          const product = row.original;
+          const stock = product.stock;
+          const hasStockObj = stock && typeof stock.quantity === 'number';
+
+          // For products with only inStock boolean (e.g. EMotorad API data)
+          if (!hasStockObj) {
+            const isInStock = product.inStock !== false;
+            return (
+              <div className="px-2 py-1">
+                <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold ${
+                  isInStock ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {isInStock ? <PackageCheck className="w-3 h-3" /> : <PackageX className="w-3 h-3" />}
+                  <span>{isInStock ? 'In Stock' : 'Out of Stock'}</span>
+                </div>
+              </div>
+            );
+          }
+
+          // For products with full stock object (editable)
           const isEditing = editingCell === `${row.id}-stock`;
-          const stock = row.original.stock || { quantity: 0, status: 'out_of_stock' };
 
           if (isEditing) {
             return (

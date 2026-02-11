@@ -79,6 +79,7 @@ function initializeFirebaseAdmin() {
         privateKey: privateKey,
         clientEmail: clientEmail,
       }),
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET || `${projectId}.firebasestorage.app`,
     });
 
     console.log('✅ Firebase Admin initialized successfully');

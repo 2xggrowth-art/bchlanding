@@ -1,10 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { categories, products as allProducts } from '../data/products';
+import { useSearchParams, useNavigate, useNavigationType } from 'react-router-dom';
+import { categories } from '../data/products';
 import CategoryTabBar from '../components/CategoryTabBar';
 import ProductCard from '../components/ProductCard';
 import LazyImage from '../components/LazyImage';
+import { getCachedProducts } from '../utils/productsCache';
 import { api } from '../utils/api';
 
 const allCategory = {
@@ -37,29 +38,68 @@ export default function ProductsPage() {
     return cat?.subCategories || [];
   }, [activeCategory]);
 
-  // Reset subcategory when main category changes
+  // Reset subcategory when main category changes and update URL
   const handleCategoryChange = (slug) => {
     setActiveCategory(slug);
     setActiveSubCategory('all');
+    // Update URL
+    if (slug === 'all') {
+      navigate('/products', { replace: true });
+    } else {
+      navigate(`/products?category=${slug}`, { replace: true });
+    }
   };
 
+  const navType = useNavigationType();
+
+  // Sync state with URL params (important for refresh and back/forward navigation)
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const urlCategory = searchParams.get('category') || 'all';
+    const urlSub = searchParams.get('sub') || 'all';
+
+    // Only update if different from current state
+    if (urlCategory !== activeCategory) {
+      setActiveCategory(tabCategories.some((c) => c.slug === urlCategory) ? urlCategory : 'all');
+    }
+    if (urlSub !== activeSubCategory) {
+      setActiveSubCategory(urlSub);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (navType !== 'POP') {
+      window.scrollTo(0, 0);
+    }
+  }, [navType]);
+
+  // Load products (uses shared cache — avoids redundant Firestore reads)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const merged = await getCachedProducts();
+        if (!cancelled) setProducts(merged);
+      } catch (err) {
+        console.error('Error loading products:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  // Load products from local data
-  useEffect(() => {
-    try {
-      setLoading(true);
-      setError(null);
-      setProducts(allProducts);
-    } catch (err) {
-      console.error('Error loading products:', err);
-      setError('Failed to load products. Please try again later.');
-    } finally {
-      setLoading(false);
+  // Update URL when subcategory changes
+  const handleSubCategoryChange = (subSlug) => {
+    setActiveSubCategory(subSlug);
+    // Update URL
+    if (subSlug === 'all') {
+      navigate(`/products?category=${activeCategory}`, { replace: true });
+    } else {
+      navigate(`/products?category=${activeCategory}&sub=${subSlug}`, { replace: true });
     }
-  }, []);
+  };
 
   const filteredProducts = useMemo(() => {
     let result = products;
@@ -75,13 +115,13 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gray-bg">
       {/* Hero Section */}
-      <section className="bg-dark text-white py-12 sm:py-16 md:py-20">
+      <section className="bg-dark text-white py-8 sm:py-16 md:py-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="font-display text-3xl sm:text-4xl md:text-5xl font-bold uppercase tracking-wider mb-3 sm:mb-4"
+            className="font-display text-2xl sm:text-4xl md:text-5xl font-bold uppercase tracking-wider mb-2 sm:mb-4"
           >
             Our <span className="text-primary">Collection</span>
           </motion.h1>
@@ -116,24 +156,22 @@ export default function ProductsPage() {
         <div className="bg-white border-b border-gray-100">
           <div className="max-w-6xl mx-auto px-3 sm:px-4 py-2.5 flex gap-2 overflow-x-auto scrollbar-hide">
             <button
-              onClick={() => setActiveSubCategory('all')}
-              className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${
-                activeSubCategory === 'all'
-                  ? 'bg-dark text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              onClick={() => handleSubCategoryChange('all')}
+              className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${activeSubCategory === 'all'
+                ? 'bg-dark text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
             >
               All
             </button>
             {activeSubCategories.map((sub) => (
               <button
                 key={sub.slug}
-                onClick={() => setActiveSubCategory(sub.slug)}
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${
-                  activeSubCategory === sub.slug
-                    ? 'bg-primary text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
+                onClick={() => handleSubCategoryChange(sub.slug)}
+                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-colors duration-200 flex-shrink-0 ${activeSubCategory === sub.slug
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
               >
                 {sub.name}
               </button>
@@ -421,8 +459,8 @@ function EnquiryModal({ product, onClose }) {
                     onChange={(e) => handleChange('name', e.target.value)}
                     onBlur={() => handleBlur('name')}
                     className={`w-full px-3 py-2.5 rounded-xl bg-gray-50 border-2 text-sm transition-colors outline-none ${errors.name && touched.name
-                        ? 'border-red-400 focus:border-red-400'
-                        : 'border-gray-200 focus:border-primary'
+                      ? 'border-red-400 focus:border-red-400'
+                      : 'border-gray-200 focus:border-primary'
                       }`}
                     placeholder="Your full name"
                     autoComplete="name"
@@ -447,8 +485,8 @@ function EnquiryModal({ product, onClose }) {
                       onChange={(e) => handleChange('phone', e.target.value.replace(/\D/g, '').slice(0, 10))}
                       onBlur={() => handleBlur('phone')}
                       className={`w-full pl-12 pr-3 py-2.5 rounded-xl bg-gray-50 border-2 text-sm transition-colors outline-none ${errors.phone && touched.phone
-                          ? 'border-red-400 focus:border-red-400'
-                          : 'border-gray-200 focus:border-primary'
+                        ? 'border-red-400 focus:border-red-400'
+                        : 'border-gray-200 focus:border-primary'
                         }`}
                       placeholder="9876543210"
                       autoComplete="tel"

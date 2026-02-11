@@ -21,19 +21,19 @@ export default function HeroSlider() {
       id: 1,
       type: 'gradient',
       content: (
-        <div className="relative min-h-[500px] sm:min-h-[600px] flex items-center">
+        <div className="relative min-h-[360px] sm:min-h-[500px] md:min-h-[600px] flex items-center">
           <div
             className="absolute inset-0 opacity-5"
             style={{
               backgroundImage: `repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(220, 38, 38, 0.1) 50px, rgba(220, 38, 38, 0.1) 52px)`
             }}
           />
-          <div className="max-w-4xl mx-auto relative z-10 text-center px-4 sm:px-6">
+          <div className="max-w-4xl mx-auto relative z-10 text-center px-3 sm:px-6">
             <motion.h1
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="font-display text-4xl sm:text-5xl md:text-6xl font-normal mb-6 tracking-wider uppercase"
+              className="font-display text-[1.6rem] leading-tight sm:text-5xl md:text-6xl font-normal mb-3 sm:mb-6 tracking-wider uppercase"
             >
               Yelahanka's <span className="text-primary">#1 Destination</span> for E-Bikes & Premium Cycles
             </motion.h1>
@@ -41,7 +41,7 @@ export default function HeroSlider() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.6 }}
-              className="text-lg sm:text-xl text-white/80 mb-8"
+              className="text-xs sm:text-lg md:text-xl text-white/80 mb-5 sm:mb-8"
             >
               Official Emotorad Dealer &bull; Exchange Your Old Cycle &bull; 0% EMI Available
             </motion.p>
@@ -51,19 +51,19 @@ export default function HeroSlider() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.6 }}
-              className="flex flex-wrap justify-center gap-4 mb-10"
+              className="flex flex-wrap justify-center gap-2 sm:gap-4 mb-6 sm:mb-10"
             >
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                 <span className="text-yellow-400">&#9733;</span>
-                <span className="text-sm font-semibold">4.7 Google Rating</span>
+                <span className="text-xs sm:text-sm font-semibold">4.7 Google Rating</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                 <span className="text-pink-400">&#128247;</span>
-                <span className="text-sm font-semibold">3.4L+ Instagram Followers</span>
+                <span className="text-xs sm:text-sm font-semibold">3.4L+ Instagram</span>
               </div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+              <div className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
                 <span className="text-green-400">&#128666;</span>
-                <span className="text-sm font-semibold">Free Home Delivery</span>
+                <span className="text-xs sm:text-sm font-semibold">Free Home Delivery</span>
               </div>
             </motion.div>
 
@@ -75,12 +75,13 @@ export default function HeroSlider() {
               transition={{ delay: 0.4, duration: 0.6 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 bg-primary text-white font-bold text-lg px-10 py-5 rounded-full shadow-2xl hover:bg-primary-dark transition-all"
+              className="inline-flex items-center gap-2 bg-primary text-white font-bold text-xs sm:text-lg px-5 sm:px-10 py-3 sm:py-5 rounded-full shadow-2xl hover:bg-primary-dark transition-all"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
-              CONTACT US - GET FREE TEST RIDE
+              <span className="sm:hidden">CONTACT US - FREE RIDE</span>
+              <span className="hidden sm:inline">CONTACT US - FREE TEST RIDE</span>
             </motion.button>
           </div>
         </div>
@@ -90,7 +91,7 @@ export default function HeroSlider() {
       id: 2,
       type: 'image',
       content: (
-        <div className="relative min-h-[500px] sm:min-h-[600px] flex flex-col">
+        <div className="relative min-h-[360px] sm:min-h-[500px] md:min-h-[600px] flex flex-col">
           {/* HD E-bike background image */}
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat"
@@ -119,10 +120,10 @@ export default function HeroSlider() {
                   <motion.div
                     animate={{ scale: [1, 1.05, 1] }}
                     transition={{ duration: 2, repeat: Infinity, repeatDelay: 0.5 }}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-full backdrop-blur-md bg-primary/20 border-2 border-primary shadow-lg"
+                    className="inline-flex items-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2 sm:py-3 rounded-full backdrop-blur-md bg-primary/20 border-2 border-primary shadow-lg"
                   >
-                    <span className="text-2xl">🎉</span>
-                    <span className="text-sm sm:text-base font-bold text-white">FIRST TIME IN BANGALORE</span>
+                    <span className="text-xl sm:text-2xl">🎉</span>
+                    <span className="text-xs sm:text-base font-bold text-white">FIRST TIME IN BANGALORE</span>
                   </motion.div>
                 </motion.div>
 
@@ -131,10 +132,10 @@ export default function HeroSlider() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.6 }}
-                  className="font-display text-4xl sm:text-5xl md:text-6xl font-black mb-6 leading-tight tracking-wider uppercase text-white"
+                  className="font-display text-[1.6rem] sm:text-5xl md:text-6xl font-black mb-3 sm:mb-6 leading-tight tracking-wider uppercase text-white"
                 >
                   Test Ride <span className="text-primary">5 Cycles</span>
-                  <span className="block mt-2">at Your Home</span>
+                  <span className="block mt-1 sm:mt-2">at Your Home</span>
                 </motion.h1>
 
                 {/* Subheadline */}
@@ -144,7 +145,7 @@ export default function HeroSlider() {
                   transition={{ delay: 0.4, duration: 0.6 }}
                   className="mb-8"
                 >
-                  <p className="text-2xl sm:text-3xl text-white font-bold mb-2">
+                  <p className="text-lg sm:text-2xl md:text-3xl text-white font-bold mb-2">
                     Book Now for Just <span className="text-primary">₹99</span>
                   </p>
                   <p className="text-sm text-white/80">
@@ -160,10 +161,11 @@ export default function HeroSlider() {
                   transition={{ delay: 0.5, duration: 0.6 }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
-                  className="inline-flex items-center gap-2 bg-primary text-white font-bold text-lg px-10 py-5 rounded-full shadow-2xl hover:bg-primary-dark transition-all uppercase tracking-wide"
+                  className="inline-flex items-center gap-2 bg-primary text-white font-bold text-xs sm:text-lg px-5 sm:px-10 py-3 sm:py-5 rounded-full shadow-2xl hover:bg-primary-dark transition-all uppercase tracking-wide"
                 >
-                  <span>CONTACT NOW - FREE TEST RIDE</span>
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <span className="sm:hidden">CONTACT NOW - FREE RIDE</span>
+                  <span className="hidden sm:inline">CONTACT NOW - FREE TEST RIDE</span>
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                   </svg>
                 </motion.button>
@@ -190,14 +192,14 @@ export default function HeroSlider() {
       </AnimatePresence>
 
       {/* Slide indicators */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-2">
+      <div className="absolute bottom-4 sm:bottom-6 left-1/2 transform -translate-x-1/2 z-20 flex gap-2.5 sm:gap-2">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all ${currentSlide === index
-              ? 'bg-primary w-8'
-              : 'bg-white/30 hover:bg-white/50'
+            className={`h-3 rounded-full transition-all min-w-[44px] sm:min-w-0 ${currentSlide === index
+              ? 'bg-primary w-10 sm:w-8'
+              : 'bg-white/30 hover:bg-white/50 w-3'
               }`}
             aria-label={`Go to slide ${index + 1}`}
           />
@@ -207,19 +209,19 @@ export default function HeroSlider() {
       {/* Navigation arrows */}
       <button
         onClick={() => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 backdrop-blur-sm p-3 rounded-full transition-all"
+        className="absolute left-1 sm:left-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm p-2.5 sm:p-3 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Previous slide"
       >
-        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
       <button
         onClick={() => setCurrentSlide((prev) => (prev + 1) % slides.length)}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 backdrop-blur-sm p-3 rounded-full transition-all"
+        className="absolute right-1 sm:right-4 top-1/2 transform -translate-y-1/2 z-20 bg-white/10 hover:bg-white/20 active:bg-white/30 backdrop-blur-sm p-2.5 sm:p-3 rounded-full transition-all min-w-[44px] min-h-[44px] flex items-center justify-center"
         aria-label="Next slide"
       >
-        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>

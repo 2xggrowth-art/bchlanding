@@ -48,7 +48,7 @@ export default function SocialMediaShowcase() {
   ];
 
   return (
-    <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white relative overflow-hidden">
+    <section className="py-10 sm:py-24 px-4 sm:px-6 bg-white relative overflow-hidden">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-5">
         <div className="absolute inset-0" style={{
@@ -68,16 +68,16 @@ export default function SocialMediaShowcase() {
             <span className="text-2xl">🌟</span>
             <span className="text-sm font-bold text-primary uppercase tracking-wide">Trusted by 1M+ Followers</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl mb-4 tracking-wider uppercase">
+          <h2 className="font-display text-2xl sm:text-4xl md:text-5xl mb-3 sm:mb-4 tracking-wider uppercase">
             Join Our <span className="text-primary">Growing Community</span>
           </h2>
-          <p className="text-gray-text text-lg max-w-2xl mx-auto">
+          <p className="text-gray-text text-sm sm:text-lg max-w-2xl mx-auto">
             Over 1 million cycling enthusiasts trust us across social media platforms. See what makes us Bangalore's favorite cycle destination.
           </p>
         </motion.div>
 
         {/* Social Media Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-8 sm:mb-12">
           {socialStats.map((social, index) => (
             <motion.a
               key={index}
@@ -89,23 +89,23 @@ export default function SocialMediaShowcase() {
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="relative bg-white rounded-[20px] p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-200 overflow-hidden group"
+              className="relative bg-white rounded-2xl sm:rounded-[20px] p-4 sm:p-6 shadow-xl hover:shadow-2xl transition-all duration-300 border border-gray-200 overflow-hidden group"
             >
               {/* Gradient background on hover */}
               <div className={`absolute inset-0 bg-gradient-to-br ${social.color} opacity-0 group-hover:opacity-10 transition-opacity duration-300`} />
 
               <div className="relative z-10">
-                <div className="flex items-start justify-between mb-3">
-                  <span className="text-4xl">{social.icon}</span>
+                <div className="flex items-start justify-between mb-2 sm:mb-3">
+                  <span className="text-2xl sm:text-4xl">{social.icon}</span>
                   {social.verified && (
-                    <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full flex items-center gap-1">
-                      ✓ Verified
+                    <span className="bg-blue-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full flex items-center gap-0.5 sm:gap-1">
+                      ✓ <span className="hidden sm:inline">Verified</span>
                     </span>
                   )}
                 </div>
-                <h3 className="font-bold text-lg mb-1">{social.platform}</h3>
-                <p className="text-gray-text text-sm mb-3 truncate">{social.handle}</p>
-                <div className="font-display text-3xl text-primary tracking-wider">
+                <h3 className="font-bold text-sm sm:text-lg mb-0.5 sm:mb-1">{social.platform}</h3>
+                <p className="text-gray-text text-xs sm:text-sm mb-2 sm:mb-3 truncate">{social.handle}</p>
+                <div className="font-display text-xl sm:text-3xl text-primary tracking-wider">
                   {social.followers}
                 </div>
                 <p className="text-xs text-gray-text uppercase tracking-wide mt-1">Followers</p>
@@ -124,10 +124,10 @@ export default function SocialMediaShowcase() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-[30px] p-8 sm:p-12"
+          className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl sm:rounded-[30px] p-4 sm:p-8 md:p-12"
         >
           <div className="text-center mb-8">
-            <h3 className="font-display text-2xl sm:text-3xl mb-2 tracking-wider uppercase">
+            <h3 className="font-display text-xl sm:text-3xl mb-2 tracking-wider uppercase">
               Follow Us on Instagram
             </h3>
             <p className="text-gray-text">
@@ -136,7 +136,7 @@ export default function SocialMediaShowcase() {
           </div>
 
           {/* Image Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
             {testimonialImages.map((img, index) => (
               <motion.div
                 key={index}
@@ -145,7 +145,7 @@ export default function SocialMediaShowcase() {
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ scale: 1.05 }}
-                className="relative aspect-square rounded-[20px] overflow-hidden shadow-lg cursor-pointer"
+                className="relative aspect-square rounded-xl sm:rounded-[20px] overflow-hidden shadow-lg cursor-pointer"
               >
                 <img
                   src={img}
@@ -171,7 +171,7 @@ export default function SocialMediaShowcase() {
               rel="noopener noreferrer"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.98 }}
-              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold px-8 py-4 rounded-full shadow-xl hover:shadow-2xl transition-all"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm sm:text-base px-5 sm:px-8 py-3 sm:py-4 rounded-full shadow-xl hover:shadow-2xl transition-all"
             >
               <span className="text-2xl">📸</span>
               <span>FOLLOW @BHARATHCYCLEHUB</span>
@@ -190,20 +190,20 @@ export default function SocialMediaShowcase() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-12 bg-dark text-white rounded-[30px] p-8 sm:p-12 text-center"
+          className="mt-6 sm:mt-12 bg-dark text-white rounded-2xl sm:rounded-[30px] p-4 sm:p-8 md:p-12 text-center"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
+          <div className="grid grid-cols-3 gap-4 sm:gap-8">
             <div>
-              <div className="font-display text-4xl sm:text-5xl text-primary mb-2 tracking-wider">1M+</div>
-              <p className="text-white/80">Total Social Media Followers</p>
+              <div className="font-display text-2xl sm:text-4xl md:text-5xl text-primary mb-1 sm:mb-2 tracking-wider">1M+</div>
+              <p className="text-white/80 text-xs sm:text-base">Social Media Followers</p>
             </div>
             <div>
-              <div className="font-display text-4xl sm:text-5xl text-primary mb-2 tracking-wider">50K+</div>
-              <p className="text-white/80">Monthly Engagement</p>
+              <div className="font-display text-2xl sm:text-4xl md:text-5xl text-primary mb-1 sm:mb-2 tracking-wider">50K+</div>
+              <p className="text-white/80 text-xs sm:text-base">Monthly Engagement</p>
             </div>
             <div>
-              <div className="font-display text-4xl sm:text-5xl text-primary mb-2 tracking-wider">4.7★</div>
-              <p className="text-white/80">Average Rating Across Platforms</p>
+              <div className="font-display text-2xl sm:text-4xl md:text-5xl text-primary mb-1 sm:mb-2 tracking-wider">4.7★</div>
+              <p className="text-white/80 text-xs sm:text-base">Average Rating</p>
             </div>
           </div>
         </motion.div>

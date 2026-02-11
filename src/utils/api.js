@@ -100,5 +100,54 @@ export const api = {
       console.error('Error fetching leads:', error);
       throw error;
     }
+  },
+
+  // Get single product (public)
+  async getProduct(productId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error('Failed to fetch product');
+      }
+
+      const data = await response.json();
+      return data.product || data;
+    } catch (error) {
+      console.error('Error fetching product:', error);
+      throw error;
+    }
+  },
+
+  // Get all products (public)
+  async getProducts(params = {}) {
+    try {
+      // Build query string from params
+      const searchParams = new URLSearchParams();
+      Object.keys(params).forEach(key => {
+        if (params[key] !== undefined && params[key] !== null) {
+          searchParams.append(key, params[key]);
+        }
+      });
+
+      const queryString = searchParams.toString();
+      const url = `${API_BASE_URL}/products${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, { cache: 'no-store' });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
+      const data = await response.json();
+      return {
+        products: data.products || [],
+        deletedIds: data.deletedIds || []
+      };
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      throw error;
+    }
   }
 };

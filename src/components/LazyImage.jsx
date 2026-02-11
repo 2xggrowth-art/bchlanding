@@ -16,6 +16,7 @@ export default function LazyImage({
   src,
   alt,
   className = '',
+  objectFit = 'cover',
   placeholder = 'blur',
   onLoad,
   ...props
@@ -42,7 +43,7 @@ export default function LazyImage({
         });
       },
       {
-        rootMargin: '50px' // Start loading 50px before image enters viewport
+        rootMargin: '200px' // Start loading 200px before image enters viewport
       }
     );
 
@@ -80,10 +81,9 @@ export default function LazyImage({
           alt={alt}
           onLoad={handleLoad}
           onError={handleError}
-          className={`w-full h-full object-cover transition-opacity duration-300 ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          }`}
-          loading="lazy"
+          className={`w-full h-full transition-opacity duration-300 ${
+            objectFit === 'contain' ? 'object-contain' : 'object-cover'
+          } ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
           {...props}
         />
       )}

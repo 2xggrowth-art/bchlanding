@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useNavigationType } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { products, categories } from '../data/products';
+import { categories } from '../data/products';
 import ProductCard from '../components/ProductCard';
 import LazyImage from '../components/LazyImage';
 // Phase 1 Components
@@ -13,6 +13,7 @@ import ProductTabs from '../components/Product/ProductTabs';
 // Phase 2 Components
 import SizeGuideSection from '../components/Product/SizeGuideSection';
 import WarrantyServiceSection from '../components/Product/WarrantyServiceSection';
+import { getCachedProducts } from '../utils/productsCache';
 import { api } from '../utils/api';
 
 const WHATSAPP_NUMBER = '919876543210';
@@ -43,8 +44,12 @@ export default function ProductDetailPage() {
   const navigate = useNavigate();
   const [enquiryOpen, setEnquiryOpen] = useState(false);
   const [product, setProduct] = useState(null);
+  const [productsList, setProductsList] = useState([]); // Dynamic products list
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedColor, setSelectedColor] = useState(null);
+  const [selectedImageIdx, setSelectedImageIdx] = useState(0);
+  const navType = useNavigationType();
 
   const category = useMemo(
     () => (product ? categories.find((c) => c.slug === product.category) : null),
@@ -52,39 +57,60 @@ export default function ProductDetailPage() {
   );
 
   const similarProducts = useMemo(() => {
-    if (!product) return [];
-    return products
+    if (!product || productsList.length === 0) return [];
+    return productsList
       .filter((p) => p.category === product.category && p.id !== product.id)
       .slice(0, 4);
+  }, [product, productsList]);
+
+  // Build full gallery: main image + gallery images (deduplicated)
+  const allGalleryImages = useMemo(() => {
+    if (!product) return [];
+    const imgs = [product.image];
+    if (product.gallery?.length) {
+      product.gallery.forEach((url) => {
+        if (url && !imgs.includes(url)) imgs.push(url);
+      });
+    }
+    return imgs;
   }, [product]);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [productId]);
+    if (navType !== 'POP') {
+      window.scrollTo(0, 0);
+    }
+    setSelectedColor(null);
+    setSelectedImageIdx(0);
+  }, [productId, navType]);
 
-  // Find product from local data
+  // Load product from shared cache (single API call, shared across pages)
   useEffect(() => {
-    const loadProduct = () => {
+    let cancelled = false;
+    (async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const foundProduct = products.find((p) => p.id === productId);
+        // getCachedProducts returns merged list (API + local), cached for 5 min
+        const allProds = await getCachedProducts();
+        if (cancelled) return;
 
-        if (!foundProduct) {
+        setProductsList(allProds);
+
+        const found = allProds.find((p) => p.id === productId);
+        if (!found) {
           setError('Product not found');
         } else {
-          setProduct(foundProduct);
+          setProduct(found);
         }
       } catch (err) {
-        console.error('Error loading product:', err);
+        console.error('Error loading data:', err);
         setError('Failed to load product');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-
-    loadProduct();
+    })();
+    return () => { cancelled = true; };
   }, [productId]);
 
   // Loading state
@@ -108,15 +134,21 @@ export default function ProductDetailPage() {
           <p className="text-gray-text text-lg mb-6">
             {error || 'Product not found'}
           </p>
-          <Link
-            to="/products"
+          <button
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/products');
+              }
+            }}
             className="inline-flex items-center gap-2 px-6 py-3 bg-dark text-white rounded-full font-semibold hover:bg-primary transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
-            Back to Products
-          </Link>
+            Go Back
+          </button>
         </div>
       </div>
     );
@@ -149,8 +181,42 @@ export default function ProductDetailPage() {
     }
   };
 
+  // Match gallery images to a color using urlKey (exact substring) or color name keywords (fallback)
+  const getImagesForColor = (colorName) => {
+    if (!colorName || allGalleryImages.length <= 1) return allGalleryImages;
+    const colorObj = product.colors?.find((c) => c.name === colorName);
+    let matched;
+    if (colorObj?.urlKey) {
+      // Exact substring match for explicit urlKey (handles path segments like "7.65Ah/BLUE")
+      const key = colorObj.urlKey.toLowerCase();
+      matched = allGalleryImages.filter((url) => url.toLowerCase().includes(key));
+    } else {
+      // Keyword matching fallback for color name
+      const keywords = colorName.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+      matched = allGalleryImages.filter((url) => {
+        const urlLower = url.toLowerCase();
+        return keywords.some((kw) => kw.length >= 3 && urlLower.includes(kw));
+      });
+    }
+    if (matched.length === 0) return allGalleryImages;
+    // Full per-color gallery (3+ matches, e.g. Emotorad): show only matched
+    if (matched.length >= 3) return matched;
+    // Few matches (1-2 swatch images): show them first, then remaining photos
+    const rest = allGalleryImages.filter((url) => !matched.includes(url));
+    return [...matched, ...rest];
+  };
+
+  // Active gallery based on selected color
+  const activeGallery = selectedColor ? getImagesForColor(selectedColor) : allGalleryImages;
+
+  // Handle color selection
+  const handleColorSelect = (colorName) => {
+    setSelectedColor(colorName);
+    setSelectedImageIdx(0);
+  };
+
   // Build specs array from all available fields
-  const specsArray = Object.entries(product.specs)
+  const specsArray = Object.entries(product.specs || {})
     .map(([key, value]) => ({
       label: specLabels[key] || key,
       value,
@@ -159,13 +225,19 @@ export default function ProductDetailPage() {
     .filter((s) => s.value);
 
   return (
-    <div className="min-h-screen bg-gray-bg">
+    <div className="min-h-screen bg-gray-bg pb-20 lg:pb-0">
       {/* Back Nav */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-30 -mt-[72px] sm:-mt-[80px]">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-sm font-semibold text-dark hover:text-primary transition-colors"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+              } else {
+                navigate('/products');
+              }
+            }}
+            className="flex items-center gap-2 text-sm font-semibold text-dark hover:text-primary transition-colors min-h-[44px]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -174,7 +246,7 @@ export default function ProductDetailPage() {
           </button>
           <button
             onClick={handleShare}
-            className="flex items-center gap-1.5 text-sm font-semibold text-dark hover:text-primary transition-colors"
+            className="flex items-center gap-1.5 text-sm font-semibold text-dark hover:text-primary transition-colors min-h-[44px]"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
@@ -187,23 +259,34 @@ export default function ProductDetailPage() {
       {/* Main Content */}
       <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
         <div className="lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
-          {/* Left — Image */}
+          {/* Left — Image Gallery */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
-            className="lg:sticky lg:top-24"
+            className="lg:sticky lg:top-[140px]"
           >
+            {/* Main Image */}
             <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-              <LazyImage
-                src={product.image}
-                alt={product.name}
-                className="w-full aspect-square sm:aspect-[4/3]"
-              />
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeGallery[selectedImageIdx] || activeGallery[0]}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <LazyImage
+                    src={activeGallery[selectedImageIdx] || activeGallery[0]}
+                    alt={`${product.name}${selectedColor ? ` - ${selectedColor}` : ''}`}
+                    className={`w-full aspect-square sm:aspect-[4/3] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
+                    objectFit={(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'contain' : 'cover'}
+                  />
+                </motion.div>
+              </AnimatePresence>
               {product.badge && (
                 <span
-                  className={`absolute top-3 left-3 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide ${badgeStyles[product.badge] || 'bg-gray-500 text-white'
-                    }`}
+                  className={`absolute top-3 left-3 text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wide ${badgeStyles[product.badge] || 'bg-gray-500 text-white'}`}
                 >
                   {product.badge}
                 </span>
@@ -213,7 +296,88 @@ export default function ProductDetailPage() {
                   {discount}% OFF
                 </span>
               )}
+              {/* Image counter */}
+              {activeGallery.length > 1 && (
+                <span className="absolute bottom-3 right-3 text-[10px] font-bold px-2 py-1 rounded-full bg-black/50 text-white">
+                  {selectedImageIdx + 1} / {activeGallery.length}
+                </span>
+              )}
+              {/* Prev/Next arrows */}
+              {activeGallery.length > 1 && (
+                <>
+                  <button
+                    onClick={() => setSelectedImageIdx((prev) => prev === 0 ? activeGallery.length - 1 : prev - 1)}
+                    className="absolute left-1 sm:left-2 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-colors"
+                    aria-label="Previous image"
+                  >
+                    <svg className="w-5 h-5 sm:w-4 sm:h-4 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setSelectedImageIdx((prev) => prev === activeGallery.length - 1 ? 0 : prev + 1)}
+                    className="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-8 sm:h-8 rounded-full bg-white/80 hover:bg-white shadow flex items-center justify-center transition-colors"
+                    aria-label="Next image"
+                  >
+                    <svg className="w-5 h-5 sm:w-4 sm:h-4 text-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                </>
+              )}
             </div>
+
+            {/* Thumbnail Strip */}
+            {activeGallery.length > 1 && (
+              <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+                {activeGallery.map((url, idx) => (
+                  <button
+                    key={url + idx}
+                    onClick={() => setSelectedImageIdx(idx)}
+                    className={`flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden border-2 transition-all ${idx === selectedImageIdx
+                      ? 'border-primary shadow-md scale-105'
+                      : 'border-gray-200 hover:border-gray-400 opacity-70 hover:opacity-100'
+                      }`}
+                  >
+                    <img src={url} alt={`${product.name} ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Color Swatches */}
+            {product.colors?.length > 0 && (
+              <div className="mt-4 bg-white rounded-xl p-3 border border-gray-100">
+                <p className="text-xs font-bold text-dark uppercase tracking-wide mb-2">
+                  Colour: <span className="text-primary font-semibold normal-case">{selectedColor || 'All'}</span>
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {product.colors.map((color) => (
+                    <button
+                      key={color.name}
+                      onClick={() => handleColorSelect(selectedColor === color.name ? null : color.name)}
+                      className={`group relative w-9 h-9 rounded-full border-2 transition-all ${selectedColor === color.name
+                        ? 'border-primary scale-110 shadow-md'
+                        : 'border-gray-300 hover:border-gray-500 hover:scale-105'
+                        }`}
+                      title={color.name}
+                    >
+                      <span
+                        className="absolute inset-1 rounded-full"
+                        style={{ background: color.hex?.startsWith('linear') ? color.hex : color.hex }}
+                      />
+                      {selectedColor === color.name && (
+                        <span className="absolute inset-0 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white drop-shadow-md" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
 
           {/* Right — Details */}
@@ -234,7 +398,7 @@ export default function ProductDetailPage() {
             )}
 
             {/* Name */}
-            <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-dark tracking-wide uppercase mb-2">
+            <h1 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-dark tracking-wide uppercase mb-2 break-words">
               {product.name}
             </h1>
 
@@ -252,16 +416,16 @@ export default function ProductDetailPage() {
             )}
 
             {/* Price */}
-            <div className="flex items-baseline gap-3 mb-6">
-              <span className="text-3xl sm:text-4xl font-bold text-primary">
+            <div className="flex items-baseline gap-2 sm:gap-3 mb-6 flex-wrap">
+              <span className="text-2xl sm:text-4xl font-bold text-primary">
                 ₹{product.price.toLocaleString('en-IN')}
               </span>
               {discount > 0 && (
                 <>
-                  <span className="text-lg text-gray-text line-through">
+                  <span className="text-base sm:text-lg text-gray-text line-through">
                     ₹{product.mrp.toLocaleString('en-IN')}
                   </span>
-                  <span className="text-sm font-bold text-green-600">
+                  <span className="text-xs sm:text-sm font-bold text-green-600">
                     Save ₹{(product.mrp - product.price).toLocaleString('en-IN')}
                   </span>
                 </>
@@ -280,11 +444,11 @@ export default function ProductDetailPage() {
             {/* PHASE 1: EMI Calculator */}
             <EMICalculator price={product.price} />
 
-            {/* CTA buttons */}
-            <div className="flex gap-3 mb-8">
+            {/* CTA buttons - visible on desktop, hidden on mobile (shown in sticky bar) */}
+            <div className="hidden lg:flex gap-3 mb-8">
               <button
                 onClick={() => setEnquiryOpen(true)}
-                className="flex-1 py-3.5 rounded-full bg-dark text-white font-bold text-sm sm:text-base transition-colors hover:bg-primary"
+                className="flex-1 py-3.5 rounded-full bg-dark text-white font-bold text-base transition-colors hover:bg-primary"
               >
                 Enquire Now
               </button>
@@ -292,13 +456,35 @@ export default function ProductDetailPage() {
                 href={whatsappUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-white font-bold text-sm sm:text-base hover:bg-green-600 transition-colors"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-white font-bold text-base hover:bg-green-600 transition-colors flex-shrink-0"
               >
                 <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                   <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
                 </svg>
-                <span className="hidden sm:inline">WhatsApp</span>
+                WhatsApp
+              </a>
+            </div>
+
+            {/* Mobile inline CTA - shows before scroll to sticky bar */}
+            <div className="flex lg:hidden gap-2 mb-6">
+              <button
+                onClick={() => setEnquiryOpen(true)}
+                className="flex-1 py-3 rounded-full bg-dark text-white font-bold text-sm transition-colors hover:bg-primary active:bg-primary min-h-[44px]"
+              >
+                Enquire Now
+              </button>
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm hover:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                </svg>
+                WhatsApp
               </a>
             </div>
 
@@ -310,7 +496,7 @@ export default function ProductDetailPage() {
 
 
         {/* Compare Bikes */}
-        <CompareBikes currentProduct={product} />
+        <CompareBikes currentProduct={product} allProducts={productsList} />
 
         {/* PHASE 2: Size Guide Section */}
         {product.sizeGuide?.hasGuide && (
@@ -348,6 +534,30 @@ export default function ProductDetailPage() {
 
       </div>
 
+      {/* Mobile Sticky Bottom CTA Bar */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] safe-bottom">
+        <div className="flex gap-2 px-4 py-3">
+          <button
+            onClick={() => setEnquiryOpen(true)}
+            className="flex-1 py-3 rounded-full bg-dark text-white font-bold text-sm transition-colors active:bg-primary min-h-[44px]"
+          >
+            Enquire Now
+          </button>
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+            </svg>
+            WhatsApp
+          </a>
+        </div>
+      </div>
+
       {/* Enquiry Modal */}
       <AnimatePresence>
         {enquiryOpen && (
@@ -371,7 +581,7 @@ const compareSpecKeys = [
   'ageRange', 'suspension', 'motor', 'battery', 'range',
 ];
 
-function CompareBikes({ currentProduct }) {
+function CompareBikes({ currentProduct, allProducts = [] }) {
   const [bikeA, setBikeA] = useState(currentProduct.id);
   const [bikeB, setBikeB] = useState('');
   const [isOpenA, setIsOpenA] = useState(false);
@@ -383,12 +593,12 @@ function CompareBikes({ currentProduct }) {
     setBikeB('');
   }, [currentProduct.id]);
 
-  const productA = products.find((p) => p.id === bikeA) || currentProduct;
-  const productB = bikeB ? products.find((p) => p.id === bikeB) : null;
+  const productA = allProducts.find((p) => p.id === bikeA) || currentProduct;
+  const productB = bikeB ? allProducts.find((p) => p.id === bikeB) : null;
 
   // Get all spec keys present in either bike
   const activeSpecKeys = compareSpecKeys.filter(
-    (key) => productA.specs[key] || (productB && productB.specs[key])
+    (key) => productA.specs?.[key] || (productB && productB.specs?.[key])
   );
 
   const discountA = productA.mrp > productA.price ? Math.round(((productA.mrp - productA.price) / productA.mrp) * 100) : 0;
@@ -407,16 +617,16 @@ function CompareBikes({ currentProduct }) {
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         {/* Bike Selectors + Images */}
-        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] gap-0">
+        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] gap-0 min-w-0">
           {/* Empty top-left cell (desktop only) */}
           <div className="hidden sm:block" />
 
           {/* Bike A Selector */}
-          <div className="border-r border-b border-gray-100 p-3 sm:p-4">
+          <div className="border-r border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
             <div className="relative">
               <button
                 onClick={() => { setIsOpenA(!isOpenA); setIsOpenB(false); }}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2.5 bg-dark text-white rounded-xl text-xs sm:text-sm font-bold"
+                className="w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 bg-dark text-white rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px]"
               >
                 <span className="truncate">{productA.name}</span>
                 <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenA ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,7 +641,7 @@ function CompareBikes({ currentProduct }) {
                     exit={{ opacity: 0, y: -5 }}
                     className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto"
                   >
-                    {products.map((p) => (
+                    {allProducts.map((p) => (
                       <button
                         key={p.id}
                         onClick={() => { setBikeA(p.id); setIsOpenA(false); }}
@@ -450,11 +660,11 @@ function CompareBikes({ currentProduct }) {
           </div>
 
           {/* Bike B Selector */}
-          <div className="border-b border-gray-100 p-3 sm:p-4">
+          <div className="border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
             <div className="relative">
               <button
                 onClick={() => { setIsOpenB(!isOpenB); setIsOpenA(false); }}
-                className={`w-full flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-bold ${productB ? 'bg-primary text-white' : 'bg-gray-200 text-gray-text'}`}
+                className={`w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px] ${productB ? 'bg-primary text-white' : 'bg-gray-200 text-gray-text'}`}
               >
                 <span className="truncate">{productB ? productB.name : 'Select a bike'}</span>
                 <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenB ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -469,7 +679,7 @@ function CompareBikes({ currentProduct }) {
                     exit={{ opacity: 0, y: -5 }}
                     className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto"
                   >
-                    {products.filter((p) => p.id !== bikeA).map((p) => (
+                    {allProducts.filter((p) => p.id !== bikeA).map((p) => (
                       <button
                         key={p.id}
                         onClick={() => { setBikeB(p.id); setIsOpenB(false); }}
@@ -504,8 +714,8 @@ function CompareBikes({ currentProduct }) {
           <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
             <span className="text-xs font-bold text-dark uppercase tracking-wide">Price</span>
           </div>
-          <div className="flex flex-col items-center justify-center px-3 py-4 border-r border-gray-100">
-            <span className="text-lg sm:text-2xl font-bold text-primary">₹{productA.price.toLocaleString('en-IN')}</span>
+          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4 border-r border-gray-100">
+            <span className="text-sm sm:text-2xl font-bold text-primary">₹{productA.price.toLocaleString('en-IN')}</span>
             {discountA > 0 && (
               <div className="flex items-center gap-2 mt-1">
                 <span className="text-xs text-gray-text line-through">₹{productA.mrp.toLocaleString('en-IN')}</span>
@@ -513,10 +723,10 @@ function CompareBikes({ currentProduct }) {
               </div>
             )}
           </div>
-          <div className="flex flex-col items-center justify-center px-3 py-4">
+          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4">
             {productB ? (
               <>
-                <span className="text-lg sm:text-2xl font-bold text-primary">₹{productB.price.toLocaleString('en-IN')}</span>
+                <span className="text-sm sm:text-2xl font-bold text-primary">₹{productB.price.toLocaleString('en-IN')}</span>
                 {discountB > 0 && (
                   <div className="flex items-center gap-2 mt-1">
                     <span className="text-xs text-gray-text line-through">₹{productB.mrp.toLocaleString('en-IN')}</span>
@@ -532,23 +742,23 @@ function CompareBikes({ currentProduct }) {
 
         {/* Spec Rows */}
         {activeSpecKeys.map((key) => {
-          const valA = productA.specs[key] || '—';
-          const valB = productB ? (productB.specs[key] || '—') : null;
+          const valA = productA.specs?.[key] || '—';
+          const valB = productB ? (productB.specs?.[key] || '—') : null;
           return (
             <div key={key} className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] border-b border-gray-100 last:border-b-0">
               {/* Label — hidden on mobile, shown on sm+ */}
               <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
                 <span className="text-xs font-bold text-dark uppercase tracking-wide">{specLabels[key]}</span>
               </div>
-              <div className="flex flex-col items-center justify-center px-3 py-3 border-r border-gray-100 text-center">
+              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 border-r border-gray-100 text-center">
                 <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
-                <span className="text-xs sm:text-sm font-semibold text-dark">{valA}</span>
+                <span className="text-[11px] sm:text-sm font-semibold text-dark">{valA}</span>
               </div>
-              <div className="flex flex-col items-center justify-center px-3 py-3 text-center">
+              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 text-center">
                 {productB ? (
                   <>
                     <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
-                    <span className="text-xs sm:text-sm font-semibold text-dark">{valB}</span>
+                    <span className="text-[11px] sm:text-sm font-semibold text-dark">{valB}</span>
                   </>
                 ) : (
                   <span className="text-sm text-gray-300">—</span>

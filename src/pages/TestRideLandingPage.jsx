@@ -32,20 +32,38 @@ const ComponentLoader = () => (
 );
 
 export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
-  const [currentStage, setCurrentStage] = useState('landing'); // landing, quiz, expertPromise, userdata, payment, success
-  const [quizAnswers, setQuizAnswers] = useState(null);
+  const [currentStage, setCurrentStage] = useState(() => sessionStorage.getItem('test_ride_stage') || 'landing');
+  const [quizAnswers, setQuizAnswers] = useState(() => {
+    const saved = sessionStorage.getItem('test_ride_quiz');
+    return saved ? JSON.parse(saved) : null;
+  });
   const [userData, setUserData] = useState(null);
-  const [leadId, setLeadId] = useState(null);
+  const [leadId, setLeadId] = useState(() => sessionStorage.getItem('test_ride_lead_id'));
   const [showStickyCTA, setShowStickyCTA] = useState(false);
   const [ctaSource, setCtaSource] = useState(null);
   const heroRef = useRef(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Sync state to session storage
+  useEffect(() => {
+    sessionStorage.setItem('test_ride_stage', currentStage);
+  }, [currentStage]);
+
+  useEffect(() => {
+    if (quizAnswers) sessionStorage.setItem('test_ride_quiz', JSON.stringify(quizAnswers));
+  }, [quizAnswers]);
+
+  useEffect(() => {
+    if (leadId) sessionStorage.setItem('test_ride_lead_id', leadId);
+  }, [leadId]);
 
   useEffect(() => {
     if (searchParams.get('open') === 'true') {
       handleStartQuiz('direct-nav');
+      // Clean up search params
+      setSearchParams({}, { replace: true });
     }
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   // Sticky CTA visibility on scroll
   useEffect(() => {
