@@ -127,39 +127,43 @@ export default function Header({ transparent = false, onCTAClick }) {
   };
 
   const bgClass = transparent
-    ? isScrolled
-      ? 'bg-dark/70 backdrop-blur-sm shadow-lg'
-      : 'bg-transparent'
-    : 'bg-white shadow-md';
+    ? (isScrolled || mobileMenuOpen)
+      ? 'bg-black/80 backdrop-blur-xl border-b border-white/10 shadow-lg'
+      : 'bg-gradient-to-b from-black/60 via-black/30 to-transparent'
+    : 'bg-white/40 backdrop-blur-2xl border-b border-white/50 shadow-[0_4px_30px_rgba(0,0,0,0.08)]';
 
   const textClass = transparent
-    ? 'text-white'
+    ? (isScrolled ? 'text-white' : 'text-white')
     : 'text-dark';
 
   const linkClass = transparent
-    ? 'text-white/90 hover:text-white'
+    ? (isScrolled ? 'text-white/80 hover:text-white' : 'text-white/90 hover:text-white')
     : 'text-gray-text hover:text-dark';
 
-  const hoverBgClass = transparent ? 'hover:bg-white/10' : 'hover:bg-gray-100';
+  const hoverBgClass = transparent
+    ? 'hover:bg-white/10'
+    : 'hover:bg-gray-100';
 
   // Use different logo based on background
-  const logoSrc = transparent ? '/logo1.png' : '/BCHwebsitelogo.png';
+  const logoSrc = transparent
+    ? (isScrolled ? '/logo1.png' : '/logo1.png')
+    : '/BCHwebsitelogo.png';
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${bgClass}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center flex-shrink-0">
+          <Link to="/" className="flex items-center min-w-0">
             <img
               src={logoSrc}
               alt="Bharath Cycle Hub Logo"
-              className="h-10 sm:h-14 w-auto"
+              className="h-8 sm:h-14 w-auto max-w-[180px] sm:max-w-none object-contain"
             />
           </Link>
 
           {/* Navigation Links - Desktop */}
-          <div className="hidden md:flex items-center gap-4">
+          <nav className="!hidden md:!flex items-center gap-4">
             <Link to="/" className={`font-medium transition-colors px-4 py-2 ${linkClass}`}>
               Home
             </Link>
@@ -365,15 +369,15 @@ export default function Header({ transparent = false, onCTAClick }) {
                 BOOK NOW
               </button>
             )}
-          </div>
+          </nav>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
+          <div className="md:hidden flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
             <button
               onClick={() => setIsContactFormOpen(true)}
-              className="flex items-center gap-1 bg-green-600 text-white font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm"
+              className="flex items-center gap-1 bg-green-600 text-white font-bold px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full text-[10px] sm:text-sm"
             >
-              <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
                 <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
               </svg>
@@ -381,9 +385,9 @@ export default function Header({ transparent = false, onCTAClick }) {
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={`p-2 ${textClass}`}
+              className={`p-2 rounded-lg ${transparent ? 'bg-white/10 text-white' : 'bg-gray-100 text-dark'}`}
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {mobileMenuOpen ? (
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 ) : (

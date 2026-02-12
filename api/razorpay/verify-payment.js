@@ -119,7 +119,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error.message || 'Failed to verify payment'
+      message: 'Failed to verify payment. Please contact support.'
     });
   }
 }

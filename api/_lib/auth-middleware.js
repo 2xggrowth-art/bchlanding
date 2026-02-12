@@ -241,30 +241,27 @@ function getCurrentUserId(req) {
  */
 function setCorsHeaders(res, options = {}) {
   const {
-    allowedOrigins = [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5175'],
+    allowedOrigins = [
+      process.env.FRONTEND_URL,
+      'http://localhost:5173',
+      'http://localhost:5175'
+    ].filter(Boolean),
     methods = 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     allowedHeaders = 'Content-Type, Authorization',
     credentials = true,
     requestOrigin
   } = options;
 
-  // Determine valid origin
-  let originToSet = '*';
-  if (allowedOrigins.includes(requestOrigin) || !process.env.FRONTEND_URL) {
-    // If explicit match or no env var set (permissive mode), reflect origin
-    // However, for security, if strictly production, we should check allowedOrigins
-    // For this fix, we will be permissive but safe for credentials
-    originToSet = requestOrigin || '*';
-  }
-
-  // If we want to allow everything but still support credentials, we must reflect origin
-  if (originToSet === 'null' || !originToSet) originToSet = '*';
+  // Only reflect origin if it's in the allowlist — never fall back to '*'
+  const originToSet = requestOrigin && allowedOrigins.includes(requestOrigin)
+    ? requestOrigin
+    : allowedOrigins[0] || '';
 
   res.setHeader('Access-Control-Allow-Origin', originToSet);
   res.setHeader('Access-Control-Allow-Methods', methods);
   res.setHeader('Access-Control-Allow-Headers', allowedHeaders);
 
-  if (credentials && originToSet !== '*') {
+  if (credentials && originToSet) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
   }
 }

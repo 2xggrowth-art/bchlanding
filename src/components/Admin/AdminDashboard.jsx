@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { AdminAPI } from '../../utils/auth-api';
 import ProductsTab from './ProductsTab';
 import LeadsTable from './LeadsTable';
+import EngagementTab from './EngagementTab';
+import VisitorsTab from './VisitorsTab';
 
 export default function AdminDashboard() {
   const [leads, setLeads] = useState([]);
@@ -325,7 +327,7 @@ export default function AdminDashboard() {
 
 
         {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-4 sm:mb-6">
+        <div className="flex border-b border-gray-200 mb-4 sm:mb-6 overflow-x-auto scrollbar-hide whitespace-nowrap">
           <button
             onClick={() => setActiveTab('all')}
             className={`px-3 sm:px-6 py-3 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'all'
@@ -353,6 +355,24 @@ export default function AdminDashboard() {
           >
             Products
           </button>
+          <button
+            onClick={() => setActiveTab('engagement')}
+            className={`px-3 sm:px-6 py-3 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'engagement'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-text hover:text-dark'
+              }`}
+          >
+            Engagement
+          </button>
+          <button
+            onClick={() => setActiveTab('visitors')}
+            className={`px-3 sm:px-6 py-3 font-bold text-xs sm:text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === 'visitors'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-gray-text hover:text-dark'
+              }`}
+          >
+            Visitors
+          </button>
         </div>
 
         {/* Products Tab Content */}
@@ -360,15 +380,25 @@ export default function AdminDashboard() {
           <ProductsTab />
         )}
 
+        {/* Engagement Tab Content */}
+        {activeTab === 'engagement' && (
+          <EngagementTab />
+        )}
+
+        {/* Visitors Tab Content */}
+        {activeTab === 'visitors' && (
+          <VisitorsTab />
+        )}
+
         {/* Filter Toggle + Refresh (Only show for leads tabs) */}
-        {activeTab !== 'products' && (
+        {activeTab !== 'products' && activeTab !== 'engagement' && activeTab !== 'visitors' && (
           <div className="flex items-center gap-3 mb-6">
             <button
               onClick={() => setShowFilters(prev => !prev)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-sm uppercase tracking-wide transition-all duration-300 border-2 ${showFilters
                 ? 'bg-primary text-white border-primary'
                 : 'bg-white text-dark border-gray-200 hover:border-primary'
-              }`}
+                }`}
             >
               <svg className={`w-4 h-4 transition-transform duration-300 ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -404,7 +434,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Collapsible Filters Panel (Only show for leads tabs) */}
-        {activeTab !== 'products' && (
+        {activeTab !== 'products' && activeTab !== 'engagement' && activeTab !== 'visitors' && (
           <AnimatePresence>
             {showFilters && (
               <motion.div
@@ -433,7 +463,7 @@ export default function AdminDashboard() {
                       className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'all'
                         ? 'bg-primary text-white'
                         : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       All ({stats.total || 0})
                     </button>
@@ -442,7 +472,7 @@ export default function AdminDashboard() {
                       className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'paid'
                         ? 'bg-green-600 text-white'
                         : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       Paid ({stats.paid || 0})
                     </button>
@@ -451,7 +481,7 @@ export default function AdminDashboard() {
                       className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${filters.paymentStatus === 'unpaid'
                         ? 'bg-orange-600 text-white'
                         : 'bg-gray-100 text-gray-text hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       Unpaid ({stats.unpaid || 0})
                     </button>
@@ -500,7 +530,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Leads Table - Responsive (Only show for leads tabs) */}
-        {activeTab !== 'products' && (
+        {activeTab !== 'products' && activeTab !== 'engagement' && activeTab !== 'visitors' && (
           <LeadsTable
             leads={leads}
             loading={loading && leads.length === 0}
@@ -513,7 +543,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Load More Button (Only show for leads tabs) */}
-        {activeTab !== 'products' && hasMore && leads.length > 0 && (
+        {activeTab !== 'products' && activeTab !== 'engagement' && hasMore && leads.length > 0 && (
           <div className="mt-8 flex justify-center">
             <button
               onClick={() => fetchLeads(false)}
@@ -538,7 +568,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Footer (Only show for leads tabs) */}
-        {activeTab !== 'products' && (
+        {activeTab !== 'products' && activeTab !== 'engagement' && activeTab !== 'visitors' && (
           <div className="mt-6 text-center text-sm text-gray-text">
             <p>Showing {leads.length} lead{leads.length !== 1 ? 's' : ''}</p>
             <p className="mt-2">

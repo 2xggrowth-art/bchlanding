@@ -1,5 +1,34 @@
 import { createLead, getLeads, getLeadsStats } from '../_lib/firestore-service.js';
-import { requireAdmin } from '../_lib/auth-middleware.js';
+import { requireAdmin, handleCors } from '../_lib/auth-middleware.js';
+
+// Simple in-memory rate limiter for lead creation (per IP)
+const rateLimitMap = new Map();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
+const RATE_LIMIT_MAX_REQUESTS = 5; // max 5 leads per minute per IP
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+
+  // Clean up stale entries periodically (every 100 checks)
+  if (rateLimitMap.size > 1000) {
+    for (const [key, val] of rateLimitMap) {
+      if (now - val.windowStart > RATE_LIMIT_WINDOW_MS) rateLimitMap.delete(key);
+    }
+  }
+
+  if (!entry || now - entry.windowStart > RATE_LIMIT_WINDOW_MS) {
+    rateLimitMap.set(ip, { windowStart: now, count: 1 });
+    return false;
+  }
+
+  entry.count++;
+  if (entry.count > RATE_LIMIT_MAX_REQUESTS) {
+    return true;
+  }
+
+  return false;
+}
 
 // Validation function for lead input
 function validateLeadInput(data) {
@@ -50,18 +79,26 @@ function validateLeadInput(data) {
 }
 
 export default async function handler(req, res) {
-  // CORS check (Simple version or use helper if desired, keeping it simple as requested)
-  // Vercel usually handles some CORS via vercel.json, but explicit headers are good.
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-  if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+  // CORS — restrict to allowed origins (FRONTEND_URL + localhost dev servers)
+  if (handleCors(req, res)) {
+    return;
   }
 
   try {
     if (req.method === 'POST') {
+      // Rate limit lead creation by IP
+      const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim()
+        || req.headers['x-real-ip']
+        || req.socket?.remoteAddress
+        || 'unknown';
+
+      if (isRateLimited(clientIp)) {
+        return res.status(429).json({
+          success: false,
+          error: 'Too many requests. Please try again later.'
+        });
+      }
+
       // Validate input before creating lead
       let validatedData;
       try {

@@ -67,7 +67,9 @@
       "WebFetch(domain:crehler.com)",
       "WebFetch(domain:spintadigital.com)",
       "WebSearch",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git checkout:*)",
+      "Bash(ls:*)"
     ]
   }
 }

@@ -301,6 +301,27 @@ export class AdminAPI {
   }
 
   /**
+   * Get engagement stats (exit intent popup analytics)
+   */
+  async getEngagementStats(days = 30) {
+    return await authenticatedFetch(`/api/analytics/engagement?days=${days}`, {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Get visitor events feed
+   */
+  async getVisitorEvents(limit = 100, action = 'all') {
+    const params = new URLSearchParams({ limit, action });
+    return await authenticatedFetch(`/api/analytics/visitor?${params}`, {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
    * Export all products
    */
   async exportProducts() {

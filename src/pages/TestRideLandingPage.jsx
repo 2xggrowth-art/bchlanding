@@ -268,7 +268,9 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         <WhyUs />
 
         {/* Phase 3: Community */}
-        <Community onCTAClick={() => handleStartQuiz('test-ride-community')} />
+        <div className="hidden md:block">
+          <Community onCTAClick={() => handleStartQuiz('test-ride-community')} />
+        </div>
 
         <SocialProof onCTAClick={() => handleStartQuiz('test-ride-final-cta')} />
 

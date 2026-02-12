@@ -1216,6 +1216,226 @@ async function seedDefaultCategories() {
   }
 }
 
+// ============================================
+// ENGAGEMENT EVENTS (Exit Intent Popup tracking)
+// ============================================
+
+/**
+ * Record an engagement event (popup shown, whatsapp click, call click, dismiss)
+ * Events are stored in daily aggregate docs to minimize writes
+ *
+ * @param {Object} eventData
+ * @param {string} eventData.action - popup_shown | whatsapp_click | call_click | dismiss
+ * @param {string} eventData.page - Page pathname where event occurred
+ * @returns {Promise<void>}
+ */
+async function recordEngagementEvent(eventData) {
+  try {
+    const db = getFirestore();
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const docId = `exit_intent_${today}`;
+
+    const docRef = db.collection('engagement').doc(docId);
+
+    // Use increment for atomic counter updates
+    const increment = admin.firestore.FieldValue.increment(1);
+    const arrayUnion = admin.firestore.FieldValue.arrayUnion;
+
+    const updateData = {
+      date: today,
+      updatedAt: getTimestamp()
+    };
+
+    // Increment the specific action counter
+    updateData[`counts.${eventData.action}`] = increment;
+    updateData['counts.total'] = increment;
+
+    // Track pages where events occurred
+    if (eventData.page) {
+      updateData['pages'] = arrayUnion(eventData.page);
+    }
+
+    await docRef.set(updateData, { merge: true });
+  } catch (error) {
+    console.error('❌ Failed to record engagement event:', error);
+    // Don't throw - engagement tracking should never break the user experience
+  }
+}
+
+/**
+ * Get engagement stats for a date range
+ *
+ * @param {Object} options
+ * @param {number} [options.days=30] - Number of days to look back
+ * @returns {Promise<Object>} Aggregated stats
+ */
+async function getEngagementStats(options = {}) {
+  try {
+    const db = getFirestore();
+    const days = options.days || 30;
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+    const startDateStr = startDate.toISOString().split('T')[0];
+
+    const snapshot = await db.collection('engagement')
+      .where('date', '>=', startDateStr)
+      .orderBy('date', 'desc')
+      .get();
+
+    if (snapshot.empty) {
+      return {
+        totals: { popup_shown: 0, whatsapp_click: 0, call_click: 0, dismiss: 0, total: 0 },
+        daily: [],
+        topPages: []
+      };
+    }
+
+    const totals = { popup_shown: 0, whatsapp_click: 0, call_click: 0, dismiss: 0, total: 0 };
+    const daily = [];
+    const pageSet = {};
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const counts = data.counts || {};
+
+      totals.popup_shown += counts.popup_shown || 0;
+      totals.whatsapp_click += counts.whatsapp_click || 0;
+      totals.call_click += counts.call_click || 0;
+      totals.dismiss += counts.dismiss || 0;
+      totals.total += counts.total || 0;
+
+      daily.push({
+        date: data.date,
+        ...counts
+      });
+
+      // Track pages
+      if (data.pages) {
+        data.pages.forEach(p => {
+          pageSet[p] = (pageSet[p] || 0) + (counts.total || 0);
+        });
+      }
+    });
+
+    const topPages = Object.entries(pageSet)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([page, count]) => ({ page, count }));
+
+    return { totals, daily, topPages };
+  } catch (error) {
+    console.error('❌ Failed to get engagement stats:', error);
+    return {
+      totals: { popup_shown: 0, whatsapp_click: 0, call_click: 0, dismiss: 0, total: 0 },
+      daily: [],
+      topPages: []
+    };
+  }
+}
+
+// ============================================
+// VISITOR EVENTS (Individual event log)
+// ============================================
+
+/**
+ * Record an individual visitor event
+ *
+ * @param {Object} data
+ * @param {string} data.visitorId - Anonymous session-stable visitor ID
+ * @param {string} data.action - page_view | popup_shown | whatsapp_click | call_click | dismiss
+ * @param {string} data.page - Page pathname
+ * @param {string} [data.referrer] - Document referrer
+ * @param {number} [data.screenWidth] - Viewport width
+ * @returns {Promise<void>}
+ */
+async function recordVisitorEvent(data) {
+  try {
+    const db = getFirestore();
+    const eventsRef = db.collection('visitor_events');
+
+    await eventsRef.add({
+      visitorId: data.visitorId || 'unknown',
+      action: data.action,
+      page: data.page || '/',
+      referrer: data.referrer || null,
+      screenWidth: data.screenWidth || null,
+      device: data.screenWidth ? (data.screenWidth < 768 ? 'mobile' : data.screenWidth < 1024 ? 'tablet' : 'desktop') : null,
+      createdAt: getTimestamp()
+    });
+  } catch (error) {
+    console.error('❌ Failed to record visitor event:', error);
+  }
+}
+
+/**
+ * Get recent visitor events for admin panel
+ *
+ * @param {Object} options
+ * @param {number} [options.limit=50] - Max events to return
+ * @param {string} [options.action] - Filter by action type
+ * @returns {Promise<Object>} { events, summary }
+ */
+async function getVisitorEvents(options = {}) {
+  try {
+    const db = getFirestore();
+    const limit = options.limit || 50;
+
+    let query = db.collection('visitor_events')
+      .orderBy('createdAt', 'desc');
+
+    if (options.action && options.action !== 'all') {
+      query = db.collection('visitor_events')
+        .where('action', '==', options.action)
+        .orderBy('createdAt', 'desc');
+    }
+
+    query = query.limit(limit);
+
+    const snapshot = await query.get();
+
+    if (snapshot.empty) {
+      return { events: [], summary: { total: 0, uniqueVisitors: 0, pageViews: 0, popupShown: 0, whatsappClicks: 0, callClicks: 0 } };
+    }
+
+    const events = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || null
+      };
+    });
+
+    // Build summary from fetched events
+    const visitorIds = new Set();
+    let pageViews = 0, popupShown = 0, whatsappClicks = 0, callClicks = 0;
+
+    events.forEach(e => {
+      visitorIds.add(e.visitorId);
+      if (e.action === 'page_view') pageViews++;
+      if (e.action === 'popup_shown') popupShown++;
+      if (e.action === 'whatsapp_click') whatsappClicks++;
+      if (e.action === 'call_click') callClicks++;
+    });
+
+    return {
+      events,
+      summary: {
+        total: events.length,
+        uniqueVisitors: visitorIds.size,
+        pageViews,
+        popupShown,
+        whatsappClicks,
+        callClicks
+      }
+    };
+  } catch (error) {
+    console.error('❌ Failed to get visitor events:', error);
+    return { events: [], summary: { total: 0, uniqueVisitors: 0, pageViews: 0, popupShown: 0, whatsappClicks: 0, callClicks: 0 } };
+  }
+}
+
 export class FirestoreService {
   // Utility
   getTimestamp = getTimestamp;
@@ -1250,6 +1470,14 @@ export class FirestoreService {
   updateCategory = updateCategory;
   deleteCategory = deleteCategory;
   seedDefaultCategories = seedDefaultCategories;
+
+  // Engagement operations
+  recordEngagementEvent = recordEngagementEvent;
+  getEngagementStats = getEngagementStats;
+
+  // Visitor operations
+  recordVisitorEvent = recordVisitorEvent;
+  getVisitorEvents = getVisitorEvents;
 
   // Cache management
   invalidateStatsCache = invalidateStatsCache;
@@ -1290,6 +1518,14 @@ export {
   updateCategory,
   deleteCategory,
   seedDefaultCategories,
+
+  // Engagement operations
+  recordEngagementEvent,
+  getEngagementStats,
+
+  // Visitor operations
+  recordVisitorEvent,
+  getVisitorEvents,
 
   // Cache management
   invalidateStatsCache,

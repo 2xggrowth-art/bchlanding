@@ -3,11 +3,11 @@ import { motion } from 'framer-motion';
 import LazyImage from './LazyImage';
 
 const badgeStyles = {
-  'Bestseller': 'bg-primary text-white',
-  'New Arrival': 'bg-green-500 text-white',
-  'Top Pick': 'bg-primary-dark text-white',
-  'Value Pick': 'bg-orange-500 text-white',
-  'Top Rated': 'bg-blue-600 text-white',
+  'Bestseller': 'bg-dark/90 text-white backdrop-blur-sm',
+  'New Arrival': 'bg-dark/90 text-white backdrop-blur-sm',
+  'Top Pick': 'bg-primary/90 text-white backdrop-blur-sm',
+  'Value Pick': 'bg-dark/90 text-white backdrop-blur-sm',
+  'Top Rated': 'bg-dark/90 text-white backdrop-blur-sm',
 };
 
 function ProductCard({ product, onEnquire, onClick }) {
@@ -48,52 +48,54 @@ function ProductCard({ product, onEnquire, onClick }) {
 
   return (
     <motion.div
-      whileHover={{ y: -6, boxShadow: '0 16px 32px rgba(0,0,0,0.12)' }}
-      transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-      className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 flex flex-col h-full cursor-pointer"
+      whileHover={{ y: -4 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      className="group bg-[#FAFAFA] rounded-3xl overflow-hidden flex flex-col h-full cursor-pointer shadow-[0_1px_3px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] transition-shadow duration-700"
       onClick={() => onClick && onClick(product)}
     >
       {/* Image */}
-      <div className={`relative ${isHercules ? 'bg-gray-50' : 'bg-white'}`}>
-        <LazyImage
-          src={displayImage}
-          alt={name}
-          className={`w-full aspect-[4/3] ${isHercules ? 'p-4' : ''}`}
-          objectFit={isHercules ? "contain" : "cover"}
-        />
+      <div className={`relative overflow-hidden ${isHercules ? 'bg-[#F5F5F7]' : 'bg-[#F5F5F7]'}`}>
+        <div className="overflow-hidden">
+          <LazyImage
+            src={displayImage}
+            alt={name}
+            className={`w-full aspect-[4/3] transition-transform duration-700 ease-out group-hover:scale-105 ${isHercules ? 'p-4' : ''}`}
+            objectFit={isHercules ? "contain" : "cover"}
+          />
+        </div>
         {badge && (
-          <span className={`absolute top-2 left-2 text-[10px] sm:text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide ${badgeStyles[badge] || 'bg-gray-500 text-white'}`}>
+          <span className={`absolute top-3 left-3 text-[10px] sm:text-[11px] font-medium px-3 py-1 rounded-full tracking-wide ${badgeStyles[badge] || 'bg-dark/80 text-white backdrop-blur-sm'}`}>
             {badge}
           </span>
         )}
         {discount > 0 && (
-          <span className="absolute top-2 right-2 text-[10px] sm:text-xs font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
+          <span className="absolute top-3 right-3 text-[10px] sm:text-[11px] font-medium px-2.5 py-1 rounded-full bg-primary/90 text-white backdrop-blur-sm">
             {discount}% OFF
           </span>
         )}
       </div>
 
       {/* Content */}
-      <div className="p-3 sm:p-4 flex flex-col flex-1 gap-1.5 sm:gap-2">
+      <div className="p-4 sm:p-5 flex flex-col flex-1 gap-2">
         {/* Name */}
-        <h3 className="text-sm sm:text-base font-bold text-dark line-clamp-2 leading-snug font-sans">
+        <h3 className="text-sm sm:text-[15px] font-semibold text-dark line-clamp-2 leading-snug tracking-tight">
           {name}
         </h3>
 
         {/* Short description */}
         {shortDescription && (
-          <p className="text-[11px] sm:text-xs text-gray-text leading-relaxed line-clamp-1">
+          <p className="text-[11px] sm:text-xs text-gray-text/70 leading-relaxed line-clamp-1">
             {shortDescription}
           </p>
         )}
 
         {/* Price */}
-        <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap mt-0.5">
-          <span className="text-lg sm:text-xl font-bold text-primary">
+        <div className="flex items-baseline gap-2 flex-wrap mt-1">
+          <span className="text-lg sm:text-xl font-semibold text-dark tracking-tight">
             {'\u20b9'}{price.toLocaleString('en-IN')}
           </span>
           {discount > 0 && (
-            <span className="text-[11px] sm:text-sm text-gray-text line-through">
+            <span className="text-[11px] sm:text-xs text-gray-text/50 line-through font-light">
               {'\u20b9'}{mrp.toLocaleString('en-IN')}
             </span>
           )}
@@ -101,7 +103,7 @@ function ProductCard({ product, onEnquire, onClick }) {
 
         {/* Color swatches */}
         {colors?.length > 0 && (
-          <div className="flex items-center gap-2 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-1">
             {colors.map((color, idx) => (
               <button
                 key={color.name}
@@ -110,28 +112,31 @@ function ProductCard({ product, onEnquire, onClick }) {
                   e.stopPropagation();
                   setSelectedColor(idx);
                 }}
-                className={`w-6 h-6 sm:w-6 sm:h-6 rounded-full border-2 transition-all duration-200 flex-shrink-0 ${
+                className={`w-5 h-5 sm:w-[22px] sm:h-[22px] rounded-full transition-all duration-300 flex-shrink-0 ${
                   selectedColor === idx
-                    ? 'border-dark scale-110 ring-1 ring-dark/20'
-                    : 'border-gray-200 hover:border-gray-400'
+                    ? 'ring-2 ring-dark/30 ring-offset-2 ring-offset-[#FAFAFA] scale-110'
+                    : 'ring-1 ring-gray-200 hover:ring-gray-300'
                 }`}
                 style={{ backgroundColor: color.hex }}
               />
             ))}
-            <span className="text-[10px] sm:text-xs text-gray-text ml-0.5 truncate">
+            <span className="text-[10px] sm:text-[11px] text-gray-text/60 ml-1 truncate font-light">
               {colors[selectedColor]?.name}
             </span>
           </div>
         )}
 
         {/* Specs chips */}
-        <div className="flex flex-wrap gap-1 sm:gap-1.5 mt-1">
+        <div className="flex flex-wrap gap-1.5 mt-1">
           {displaySpecs.slice(0, 3).map((spec) => (
             <span
               key={spec.key}
-              className="inline-flex items-center gap-0.5 sm:gap-1 text-[9px] sm:text-xs bg-gray-bg text-gray-text rounded-full px-1.5 sm:px-2 py-0.5"
+              className="inline-flex items-center text-[9px] sm:text-[11px] text-gray-text/60 font-light"
             >
               {spec.label}
+              {spec.key !== displaySpecs.slice(0, 3).at(-1)?.key && (
+                <span className="ml-1.5 text-gray-200">|</span>
+              )}
             </span>
           ))}
         </div>
@@ -140,13 +145,13 @@ function ProductCard({ product, onEnquire, onClick }) {
         <div className="flex-1" />
 
         {/* CTAs */}
-        <div className="mt-2 flex gap-1.5 sm:gap-2">
+        <div className="mt-3 flex gap-2">
           <button
             onClick={(e) => {
               e.stopPropagation();
               onClick && onClick(product);
             }}
-            className="flex-1 py-2.5 sm:py-2.5 rounded-full border-2 border-dark text-dark text-[11px] sm:text-sm font-bold transition-colors duration-200 hover:bg-dark hover:text-white active:bg-dark active:text-white min-h-[40px]"
+            className="flex-1 py-2.5 rounded-full border border-gray-200 text-dark text-[11px] sm:text-xs font-medium transition-all duration-300 hover:border-dark hover:bg-dark hover:text-white min-h-[40px]"
           >
             Details
           </button>
@@ -155,7 +160,7 @@ function ProductCard({ product, onEnquire, onClick }) {
               e.stopPropagation();
               onEnquire(product);
             }}
-            className="flex-1 py-2.5 sm:py-2.5 rounded-full bg-dark text-white text-[11px] sm:text-sm font-bold transition-colors duration-200 hover:bg-primary active:bg-primary min-h-[40px]"
+            className="flex-1 py-2.5 rounded-full bg-dark text-white text-[11px] sm:text-xs font-medium transition-all duration-300 hover:bg-primary min-h-[40px]"
           >
             Enquire
           </button>

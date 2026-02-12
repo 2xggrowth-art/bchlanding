@@ -117,7 +117,7 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-gray-bg">
       {/* Hero Section */}
-      <section className="bg-dark text-white py-8 sm:py-16 md:py-20">
+      <section className="bg-dark text-white pt-[80px] sm:pt-[100px] pb-8 sm:pb-16 md:pb-20">
         <div className="max-w-6xl mx-auto px-4 text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -186,9 +186,18 @@ export default function ProductsPage() {
       <section className="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-10 md:py-12">
         {/* Loading State */}
         {loading && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/30 border-t-primary mb-4" />
-            <p className="text-gray-text text-sm">Loading products...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100">
+                <div className="animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] w-full aspect-[4/3]" style={{ animation: 'shimmer 1.5s ease-in-out infinite' }} />
+                <div className="p-4 space-y-3">
+                  <div className="animate-pulse bg-gray-200 h-4 w-3/4 rounded" />
+                  <div className="animate-pulse bg-gray-200 h-3 w-1/2 rounded" />
+                  <div className="animate-pulse bg-gray-200 h-5 w-20 rounded" />
+                  <div className="animate-pulse bg-gray-200 h-10 w-full rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
 
@@ -527,10 +536,10 @@ function EnquiryModal({ product, onClose }) {
                   {status === 'loading' ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />
-                      Submitting...
+                      Sending...
                     </>
                   ) : (
-                    'Submit Enquiry'
+                    'Get Expert Advice'
                   )}
                 </button>
               </form>

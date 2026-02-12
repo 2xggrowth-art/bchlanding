@@ -47,7 +47,11 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { leadId, amount, currency = 'INR' } = req.body;
+    const { leadId } = req.body;
+
+    // Server-enforced price — never trust client-supplied amount
+    const amount = 99; // ₹99 test ride fee
+    const currency = 'INR';
 
     // Validation
     if (!leadId) {
@@ -55,14 +59,6 @@ export default async function handler(req, res) {
         success: false,
         error: 'Validation Error',
         message: 'leadId is required'
-      });
-    }
-
-    if (!amount || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Validation Error',
-        message: 'Valid amount is required'
       });
     }
 
@@ -129,7 +125,7 @@ export default async function handler(req, res) {
     return res.status(500).json({
       success: false,
       error: 'Internal Server Error',
-      message: error.message || 'Failed to create Razorpay order'
+      message: 'Failed to create payment order. Please try again.'
     });
   }
 }

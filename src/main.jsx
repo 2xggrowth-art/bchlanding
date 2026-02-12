@@ -1,8 +1,10 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
+import { PageSkeleton } from './components/Skeleton';
 import './index.css';
 
 // Lazy load pages for code splitting
@@ -15,24 +17,44 @@ const ProductsPage = lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const AdminPanel = lazy(() => import('./AdminPanel'));
 
-// Loading component
-const PageLoader = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
+// Skeleton-based loading (replaces spinner)
+const PageLoader = () => <PageSkeleton />;
 
-function App() {
+// Scroll to top on route change
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
+
+// Page transition wrapper
+function PageTransition({ children }) {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2, ease: 'easeInOut' }}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function AppRoutes() {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        {/* Main Landing Page */}
           {/* Main Landing Page */}
           <Route
             path="/"
             element={
-              <Layout>
-                <MainLandingPage />
+              <Layout headerTransparent={true}>
+                <PageTransition><MainLandingPage /></PageTransition>
               </Layout>
             }
           />
@@ -42,7 +64,7 @@ function App() {
             path="/test-ride/*"
             element={
               <Layout headerTransparent showFooter>
-                <TestRideLandingPage />
+                <PageTransition><TestRideLandingPage /></PageTransition>
               </Layout>
             }
           />
@@ -51,8 +73,8 @@ function App() {
           <Route
             path="/products"
             element={
-              <Layout>
-                <ProductsPage />
+              <Layout headerTransparent>
+                <PageTransition><ProductsPage /></PageTransition>
               </Layout>
             }
           />
@@ -62,7 +84,7 @@ function App() {
             path="/products/:productId"
             element={
               <Layout>
-                <ProductDetailPage />
+                <PageTransition><ProductDetailPage /></PageTransition>
               </Layout>
             }
           />
@@ -78,7 +100,7 @@ function App() {
             path="/privacy-policy"
             element={
               <Layout>
-                <PrivacyPolicy />
+                <PageTransition><PrivacyPolicy /></PageTransition>
               </Layout>
             }
           />
@@ -86,7 +108,7 @@ function App() {
             path="/terms"
             element={
               <Layout>
-                <Terms />
+                <PageTransition><Terms /></PageTransition>
               </Layout>
             }
           />
@@ -94,7 +116,7 @@ function App() {
             path="/disclaimer"
             element={
               <Layout>
-                <Disclaimer />
+                <PageTransition><Disclaimer /></PageTransition>
               </Layout>
             }
           />
@@ -105,6 +127,16 @@ function App() {
           {/* 404 - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <Suspense fallback={<PageLoader />}>
+        <AppRoutes />
       </Suspense>
     </BrowserRouter>
   );

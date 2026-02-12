@@ -113,13 +113,28 @@ export default function ProductDetailPage() {
     return () => { cancelled = true; };
   }, [productId]);
 
-  // Loading state
+  // Loading state - skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-bg flex items-center justify-center px-4">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/30 border-t-primary mx-auto mb-4" />
-          <p className="text-gray-text text-sm">Loading product...</p>
+      <div className="min-h-screen bg-gray-bg px-4 py-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] w-full aspect-square rounded-2xl" style={{ animation: 'shimmer 1.5s ease-in-out infinite' }} />
+            <div className="space-y-4">
+              <div className="animate-pulse bg-gray-200 h-8 w-3/4 rounded" />
+              <div className="animate-pulse bg-gray-200 h-5 w-1/2 rounded" />
+              <div className="animate-pulse bg-gray-200 h-10 w-32 rounded" />
+              <div className="space-y-2">
+                <div className="animate-pulse bg-gray-200 h-4 w-full rounded" />
+                <div className="animate-pulse bg-gray-200 h-4 w-5/6 rounded" />
+                <div className="animate-pulse bg-gray-200 h-4 w-4/6 rounded" />
+              </div>
+              <div className="flex gap-3 pt-4">
+                <div className="animate-pulse bg-gray-200 h-12 w-40 rounded-full" />
+                <div className="animate-pulse bg-gray-200 h-12 w-40 rounded-full" />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -209,6 +224,14 @@ export default function ProductDetailPage() {
   // Active gallery based on selected color
   const activeGallery = selectedColor ? getImagesForColor(selectedColor) : allGalleryImages;
 
+  // Preload all gallery images so switching is instant
+  useEffect(() => {
+    activeGallery.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [activeGallery]);
+
   // Handle color selection
   const handleColorSelect = (colorName) => {
     setSelectedColor(colorName);
@@ -281,6 +304,7 @@ export default function ProductDetailPage() {
                     alt={`${product.name}${selectedColor ? ` - ${selectedColor}` : ''}`}
                     className={`w-full aspect-square sm:aspect-[4/3] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
                     objectFit={(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'contain' : 'cover'}
+                    eager
                   />
                 </motion.div>
               </AnimatePresence>
@@ -932,7 +956,7 @@ function EnquiryModal({ product, onClose }) {
                   <input id="detail-email" type="email" value={formData.email} onChange={(e) => handleChange('email', e.target.value)} className="w-full px-3 py-2.5 rounded-xl bg-gray-50 border-2 border-gray-200 focus:border-primary text-sm transition-colors outline-none" placeholder="you@example.com" autoComplete="email" disabled={status === 'loading'} />
                 </div>
                 <button type="submit" disabled={status === 'loading'} className="w-full py-3 rounded-full bg-dark text-white font-bold text-sm transition-colors hover:bg-primary disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {status === 'loading' ? (<><div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />Submitting...</>) : 'Submit Enquiry'}
+                  {status === 'loading' ? (<><div className="animate-spin rounded-full h-4 w-4 border-2 border-white/30 border-t-white" />Sending...</>) : 'Get Expert Advice'}
                 </button>
               </form>
               <p className="text-[10px] text-gray-text text-center mt-3">Your information is secure and will only be used to assist your purchase.</p>

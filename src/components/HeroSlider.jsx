@@ -178,7 +178,7 @@ export default function HeroSlider() {
   ];
 
   return (
-    <section className="relative bg-gradient-to-b from-dark to-dark-light text-white overflow-hidden">
+    <section className="relative bg-gradient-to-b from-dark to-dark-light text-white overflow-hidden pt-[72px] sm:pt-[80px]">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}

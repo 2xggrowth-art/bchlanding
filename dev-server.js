@@ -45,6 +45,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 const app = express();
 app.use(express.json());
+app.use(express.text({ type: 'text/plain' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Request Logger Middleware
@@ -184,6 +185,27 @@ app.all('/api/categories', async (req, res) => {
     await handler(req, res);
   } catch (error) {
     console.error('❌ /api/categories error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Analytics API routes
+app.all('/api/analytics/engagement', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/analytics/engagement.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/analytics/engagement error:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+app.all('/api/analytics/visitor', async (req, res) => {
+  try {
+    const handler = await loadHandler('./api/analytics/visitor.js');
+    await handler(req, res);
+  } catch (error) {
+    console.error('❌ /api/analytics/visitor error:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
