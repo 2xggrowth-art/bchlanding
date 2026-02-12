@@ -20,20 +20,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    // GET - List all categories (public)
+    // GET - List all categories (public, cached server-side + CDN)
     if (req.method === 'GET') {
-      const categories = await listCategories();
+      let categories = await listCategories(); // Uses server-side cache (10 min)
 
-      // Seed default categories if none exist
+      // Seed default categories if none exist (one-time only)
       if (categories.length === 0) {
         await seedDefaultCategories();
-        const seededCategories = await listCategories();
-        return res.status(200).json({
-          success: true,
-          data: seededCategories,
-          seeded: true
-        });
+        categories = await listCategories();
       }
+
+      // CDN cache for 10 min (categories rarely change)
+      res.setHeader('Cache-Control', 'public, s-maxage=600, max-age=60');
 
       return res.status(200).json({
         success: true,

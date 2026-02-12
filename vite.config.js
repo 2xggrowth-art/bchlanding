@@ -26,25 +26,20 @@ export default defineConfig({
     // Manual chunk splitting for better caching
     rollupOptions: {
       output: {
-        // manualChunks(id) {
-        //   // Vendor chunks for node_modules
-        //   if (id.includes('node_modules')) {
-        //     // React ecosystem in one chunk
-        //     if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
-        //       return 'react-vendor';
-        //     }
-        //     // Firebase in separate chunk (it's large)
-        //     if (id.includes('firebase')) {
-        //       return 'firebase-vendor';
-        //     }
-        //     // Framer Motion in separate chunk (it's large)
-        //     if (id.includes('framer-motion')) {
-        //       return 'animation-vendor';
-        //     }
-        //     // All other dependencies go to vendor chunk
-        //     return 'vendor';
-        //   }
-        // }
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'react-vendor';
+            }
+            if (id.includes('firebase')) {
+              return 'firebase-vendor';
+            }
+            if (id.includes('framer-motion')) {
+              return 'animation-vendor';
+            }
+            return 'vendor';
+          }
+        }
       }
     },
 

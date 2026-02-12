@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion';
 
-export default function Testimonials() {
-  const testimonials = [
+const testimonials = [
     {
       name: "Rahul Sharma",
       location: "Whitefield, Bangalore",
@@ -29,8 +28,9 @@ export default function Testimonials() {
       image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&auto=format",
       verified: true
     }
-  ];
+];
 
+export default function Testimonials() {
   return (
     <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white">
       <div className="max-w-6xl mx-auto">

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { motion } from 'framer-motion';
 import LazyImage from './LazyImage';
 
@@ -10,16 +10,31 @@ const badgeStyles = {
   'Top Rated': 'bg-blue-600 text-white',
 };
 
-export default function ProductCard({ product, onEnquire, onClick }) {
-  const { name, price, mrp, image, specs, badge, shortDescription, colors, subCategory } = product;
+function ProductCard({ product, onEnquire, onClick }) {
+  const { name, price, mrp, image, specs, badge, shortDescription, colors, subCategory, gallery } = product;
   const discount = mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
 
   const [selectedColor, setSelectedColor] = useState(0);
 
-  // Use per-color image if available, otherwise default image
-  const displayImage = colors?.length > 0 && colors[selectedColor]?.image
-    ? colors[selectedColor].image
-    : image;
+  // Find the first gallery image matching the selected color
+  const getImageForColor = (colorIdx) => {
+    if (!colors?.length || !gallery?.length) return image;
+    const color = colors[colorIdx];
+    if (!color) return image;
+    if (color.urlKey) {
+      const key = color.urlKey.toLowerCase();
+      const match = gallery.find((url) => url.toLowerCase().includes(key));
+      if (match) return match;
+    }
+    const keywords = color.name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+    const match = gallery.find((url) => {
+      const urlLower = url.toLowerCase();
+      return keywords.some((kw) => kw.length >= 3 && urlLower.includes(kw));
+    });
+    return match || image;
+  };
+
+  const displayImage = getImageForColor(selectedColor);
 
   // Check if this is a Hercules product (uses illustration-style images)
   const isHercules = subCategory === 'hercules';
@@ -149,3 +164,5 @@ export default function ProductCard({ product, onEnquire, onClick }) {
     </motion.div>
   );
 }
+
+export default memo(ProductCard, (prev, next) => prev.product.id === next.product.id);

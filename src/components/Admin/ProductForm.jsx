@@ -9,6 +9,8 @@ export default function ProductForm({ product, categories = [], onClose }) {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
   const [uploading, setUploading] = useState(false);
+  const [galleryUploading, setGalleryUploading] = useState(false);
+  const [galleryUploadProgress, setGalleryUploadProgress] = useState({ done: 0, total: 0 });
 
   const [formData, setFormData] = useState({
     id: product?.id || '',
@@ -89,6 +91,53 @@ export default function ProductForm({ product, categories = [], onClose }) {
     reader.readAsDataURL(file);
   };
 
+  const handleGalleryUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validate all files
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const invalid = files.filter(f => !allowedTypes.includes(f.type) || f.size > maxSize);
+    if (invalid.length > 0) {
+      setError(`${invalid.length} file(s) skipped — only JPG/PNG/WebP under 5MB allowed.`);
+      const valid = files.filter(f => allowedTypes.includes(f.type) && f.size <= maxSize);
+      if (valid.length === 0) return;
+      files.length = 0;
+      files.push(...valid);
+    }
+
+    setGalleryUploading(true);
+    setGalleryUploadProgress({ done: 0, total: files.length });
+    setError(null);
+
+    const uploadedUrls = [];
+    const failed = [];
+
+    for (const file of files) {
+      try {
+        const url = await adminAPI.uploadProductImage(file);
+        uploadedUrls.push(url);
+      } catch (err) {
+        failed.push(file.name);
+      }
+      setGalleryUploadProgress(prev => ({ ...prev, done: prev.done + 1 }));
+    }
+
+    // Add uploaded URLs to gallery
+    if (uploadedUrls.length > 0) {
+      handleChange('gallery', [...formData.gallery, ...uploadedUrls]);
+    }
+
+    if (failed.length > 0) {
+      setError(`Failed to upload: ${failed.join(', ')}`);
+    }
+
+    setGalleryUploading(false);
+    // Reset file input
+    e.target.value = '';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -133,20 +182,20 @@ export default function ProductForm({ product, categories = [], onClose }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 overflow-y-auto"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <motion.div
-        initial={{ scale: 0.9, y: 20 }}
+        initial={{ scale: 0.95, y: 20 }}
         animate={{ scale: 1, y: 0 }}
-        exit={{ scale: 0.9, y: 20 }}
-        className="bg-white rounded-[20px] w-full max-w-4xl my-8"
+        exit={{ scale: 0.95, y: 20 }}
+        className="bg-white rounded-t-2xl sm:rounded-[20px] w-full max-w-4xl sm:my-8 max-h-[95vh] sm:max-h-none flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
-          <h2 className="font-display text-2xl text-dark uppercase tracking-wide">
-            {isEditing ? 'Edit Product' : 'Add New Product'}
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+          <h2 className="font-display text-lg sm:text-2xl text-dark uppercase tracking-wide">
+            {isEditing ? 'Edit Product' : 'Add Product'}
           </h2>
           <button
             onClick={onClose}
@@ -160,7 +209,7 @@ export default function ProductForm({ product, categories = [], onClose }) {
 
         {/* Error Banner */}
         {error && (
-          <div className="mx-6 mt-6 p-4 bg-red-50 border border-red-200 rounded-[20px] flex items-center gap-3">
+          <div className="mx-4 sm:mx-6 mt-4 sm:mt-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-xl sm:rounded-[20px] flex items-center gap-3">
             <svg className="w-6 h-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
             </svg>
@@ -170,25 +219,25 @@ export default function ProductForm({ product, categories = [], onClose }) {
 
         <form onSubmit={handleSubmit} noValidate>
           {/* Tabs */}
-          <div className="flex border-b border-gray-200 px-6">
+          <div className="flex border-b border-gray-200 px-2 sm:px-6 overflow-x-auto">
             {tabs.map(tab => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 font-bold text-sm uppercase tracking-wider transition-all border-b-2 ${activeTab === tab.id
+                className={`px-2.5 sm:px-4 py-2.5 sm:py-3 font-bold text-[11px] sm:text-sm uppercase tracking-wider transition-all border-b-2 whitespace-nowrap ${activeTab === tab.id
                     ? 'border-primary text-primary'
                     : 'border-transparent text-gray-text hover:text-dark'
                   }`}
               >
-                <span className="mr-2">{tab.icon}</span>
+                <span className="mr-1 sm:mr-2">{tab.icon}</span>
                 {tab.label}
               </button>
             ))}
           </div>
 
           {/* Form Content */}
-          <div className="p-6 max-h-[60vh] overflow-y-auto">
+          <div className="p-4 sm:p-6 max-h-[60vh] overflow-y-auto flex-1">
             {/* Basic Info Tab */}
             {activeTab === 'basic' && (
               <div className="space-y-4">
@@ -297,7 +346,7 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       <input
                         type="file"
                         id="image-upload"
-                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.jpe,.png,.webp"
                         onChange={handleImageUpload}
                         className="hidden"
                       />
@@ -719,14 +768,49 @@ export default function ProductForm({ product, categories = [], onClose }) {
                     <label className="block text-xs font-bold text-gray-text uppercase tracking-wide">
                       Gallery Images
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => handleChange('gallery', [...formData.gallery, ''])}
-                      className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
-                    >
-                      + Add Image URL
-                    </button>
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        id="gallery-upload"
+                        accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.jpe,.png,.webp"
+                        multiple
+                        onChange={handleGalleryUpload}
+                        className="hidden"
+                        disabled={galleryUploading}
+                      />
+                      <label
+                        htmlFor="gallery-upload"
+                        className={`px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold hover:bg-green-200 transition-colors cursor-pointer ${galleryUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {galleryUploading
+                          ? `Uploading ${galleryUploadProgress.done}/${galleryUploadProgress.total}...`
+                          : '+ Upload Images'}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleChange('gallery', [...formData.gallery, ''])}
+                        className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors"
+                      >
+                        + Add URL
+                      </button>
+                    </div>
                   </div>
+
+                  {/* Upload progress bar */}
+                  {galleryUploading && (
+                    <div className="mb-3">
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-green-500 rounded-full transition-all duration-300"
+                          style={{ width: `${galleryUploadProgress.total > 0 ? (galleryUploadProgress.done / galleryUploadProgress.total) * 100 : 0}%` }}
+                        />
+                      </div>
+                      <p className="text-[10px] text-gray-text mt-1">
+                        Uploading {galleryUploadProgress.done} of {galleryUploadProgress.total} images to Firebase Storage...
+                      </p>
+                    </div>
+                  )}
+
                   {formData.gallery.length === 0 ? (
                     <p className="text-xs text-gray-text italic">No gallery images. Main image will be used.</p>
                   ) : (
@@ -761,7 +845,8 @@ export default function ProductForm({ product, categories = [], onClose }) {
                     </div>
                   )}
                   <p className="text-[10px] text-gray-text mt-2">
-                    {formData.gallery.length} image{formData.gallery.length !== 1 ? 's' : ''} in gallery
+                    {formData.gallery.length} image{formData.gallery.length !== 1 ? 's' : ''} in gallery.
+                    Select multiple files at once to upload them all.
                   </p>
                 </div>
 
@@ -777,7 +862,7 @@ export default function ProductForm({ product, categories = [], onClose }) {
           </div>
 
           {/* Footer Actions */}
-          <div className="flex gap-3 p-6 border-t border-gray-200">
+          <div className="flex gap-3 p-4 sm:p-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
@@ -788,7 +873,7 @@ export default function ProductForm({ product, categories = [], onClose }) {
             </button>
             <button
               type="submit"
-              disabled={loading || uploading}
+              disabled={loading || uploading || galleryUploading}
               className="flex-1 px-6 py-3 rounded-full bg-primary text-white hover:bg-primary-dark transition-all duration-300 font-bold text-sm uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Saving...' : isEditing ? 'Update Product' : 'Create Product'}

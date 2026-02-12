@@ -76,14 +76,14 @@ export default async function handler(req, res) {
         leadId: leadId
       });
 
-      // Update lead with failed payment
+      // Update lead with failed payment (skip existence check — already verified above)
       await updateLeadPayment(leadId, {
         status: 'FAILED',
         orderId: razorpay_order_id,
         transactionId: razorpay_payment_id,
         method: 'RAZORPAY',
         errorMessage: 'Payment signature verification failed'
-      });
+      }, { skipExistenceCheck: true });
 
       return res.status(400).json({
         success: false,
@@ -92,13 +92,13 @@ export default async function handler(req, res) {
       });
     }
 
-    // Signature is valid - update lead with successful payment
+    // Signature is valid - update lead with successful payment (skip existence check)
     const updatedLead = await updateLeadPayment(leadId, {
       status: 'PAID',
       orderId: razorpay_order_id,
       transactionId: razorpay_payment_id,
       method: 'RAZORPAY'
-    });
+    }, { skipExistenceCheck: true });
 
     console.log('✅ Payment verified successfully:', {
       orderId: razorpay_order_id,

@@ -6,7 +6,7 @@ import { X, Phone, Mail, Calendar, Package, CreditCard, MapPin, FileText } from 
  * Responsive Leads Table Component
  * - Desktop: Full table with all columns
  * - Mobile: Stripped down to Name, Phone, Status
- * - Double-click row to see full details in modal
+ * - Click/tap row to see full details in modal
  */
 export default function LeadsTable({
   leads,
@@ -18,24 +18,10 @@ export default function LeadsTable({
   handleDeleteLead
 }) {
   const [selectedLead, setSelectedLead] = useState(null);
-  const [touchStartTime, setTouchStartTime] = useState(null);
 
-  // Handle row click/touch to open detail modal
+  // Handle row click/tap to open detail modal
   const handleRowClick = (lead) => {
     setSelectedLead(lead);
-  };
-
-  // Handle touch events for mobile
-  const handleTouchStart = () => {
-    setTouchStartTime(Date.now());
-  };
-
-  const handleTouchEnd = (lead) => {
-    const touchDuration = Date.now() - touchStartTime;
-    // If touch duration < 200ms, treat as tap (open modal)
-    if (touchDuration < 200) {
-      setSelectedLead(lead);
-    }
   };
 
   const closeModal = () => {
@@ -65,20 +51,20 @@ export default function LeadsTable({
   return (
     <>
       {/* Responsive Table Container */}
-      <div className="bg-white rounded-[20px] shadow-sm border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-xl sm:rounded-[20px] shadow-sm border border-gray-200 overflow-clip">
+        <div className="lg:overflow-x-auto">
           <table className="w-full">
             {/* Sticky Header */}
             <thead className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-10">
               <tr>
                 {/* Always visible columns */}
-                <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
+                <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
+                <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
                   Phone
                 </th>
-                <th className="px-4 lg:px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
+                <th className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
                   Status
                 </th>
 
@@ -115,18 +101,16 @@ export default function LeadsTable({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.02 }}
-                  onDoubleClick={() => handleRowClick(lead)}
-                  onTouchStart={handleTouchStart}
-                  onTouchEnd={() => handleTouchEnd(lead)}
+                  onClick={() => handleRowClick(lead)}
                   className={`
                     hover:bg-gray-50 transition-colors duration-200 cursor-pointer
                     ${lead.category === 'Test Ride' || lead.category === '99 Offer' ? 'bg-blue-50/30 border-l-4 border-blue-500' : ''}
                     ${lead.category === 'Contact' ? 'bg-red-50/30 border-l-4 border-red-500' : ''}
                   `}
-                  title="Double-click for details"
+                  title="Click for details"
                 >
                   {/* Name Column - Always visible */}
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                     <div className="font-bold text-dark text-sm lg:text-base">{lead.name}</div>
                     {lead.email && (
                       <div className="text-xs text-gray-text lowercase hidden lg:block mt-0.5">{lead.email}</div>
@@ -143,7 +127,7 @@ export default function LeadsTable({
                   </td>
 
                   {/* Phone Column - Always visible */}
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                     <a
                       href={`tel:${lead.phone}`}
                       onClick={(e) => e.stopPropagation()}
@@ -155,7 +139,7 @@ export default function LeadsTable({
                   </td>
 
                   {/* Status Column - Always visible */}
-                  <td className="px-4 lg:px-6 py-4">
+                  <td className="px-2 sm:px-4 lg:px-6 py-3 sm:py-4">
                     <span className={`px-2.5 lg:px-3 py-1 rounded-full text-[10px] lg:text-xs font-bold uppercase tracking-wide border inline-block ${getStatusBadge(lead.payment?.status || 'UNPAID')}`}>
                       {lead.payment?.status || 'UNPAID'}
                     </span>
@@ -183,6 +167,11 @@ export default function LeadsTable({
                       {/* Requirements Column - Desktop only (lg+) */}
                       <td className="hidden lg:table-cell px-6 py-4">
                         <div className="flex flex-wrap gap-1 max-w-xs">
+                          {lead.message && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 max-w-[200px] truncate">
+                              {lead.message}
+                            </span>
+                          )}
                           {lead.quizAnswers && Object.entries(lead.quizAnswers).slice(0, 2).map(([key, value]) => (
                             <span
                               key={key}
@@ -380,11 +369,21 @@ export default function LeadsTable({
                       </div>
                       <div>
                         <p className="text-xs text-gray-text uppercase font-bold">Amount</p>
-                        <p className="text-lg font-bold text-dark">₹{(selectedLead.payment.amount / 100).toFixed(2)}</p>
+                        <p className="text-lg font-bold text-dark">₹{selectedLead.payment.amount}</p>
                       </div>
                     </div>
                   )}
                 </div>
+
+                {/* Message (from contact forms) */}
+                {selectedLead.message && (
+                  <div className="bg-gray-50 rounded-[20px] p-4 space-y-3">
+                    <h3 className="font-bold text-dark uppercase text-sm tracking-wide border-b border-gray-200 pb-2">
+                      Message
+                    </h3>
+                    <p className="text-sm text-dark leading-relaxed whitespace-pre-wrap">{selectedLead.message}</p>
+                  </div>
+                )}
 
                 {/* Requirements/Quiz Answers */}
                 {selectedLead.quizAnswers && Object.keys(selectedLead.quizAnswers).length > 0 && (

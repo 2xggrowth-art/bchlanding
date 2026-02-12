@@ -1,8 +1,7 @@
 import { motion } from 'framer-motion';
 import CTAButton from './CTAButton';
 
-export default function SocialProof({ onCTAClick }) {
-  const socialStats = [
+const socialStats = [
     {
       platform: "YouTube",
       icon: (
@@ -27,8 +26,9 @@ export default function SocialProof({ onCTAClick }) {
       subtext: "Active Community",
       link: "https://www.instagram.com/bharathcyclehub?igsh=bGJqNG5qZHRsMmdl"
     }
-  ];
+];
 
+export default function SocialProof({ onCTAClick }) {
   return (
     <section className="bg-dark-light relative overflow-hidden">
       <div className="py-8 sm:py-12 px-4 sm:px-6">

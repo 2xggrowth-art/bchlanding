@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useNavigate, useNavigationType } from 'react-router-dom';
 import { categories } from '../data/products';
@@ -100,6 +100,8 @@ export default function ProductsPage() {
       navigate(`/products?category=${activeCategory}&sub=${subSlug}`, { replace: true });
     }
   };
+
+  const handleProductClick = useCallback((p) => navigate(`/products/${p.id}`), [navigate]);
 
   const filteredProducts = useMemo(() => {
     let result = products;
@@ -231,7 +233,7 @@ export default function ProductsPage() {
                     <ProductCard
                       product={product}
                       onEnquire={setEnquiryProduct}
-                      onClick={(p) => navigate(`/products/${p.id}`)}
+                      onClick={handleProductClick}
                     />
                   </motion.div>
                 ))}

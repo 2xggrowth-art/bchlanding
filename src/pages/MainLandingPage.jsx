@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
@@ -48,26 +48,21 @@ function ExploreCollection() {
     return () => { cancelled = true; };
   }, []);
 
-  const featuredProducts = useMemo(() => {
-    return localProducts.filter(
+  const loopProducts = useMemo(() => {
+    const featured = localProducts.filter(
       (p) => p.badge === 'Bestseller' || p.badge === 'Top Pick' || p.badge === 'New Arrival' || p.badge === 'Value Pick'
     ).slice(0, 8);
+    const base = featured.length > 0 ? featured : localProducts.slice(0, 8);
+    return [...base, ...base];
   }, [localProducts]);
 
-  const featuredFallback = useMemo(() => {
-    return featuredProducts.length > 0 ? featuredProducts : localProducts.slice(0, 8);
-  }, [featuredProducts, localProducts]);
-
-  // Double the products to create a seamless loop
-  const loopProducts = useMemo(() => [...featuredFallback, ...featuredFallback], [featuredFallback]);
-
-  const handleEnquire = () => {
+  const handleEnquire = useCallback(() => {
     navigate('/products');
-  };
+  }, [navigate]);
 
-  const handleDetail = (product) => {
+  const handleDetail = useCallback((product) => {
     navigate(`/products/${product.id}`);
-  };
+  }, [navigate]);
 
   return (
     <section

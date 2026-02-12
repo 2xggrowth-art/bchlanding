@@ -4,10 +4,14 @@
  * POST /api/products/import-excel - Parse and import Excel file (admin only)
  *
  * Expected Excel format:
- * | name | category | price | stock | description | ... |
+ * | name | category | price | stock | description | images | ... |
+ *
+ * Images column accepts:
+ * - Full URLs (https://...)
+ * - Filenames (hero.jpg) — resolved via imageMap field
  */
 
-import { bulkCreateProducts } from '../_lib/firestore-service.js';
+import { bulkImportProducts } from '../_lib/firestore-service.js';
 import { verifyAdmin } from '../_lib/auth-middleware.js';
 import XLSX from 'xlsx';
 import formidable from 'formidable';
@@ -22,9 +26,10 @@ export const config = {
 /**
  * Parse Excel file to JSON
  * @param {Buffer} fileBuffer - Excel file buffer
+ * @param {Object} imageMap - Map of filename → uploaded URL (e.g., { "hero.jpg": "https://storage..." })
  * @returns {Array} Array of product objects
  */
-function parseExcelToProducts(fileBuffer) {
+function parseExcelToProducts(fileBuffer, imageMap = {}) {
   const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
   const sheetName = workbook.SheetNames[0];
   const sheet = workbook.Sheets[sheetName];
@@ -58,10 +63,29 @@ function parseExcelToProducts(fileBuffer) {
         (typeof row.tags === 'string' ? row.tags.split(',').map(t => t.trim()) : row.tags) :
         [];
 
-      // Parse images
-      const images = row.images ?
-        (typeof row.images === 'string' ? row.images.split(',').map(url => ({ url: url.trim(), alt: row.name })) : row.images) :
-        [];
+      // Parse images - accepts URLs or filenames (resolved via imageMap)
+      let images = [];
+      if (row.images && typeof row.images === 'string') {
+        images = row.images.split(',')
+          .map(entry => entry.trim())
+          .filter(entry => entry.length > 0)
+          .map(entry => {
+            // If it's already a URL, use directly
+            if (entry.startsWith('http://') || entry.startsWith('https://')) {
+              return { url: entry, alt: row.name };
+            }
+            // Try to resolve filename via imageMap
+            const resolvedUrl = imageMap[entry] || imageMap[entry.toLowerCase()];
+            if (resolvedUrl) {
+              return { url: resolvedUrl, alt: row.name };
+            }
+            // Skip non-URL, non-mapped entries (placeholder text etc.)
+            return null;
+          })
+          .filter(Boolean);
+      } else if (Array.isArray(row.images)) {
+        images = row.images;
+      }
 
       // Parse specifications
       const specifications = {};
@@ -136,12 +160,6 @@ export default async function handler(req, res) {
     const form = formidable({
       maxFileSize: 10 * 1024 * 1024, // 10MB
       allowEmptyFiles: false,
-      filter: function ({ mimetype }) {
-        // Accept Excel files
-        return mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
-               mimetype === 'application/vnd.ms-excel' ||
-               mimetype === 'text/csv';
-      }
     });
 
     const [fields, files] = await new Promise((resolve, reject) => {
@@ -160,12 +178,23 @@ export default async function handler(req, res) {
       });
     }
 
+    // Parse imageMap from form fields (filename → URL mapping)
+    let imageMap = {};
+    const imageMapRaw = fields.imageMap?.[0] || fields.imageMap;
+    if (imageMapRaw) {
+      try {
+        imageMap = JSON.parse(imageMapRaw);
+      } catch (e) {
+        console.warn('Failed to parse imageMap:', e.message);
+      }
+    }
+
     // Read file buffer
     const fs = await import('fs');
     const fileBuffer = fs.readFileSync(file.filepath);
 
-    // Parse Excel to products
-    const products = parseExcelToProducts(fileBuffer);
+    // Parse Excel to products (with imageMap for filename resolution)
+    const products = parseExcelToProducts(fileBuffer, imageMap);
 
     if (products.length === 0) {
       return res.status(400).json({
@@ -175,7 +204,7 @@ export default async function handler(req, res) {
     }
 
     // Bulk import products
-    const result = await bulkCreateProducts(products);
+    const result = await bulkImportProducts(products);
 
     // Clean up temp file
     fs.unlinkSync(file.filepath);

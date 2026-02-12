@@ -1284,7 +1284,8 @@ export const products = [
       range: "Up to 45 KM on PAS | Up to 30 Km on Throttle",
     },
     colors: [
-      { name: "Yellow", hex: "#FFD700", inStock: true },
+      { name: "Beige", hex: "#C8B99A", urlKey: "Beige", inStock: true },
+      { name: "Blue", hex: "#3B6FA0", urlKey: "Blue", inStock: true },
       { name: "Black", hex: "#222222", urlKey: "black", inStock: false },
       { name: "Grey", hex: "#9E9E9E", urlKey: "grey", inStock: false },
     ],
@@ -1395,7 +1396,7 @@ export const products = [
       { name: "Beige Desert Hawk", hex: "#A49A83", inStock: true },
       { name: "Mint Green Blaze", hex: "#94E0A7", inStock: true },
       { name: "Cherry Red", hex: "rgb(194, 12, 25)", inStock: true, urlKey: "images/red/" },
-      { name: "Ocean Blue", hex: "linear-gradient(to bottom left, #437DBA  50%, #383c3e 50%)", inStock: true, urlKey: "images/yellow" },
+      { name: "Classic Yellow", hex: "linear-gradient(to bottom left, #D4A843  50%, #383c3e 50%)", inStock: true, urlKey: "images/yellow" },
       { name: "Arctic Blue (Mudguard)", hex: "#014261", inStock: true, urlKey: "Blue+with+mudguard" },
       { name: "Ruby Red (Mudguard)", hex: "#D13023", inStock: true, urlKey: "Red+with+mudguard" },
       { name: "Phantom Grey (Mudguard)", hex: "#828282", inStock: true, urlKey: "Grey+with+mudguard" },
@@ -1926,7 +1927,6 @@ export const products = [
     },
     colors: [
       { name: "Aqua", hex: "#25BDAE", inStock: true },
-      { name: "Neon Green", hex: "#EDFF00", inStock: true },
     ],
     gallery: [
       "https://ar-euro.s3.ap-south-1.amazonaws.com/website_images/new-images/product-images/emx/aqua/1.png",

@@ -51,6 +51,7 @@ async function createLead(leadData) {
       name: leadData.name,
       phone: leadData.phone,
       email: leadData.email || null,
+      message: leadData.message || null,
       quizAnswers: leadData.quizAnswers || {},
 
       // Payment info (initially unpaid)
@@ -58,7 +59,7 @@ async function createLead(leadData) {
         status: 'UNPAID',
         transactionId: null,
         merchantTransactionId: null,
-        amount: 9900, // ₹99 in paise
+        amount: 99, // ₹99 in rupees
         currency: 'INR',
         method: null,
         paidAt: null
@@ -82,6 +83,7 @@ async function createLead(leadData) {
     };
 
     await leadsRef.doc(leadId).set(lead);
+    invalidateStatsCache(); // New lead changes stats
 
     console.log(`✅ Lead created: ${leadId}`);
 
@@ -357,15 +359,17 @@ async function getLeadById(leadId) {
  * @param {string} [paymentData.errorMessage] - Error message for failed payments
  * @returns {Promise<Object>} Updated lead
  */
-async function updateLeadPayment(leadId, paymentData) {
+async function updateLeadPayment(leadId, paymentData, { skipExistenceCheck = false } = {}) {
   try {
     const db = getFirestore();
     const leadRef = db.collection('leads').doc(leadId);
 
-    // Check if lead exists
-    const leadDoc = await leadRef.get();
-    if (!leadDoc.exists) {
-      throw new Error(`Lead not found: ${leadId}`);
+    // Skip existence check if caller already verified (saves 1 Firestore read)
+    if (!skipExistenceCheck) {
+      const leadDoc = await leadRef.get();
+      if (!leadDoc.exists) {
+        throw new Error(`Lead not found: ${leadId}`);
+      }
     }
 
     // Update payment info
@@ -405,11 +409,12 @@ async function updateLeadPayment(leadId, paymentData) {
     }
 
     await leadRef.update(updateData);
+    invalidateStatsCache(); // Payment status change affects stats
 
     console.log(`✅ Lead payment updated: ${leadId} - ${paymentData.status}`);
 
-    // Return updated lead
-    return await getLeadById(leadId);
+    // Build return object from update data instead of re-reading (saves 1 read)
+    return { id: leadId, payment: { ...paymentData }, updatedAt: new Date().toISOString() };
 
   } catch (error) {
     console.error('❌ Failed to update lead payment:', error);
@@ -427,15 +432,17 @@ async function updateLeadPayment(leadId, paymentData) {
  * @param {string} [updates.assignedTo] - Assigned admin user ID
  * @returns {Promise<Object>} Updated lead
  */
-async function updateLead(leadId, updates) {
+async function updateLead(leadId, updates, { skipExistenceCheck = false } = {}) {
   try {
     const db = getFirestore();
     const leadRef = db.collection('leads').doc(leadId);
 
-    // Check if lead exists
-    const leadDoc = await leadRef.get();
-    if (!leadDoc.exists) {
-      throw new Error(`Lead not found: ${leadId}`);
+    // Skip existence check if caller already verified (saves 1 Firestore read)
+    if (!skipExistenceCheck) {
+      const leadDoc = await leadRef.get();
+      if (!leadDoc.exists) {
+        throw new Error(`Lead not found: ${leadId}`);
+      }
     }
 
     const updateData = {
@@ -443,12 +450,11 @@ async function updateLead(leadId, updates) {
       updatedAt: getTimestamp()
     };
 
-    console.log(`🔥 Firestore writing update for ${leadId}:`, JSON.stringify(updateData, null, 2));
-
     await leadRef.update(updateData);
 
     console.log(`✅ Lead updated: ${leadId}`);
 
+    // Re-read to return full updated lead (1 read — needed for complete response)
     return await getLeadById(leadId);
 
   } catch (error) {
@@ -467,6 +473,7 @@ async function deleteLead(leadId) {
   try {
     const db = getFirestore();
     await db.collection('leads').doc(leadId).delete();
+    invalidateStatsCache(); // Deleted lead changes stats
 
     console.log(`✅ Lead deleted: ${leadId}`);
 
@@ -486,70 +493,57 @@ async function deleteLead(leadId) {
  *
  * @returns {Promise<Object>} Stats object
  */
-async function getLeadsStats() {
+async function getLeadsStats({ useCache = true } = {}) {
+  // Return cached stats if fresh (saves 5-6 Firestore reads)
+  if (useCache && _statsCache.data && (Date.now() - _statsCache.ts < STATS_TTL)) {
+    return _statsCache.data;
+  }
+
   try {
     const db = getFirestore();
     const leadsRef = db.collection('leads');
 
-    // Use Aggregation Queries for counts (Cost: 1 read batch per aggregation = very cheap)
-    // Note: We avoid aggregation with where clause to prevent composite index requirements
-
-    // 1. Total Leads
-    const totalQuery = leadsRef.count();
-
-    // 2. Status Counts
-    const paidQuery = leadsRef.where('payment.status', '==', 'PAID').count();
-    const unpaidQuery = leadsRef.where('payment.status', '==', 'UNPAID').count();
-    const pendingQuery = leadsRef.where('payment.status', '==', 'PENDING').count();
-    const failedQuery = leadsRef.where('payment.status', '==', 'FAILED').count();
-
-    // Run count aggregations in parallel
-    const [
-      totalSnap,
-      paidSnap,
-      unpaidSnap,
-      pendingSnap,
-      failedSnap
-    ] = await Promise.all([
-      totalQuery.get(),
-      paidQuery.get(),
-      unpaidQuery.get(),
-      pendingQuery.get(),
-      failedQuery.get()
+    // Run count aggregations in parallel (5 reads)
+    const [totalSnap, paidSnap, unpaidSnap, pendingSnap, failedSnap] = await Promise.all([
+      leadsRef.count().get(),
+      leadsRef.where('payment.status', '==', 'PAID').count().get(),
+      leadsRef.where('payment.status', '==', 'UNPAID').count().get(),
+      leadsRef.where('payment.status', '==', 'PENDING').count().get(),
+      leadsRef.where('payment.status', '==', 'FAILED').count().get()
     ]);
 
-    // 3. Revenue Calculation (fetch PAID leads and sum client-side)
-    // This avoids composite index requirement for aggregation with where clause
+    // Revenue: only fetch if paid leads exist
     let revenue = 0;
     const paidCount = paidSnap.data().count;
 
     if (paidCount > 0) {
-      // Only fetch if there are paid leads
       const paidLeadsSnap = await leadsRef
         .where('payment.status', '==', 'PAID')
-        .select('payment.amount') // Only fetch amount field for efficiency
+        .select('payment.amount')
         .get();
 
-      // Sum revenue client-side
       paidLeadsSnap.forEach(doc => {
-        const amount = doc.data()?.payment?.amount || 0;
-        revenue += amount;
+        revenue += doc.data()?.payment?.amount || 0;
       });
     }
 
-    return {
+    const stats = {
       total: totalSnap.data().count,
-      paid: paidSnap.data().count,
+      paid: paidCount,
       unpaid: unpaidSnap.data().count,
       pending: pendingSnap.data().count,
       failed: failedSnap.data().count,
-      revenue: revenue, // Sum in paise
-      revenueInRupees: revenue / 100 // Convert to rupees
+      revenue,
+      revenueInRupees: revenue
     };
+
+    // Cache the result
+    _statsCache = { data: stats, ts: Date.now() };
+
+    return stats;
 
   } catch (error) {
     console.error('❌ Failed to get leads stats:', error);
-    // Fallback: Return zeros is better than crashing
     return {
       total: 0, paid: 0, unpaid: 0, pending: 0, failed: 0, revenue: 0, revenueInRupees: 0
     };
@@ -682,7 +676,25 @@ async function updateUserLastLogin(uid) {
 
 // Server-side cache for soft-deleted product IDs (avoids extra Firestore read per request)
 let _deletedIdsCache = { ids: null, ts: 0 };
-const DELETED_IDS_TTL = 5 * 60 * 1000; // 5 minutes
+const DELETED_IDS_TTL = 30 * 60 * 1000; // 30 minutes (invalidated on delete ops)
+
+// Server-side cache for categories (small, rarely changes)
+let _categoriesCache = { data: null, ts: 0 };
+const CATEGORIES_TTL = 10 * 60 * 1000; // 10 minutes
+
+// Server-side cache for lead stats (expensive: 5 aggregation queries)
+let _statsCache = { data: null, ts: 0 };
+const STATS_TTL = 2 * 60 * 1000; // 2 minutes
+
+// Invalidate stats cache (call after lead create/update/delete)
+function invalidateStatsCache() {
+  _statsCache = { data: null, ts: 0 };
+}
+
+// Invalidate categories cache (call after category create/update/delete)
+function invalidateCategoriesCache() {
+  _categoriesCache = { data: null, ts: 0 };
+}
 
 /**
  * Create a new product in Firestore
@@ -1028,6 +1040,11 @@ async function bulkImportProducts(products) {
  * @returns {Promise<Array>} Array of categories
  */
 async function listCategories() {
+  // Return cached categories if fresh (saves 1 Firestore read)
+  if (_categoriesCache.data && (Date.now() - _categoriesCache.ts < CATEGORIES_TTL)) {
+    return _categoriesCache.data;
+  }
+
   try {
     const db = getFirestore();
     const snapshot = await db.collection('categories').orderBy('order', 'asc').get();
@@ -1036,7 +1053,7 @@ async function listCategories() {
       return [];
     }
 
-    return snapshot.docs.map(doc => {
+    const categories = snapshot.docs.map(doc => {
       const data = doc.data();
       return {
         ...data,
@@ -1044,9 +1061,42 @@ async function listCategories() {
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
       };
     });
+
+    // Cache the result
+    _categoriesCache = { data: categories, ts: Date.now() };
+
+    return categories;
   } catch (error) {
     console.error('❌ Failed to list categories:', error);
     throw new Error(`Failed to list categories: ${error.message}`);
+  }
+}
+
+/**
+ * Get a single category by slug (direct doc read — 1 read instead of fetching all)
+ * @param {string} slug - Category slug
+ * @returns {Promise<Object|null>} Category or null
+ */
+async function getCategoryBySlug(slug) {
+  // Try cache first
+  if (_categoriesCache.data && (Date.now() - _categoriesCache.ts < CATEGORIES_TTL)) {
+    return _categoriesCache.data.find(cat => cat.slug === slug) || null;
+  }
+
+  try {
+    const db = getFirestore();
+    const doc = await db.collection('categories').doc(slug).get();
+    if (!doc.exists) return null;
+
+    const data = doc.data();
+    return {
+      ...data,
+      createdAt: data.createdAt?.toDate?.()?.toISOString() || null,
+      updatedAt: data.updatedAt?.toDate?.()?.toISOString() || null
+    };
+  } catch (error) {
+    console.error('❌ Failed to get category:', error);
+    return null;
   }
 }
 
@@ -1076,6 +1126,7 @@ async function createCategory(categoryData) {
     };
 
     await db.collection('categories').doc(slug).set(category);
+    invalidateCategoriesCache();
     console.log(`✅ Category created: ${slug}`);
     return slug;
   } catch (error) {
@@ -1102,6 +1153,7 @@ async function updateCategory(slug, updates) {
     const updateData = { ...updates, updatedAt: getTimestamp() };
     delete updateData.slug; // Don't allow slug change
     await catRef.update(updateData);
+    invalidateCategoriesCache();
     console.log(`✅ Category updated: ${slug}`);
   } catch (error) {
     console.error('❌ Failed to update category:', error);
@@ -1125,6 +1177,7 @@ async function deleteCategory(slug) {
     }
 
     await db.collection('categories').doc(slug).delete();
+    invalidateCategoriesCache();
     console.log(`✅ Category deleted: ${slug}`);
     return { success: true, message: `Category ${slug} deleted successfully` };
   } catch (error) {
@@ -1192,10 +1245,15 @@ export class FirestoreService {
 
   // Category operations
   listCategories = listCategories;
+  getCategoryBySlug = getCategoryBySlug;
   createCategory = createCategory;
   updateCategory = updateCategory;
   deleteCategory = deleteCategory;
   seedDefaultCategories = seedDefaultCategories;
+
+  // Cache management
+  invalidateStatsCache = invalidateStatsCache;
+  invalidateCategoriesCache = invalidateCategoriesCache;
 }
 
 export {
@@ -1227,8 +1285,13 @@ export {
 
   // Category operations
   listCategories,
+  getCategoryBySlug,
   createCategory,
   updateCategory,
   deleteCategory,
-  seedDefaultCategories
+  seedDefaultCategories,
+
+  // Cache management
+  invalidateStatsCache,
+  invalidateCategoriesCache
 };

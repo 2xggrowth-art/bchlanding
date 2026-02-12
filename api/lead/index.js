@@ -42,6 +42,7 @@ function validateLeadInput(data) {
     name: data.name.trim(),
     phone: data.phone.trim(),
     email: data.email ? data.email.trim() : undefined,
+    message: data.message ? String(data.message).trim() : undefined,
     quizAnswers: data.quizAnswers || {},
     source: data.source || undefined,
     category: data.category || undefined
@@ -81,12 +82,14 @@ export default async function handler(req, res) {
       const adminUser = await requireAdmin(req, res);
       if (!adminUser) return; // Response sent by middleware
 
-      // 2. Fetch Data
+      // 2. Fetch Data (leads + stats in parallel; stats are cached server-side for 2 min)
       const limit = parseInt(req.query.limit) || 10;
       const queryWithExtra = { ...req.query, limit: limit + 1 };
-      
-      const leads = await getLeads(queryWithExtra);
-      const stats = await getLeadsStats();
+
+      const [leads, stats] = await Promise.all([
+        getLeads(queryWithExtra),
+        getLeadsStats()  // Uses cached result if fresh (saves 5-6 reads)
+      ]);
 
       // Determine if there are more items and set cursor appropriately
       let nextCursor = null;

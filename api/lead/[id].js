@@ -72,7 +72,8 @@ export default async function handler(req, res) {
         }
       });
 
-      const updatedLead = await updateLead(id, updateData);
+      // skipExistenceCheck: lead already verified above (saves 1 Firestore read)
+      const updatedLead = await updateLead(id, updateData, { skipExistenceCheck: true });
       return res.status(200).json({ success: true, lead: updatedLead });
     }
 

@@ -6,7 +6,7 @@
  * DELETE /api/categories/:slug - Delete category (admin only)
  */
 
-import { updateCategory, deleteCategory, listCategories } from '../_lib/firestore-service.js';
+import { updateCategory, deleteCategory, getCategoryBySlug } from '../_lib/firestore-service.js';
 import { verifyAdmin } from '../_lib/auth-middleware.js';
 
 export default async function handler(req, res) {
@@ -30,10 +30,9 @@ export default async function handler(req, res) {
   }
 
   try {
-    // GET - Get category details (public)
+    // GET - Get category details (public, direct doc read — 1 read instead of all)
     if (req.method === 'GET') {
-      const categories = await listCategories();
-      const category = categories.find(cat => cat.slug === slug);
+      const category = await getCategoryBySlug(slug);
 
       if (!category) {
         return res.status(404).json({

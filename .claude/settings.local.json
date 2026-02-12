@@ -61,7 +61,13 @@
       "Bash(npx vite build:*)",
       "WebFetch(domain:suncrossbikes.com)",
       "WebFetch(domain:www.suncrossbikes.com)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(ipconfig:*)",
+      "Bash(netsh advfirewall firewall add rule:*)",
+      "WebFetch(domain:crehler.com)",
+      "WebFetch(domain:spintadigital.com)",
+      "WebSearch",
+      "Bash(find:*)"
     ]
   }
 }

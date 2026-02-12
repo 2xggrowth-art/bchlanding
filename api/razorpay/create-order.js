@@ -103,14 +103,14 @@ export default async function handler(req, res) {
       amount: amount
     });
 
-    // Update lead with order info
+    // Update lead with order info (skip existence check — already verified above)
     await updateLeadPayment(leadId, {
       status: 'PENDING',
       orderId: order.id,
-      amount: amount * 100, // Save as paise for database consistency
+      amount: amount, // Store in rupees (matches frontend value)
       currency: currency,
       method: 'RAZORPAY'
-    });
+    }, { skipExistenceCheck: true });
 
     return res.status(200).json({
       success: true,
