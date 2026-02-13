@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import LazyImage from './LazyImage';
 
 const categoryData = [
   {
@@ -88,112 +86,127 @@ export default function CategoryShowcase() {
             return (
               <div
                 key={cat.slug}
-                className="relative overflow-hidden cursor-pointer group transition-[flex] duration-500 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]"
-                style={{ flex: isActive ? 4 : 1 }}
+                className="relative overflow-hidden cursor-pointer"
+                style={{
+                  flex: isActive ? 4 : 1,
+                  transition: 'flex 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                  willChange: 'flex',
+                }}
                 onMouseEnter={() => !isMobile && setActiveIndex(index)}
                 onMouseLeave={() => !isMobile && setActiveIndex(null)}
                 onClick={() => handleClick(index)}
               >
-                {/* Background Image — lazy loaded */}
-                <div className="absolute inset-0">
-                  <LazyImage
-                    src={cat.image}
-                    alt={cat.name}
-                    className="w-full h-full"
-                    objectFit="cover"
-                  />
-                </div>
+                {/* Background Image — native lazy loading, no JS overhead */}
+                <img
+                  src={cat.image}
+                  alt={cat.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/40 to-dark/10 z-[1]" />
-                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-500 z-[1]" />
+                <div
+                  className="absolute inset-0 z-[1]"
+                  style={{
+                    backgroundColor: isActive ? 'rgba(26, 31, 60, 0.1)' : 'transparent',
+                    transition: 'background-color 0.4s ease',
+                  }}
+                />
 
                 {/* Collapsed State - Vertical Label */}
-                <AnimatePresence>
-                  {!isActive && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4"
-                    >
-                      <span
-                        className="text-white font-display text-sm sm:text-lg md:text-xl tracking-[0.2em] uppercase whitespace-nowrap"
-                        style={{
-                          writingMode: 'vertical-rl',
-                          textOrientation: 'mixed',
-                        }}
-                      >
-                        {cat.name}
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                <div
+                  className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-4"
+                  style={{
+                    opacity: isActive ? 0 : 1,
+                    transition: 'opacity 0.3s ease',
+                    pointerEvents: isActive ? 'none' : 'auto',
+                  }}
+                >
+                  <span
+                    className="text-white font-display text-sm sm:text-lg md:text-xl tracking-[0.2em] uppercase whitespace-nowrap"
+                    style={{
+                      writingMode: 'vertical-rl',
+                      textOrientation: 'mixed',
+                    }}
+                  >
+                    {cat.name}
+                  </span>
+                </div>
 
                 {/* Collapsed bottom accent */}
-                {!isActive && (
-                  <div className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-10 text-center">
-                    <div className="w-5 sm:w-6 h-0.5 rounded-full mx-auto bg-primary" />
-                  </div>
-                )}
+                <div
+                  className="absolute bottom-4 sm:bottom-6 left-0 right-0 z-10 text-center"
+                  style={{
+                    opacity: isActive ? 0 : 1,
+                    transition: 'opacity 0.3s ease',
+                  }}
+                >
+                  <div className="w-5 sm:w-6 h-0.5 rounded-full mx-auto bg-primary" />
+                </div>
 
-                {/* Expanded State - Full Info */}
-                <AnimatePresence>
-                  {isActive && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.4, delay: 0.1 }}
-                      className="absolute inset-0 z-10 flex flex-col justify-end p-4 sm:p-8 md:p-10"
+                {/* Expanded State - Full Info (always mounted, CSS-only show/hide) */}
+                <div
+                  className="absolute inset-0 z-10 flex flex-col justify-end p-4 sm:p-8 md:p-10"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    transition: 'opacity 0.35s ease 0.1s',
+                    pointerEvents: isActive ? 'auto' : 'none',
+                  }}
+                >
+                  <p
+                    className="text-primary text-[10px] sm:text-xs uppercase tracking-[0.2em] font-medium mb-1.5 sm:mb-3"
+                    style={{
+                      transform: isActive ? 'translateY(0)' : 'translateY(12px)',
+                      opacity: isActive ? 1 : 0,
+                      transition: 'transform 0.4s ease 0.15s, opacity 0.4s ease 0.15s',
+                    }}
+                  >
+                    {cat.tagline}
+                  </p>
+
+                  <h3
+                    className="font-display text-2xl sm:text-4xl md:text-5xl text-white tracking-wider uppercase mb-1.5 sm:mb-3"
+                    style={{
+                      transform: isActive ? 'translateY(0)' : 'translateY(16px)',
+                      opacity: isActive ? 1 : 0,
+                      transition: 'transform 0.4s ease 0.2s, opacity 0.4s ease 0.2s',
+                    }}
+                  >
+                    {cat.name}
+                  </h3>
+
+                  <p
+                    className="text-white/60 text-[11px] sm:text-sm max-w-xs leading-snug sm:leading-relaxed font-light mb-3 sm:mb-6"
+                    style={{
+                      transform: isActive ? 'translateY(0)' : 'translateY(12px)',
+                      opacity: isActive ? 1 : 0,
+                      transition: 'transform 0.4s ease 0.25s, opacity 0.4s ease 0.25s',
+                    }}
+                  >
+                    {cat.description}
+                  </p>
+
+                  <div
+                    style={{
+                      transform: isActive ? 'translateY(0)' : 'translateY(12px)',
+                      opacity: isActive ? 1 : 0,
+                      transition: 'transform 0.4s ease 0.3s, opacity 0.4s ease 0.3s',
+                    }}
+                  >
+                    <Link
+                      to={`/products?category=${cat.slug}`}
+                      className="inline-flex items-center gap-2 bg-white text-dark px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-[11px] sm:text-sm font-semibold tracking-wide hover:bg-primary hover:text-white transition-all duration-500 shadow-2xl"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <motion.p
-                        initial={{ y: 15, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.15 }}
-                        className="text-primary text-[10px] sm:text-xs uppercase tracking-[0.2em] font-medium mb-1.5 sm:mb-3"
-                      >
-                        {cat.tagline}
-                      </motion.p>
-
-                      <motion.h3
-                        initial={{ y: 20, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.2 }}
-                        className="font-display text-2xl sm:text-4xl md:text-5xl text-white tracking-wider uppercase mb-1.5 sm:mb-3"
-                      >
-                        {cat.name}
-                      </motion.h3>
-
-                      <motion.p
-                        initial={{ y: 15, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.25 }}
-                        className="text-white/60 text-[11px] sm:text-sm max-w-xs leading-snug sm:leading-relaxed font-light mb-3 sm:mb-6"
-                      >
-                        {cat.description}
-                      </motion.p>
-
-                      <motion.div
-                        initial={{ y: 15, opacity: 0 }}
-                        animate={{ y: 0, opacity: 1 }}
-                        transition={{ duration: 0.4, delay: 0.3 }}
-                      >
-                        <Link
-                          to={`/products?category=${cat.slug}`}
-                          className="group/btn inline-flex items-center gap-2 bg-white text-dark px-5 sm:px-8 py-2.5 sm:py-3.5 rounded-full text-[11px] sm:text-sm font-semibold tracking-wide hover:bg-primary hover:text-white transition-all duration-500 shadow-2xl"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Explore
-                          <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4 group-hover/btn:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                          </svg>
-                        </Link>
-                      </motion.div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      Explore
+                      <svg className="w-3.5 sm:w-4 h-3.5 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                      </svg>
+                    </Link>
+                  </div>
+                </div>
               </div>
             );
           })}
