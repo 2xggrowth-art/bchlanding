@@ -87,6 +87,12 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
 
   const handleStartQuiz = (source = 'test-ride-landing') => {
     setCtaSource(source);
+    // Clear stale data so a fresh lead is always created
+    setLeadId(null);
+    setQuizAnswers(null);
+    setUserData(null);
+    sessionStorage.removeItem('test_ride_lead_id');
+    sessionStorage.removeItem('test_ride_quiz');
     setCurrentStage('userdata');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
