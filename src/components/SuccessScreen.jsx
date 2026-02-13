@@ -47,7 +47,7 @@ export default function SuccessScreen({ userData }) {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="text-lg sm:text-xl text-gray-light mb-12 leading-relaxed max-w-xl mx-auto"
         >
-          Your booking is confirmed. Our expert will call you within 5 minutes to schedule your home visit.
+          Your booking is confirmed. Our expert will call you within 24 hours to schedule your visit.
         </motion.p>
 
         {/* Next steps */}
@@ -74,7 +74,7 @@ export default function SuccessScreen({ userData }) {
               {
                 step: "2",
                 title: "Confirmation Call",
-                description: "Our expert calls within 5 minutes to schedule your home visit"
+                description: "Our expert calls within 24 hours to schedule your visit"
               },
               {
                 step: "3",

@@ -523,6 +523,12 @@ export default function ProductDetailPage() {
             {/* PHASE 1: EMI Calculator */}
             <EMICalculator price={product.price} />
 
+            {/* Urgency signal */}
+            <p className="text-xs text-primary font-bold mb-2 flex items-center gap-1.5">
+              <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              Book by tonight for same-week visit
+            </p>
+
             {/* CTA buttons - visible on desktop, hidden on mobile (shown in sticky bar) */}
             <div className="hidden lg:flex flex-col gap-3 mb-8">
               <div className="flex gap-3">
