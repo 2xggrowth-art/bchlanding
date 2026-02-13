@@ -272,6 +272,8 @@ export default function ProductDetailPage() {
       setBookingLeadId(lead.id);
     } catch (err) {
       console.error('Error creating lead:', err);
+      alert('Something went wrong. Please try again.');
+      return;
     }
 
     setBookingStage('payment');
@@ -294,6 +296,7 @@ export default function ProductDetailPage() {
   };
 
   const handleBookingPaymentError = (err) => {
+    if (err.code === 'PAYMENT_CANCELLED') return;
     console.error('Payment error:', err);
     alert('Payment failed: ' + err.description + '. Please try again.');
   };
@@ -736,7 +739,20 @@ export default function ProductDetailPage() {
 
       {bookingStage === 'success' && (
         <Suspense fallback={null}>
-          <SuccessScreen userData={bookingUserData} />
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <SuccessScreen userData={bookingUserData} />
+            <div className="fixed top-4 right-4 z-50">
+              <button
+                onClick={handleCloseBooking}
+                className="p-2 bg-white/20 hover:bg-white/30 rounded-full text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
         </Suspense>
       )}
 

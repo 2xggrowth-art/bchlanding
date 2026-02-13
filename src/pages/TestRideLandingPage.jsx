@@ -140,8 +140,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
     if (leadId) {
       try {
         await api.updateLead(leadId, {
-          quizAnswers: answers,
-          updatedAt: new Date().toISOString()
+          quizAnswers: answers
         });
         console.log('✅ Lead updated successfully with quiz answers:', leadId, answers);
       } catch (error) {
@@ -188,8 +187,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         await api.updateLead(leadId, {
           name: data.name,
           phone: data.phone,
-          ...(selectedProduct ? { quizAnswers: leadData.quizAnswers } : {}),
-          updatedAt: new Date().toISOString()
+          ...(selectedProduct ? { quizAnswers: leadData.quizAnswers } : {})
         });
         console.log('✅ Lead updated with new contact info:', leadId);
       } catch (error) {
@@ -203,6 +201,8 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         console.log('✅ Lead created early:', lead.id, lead);
       } catch (error) {
         console.error('❌ Error creating lead early:', error);
+        alert('Something went wrong. Please try again.');
+        return;
       }
     }
 
@@ -242,6 +242,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   };
 
   const handlePaymentError = (error) => {
+    if (error.code === 'PAYMENT_CANCELLED') return;
     console.error('Payment error:', error);
     alert('Payment failed: ' + error.description + '. Please try again.');
   };
