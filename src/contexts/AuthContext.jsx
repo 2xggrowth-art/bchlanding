@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }) => {
     // Set persistence to LOCAL (survive page reloads)
     setPersistence(auth, browserLocalPersistence)
       .then(() => {
-        console.log('✅ Auth persistence set to LOCAL');
+        // Auth persistence set to LOCAL
       })
       .catch((err) => {
         console.error('❌ Failed to set auth persistence:', err);
@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }) => {
       try {
         if (firebaseUser) {
           // User is signed in
-          console.log('✅ User authenticated:', firebaseUser.email);
+          // User authenticated
 
           // Get ID token
           const token = await firebaseUser.getIdToken();
@@ -158,7 +158,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const data = await response.json();
-      console.log('✅ Admin verified with backend:', data.user.role);
+      // Admin verified
 
     } catch (err) {
       // Expected to fail if user doesn't have admin role - not an error

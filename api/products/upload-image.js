@@ -102,7 +102,9 @@ export default async function handler(req, res) {
     const fs = await import('fs');
     const fileBuffer = fs.readFileSync(imageFile.filepath);
 
+    // Single call: save + make public via predefinedAcl (no separate makePublic needed)
     await file.save(fileBuffer, {
+      predefinedAcl: 'publicRead',
       metadata: {
         contentType: imageFile.mimetype,
         metadata: {
@@ -111,9 +113,6 @@ export default async function handler(req, res) {
         },
       },
     });
-
-    // Make file publicly accessible
-    await file.makePublic();
 
     // Get public URL
     const publicUrl = `https://storage.googleapis.com/${bucket.name}/${filename}`;

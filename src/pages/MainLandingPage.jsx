@@ -45,6 +45,7 @@ function PremiumHero({ onCTAClick }) {
   useEffect(() => {
     const img = new Image();
     img.src = '/main2.jpg';
+    img.decoding = 'async';
     img.onload = () => setHeroLoaded(true);
   }, []);
 
@@ -539,64 +540,54 @@ function PremiumOffers({ onCTAClick }) {
 // ─── Testimonials (Luxury Carousel) ──────────────────────────────
 const testimonials = [
   {
-    name: 'Rahul Sharma',
-    location: 'Whitefield',
-    lifestyle: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'Best decision ever! Instead of buying blindly, I could try 5 different bikes at home. They explained every feature and helped me pick the perfect fit for my morning commute.',
+    name: 'Deepak',
+    text: 'Knowledgeable staff with a wide selection of bikes. Excellent customer service with free bike fitting and skilled repair technicians. Highly recommended!',
     rating: 5,
-    cycle: 'Emotorad Doodle',
-    verified: true,
   },
   {
-    name: 'Priya Menon',
-    location: 'Koramangala',
-    lifestyle: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'The team was incredibly patient with my kids trying different sizes. Got excellent guidance on which model would last them for years. Service after purchase is equally impressive!',
+    name: 'Rajesh',
+    text: 'Super cycle shop! Great variety of brands, helpful staff who guide you to the right choice. The complimentary one-year service is a great bonus.',
     rating: 5,
-    cycle: 'Firefox Stardust',
-    verified: true,
   },
   {
-    name: 'Arun Kumar',
-    location: 'HSR Layout',
-    lifestyle: 'https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'Tired of visiting 10 shops across Bangalore. BCH brought everything to my door! The booking fee was adjusted in the final price. No pressure, no hassle.',
+    name: 'Adithya C',
+    text: 'Purchased a Schnell R-bike here. Syed\'s technical knowledge is impressive — helped with wheel and gear upgrades. 2000km in and still running perfectly.',
+    rating: 5,
+  },
+  {
+    name: 'Girish C K',
+    text: 'One of the best cycle centers in Yelahanka with the best deals and an excellent collection. Staff is friendly and doesn\'t push you into buying.',
+    rating: 5,
+  },
+  {
+    name: 'S Kumar',
+    text: 'Bought children\'s bicycles at very reasonable rates. The shop owner is friendly and patient. Helped us pick the right size for both kids.',
     rating: 4,
-    cycle: 'Hero Lectro F6i',
-    verified: true,
   },
   {
-    name: 'Sneha Reddy',
-    location: 'Yelahanka',
-    lifestyle: 'https://images.unsplash.com/photo-1505705694340-019e0d8a2e20?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'Switched to e-cycle for my 8km commute. Saving ₹300/day on fuel! BCH made the entire process smooth — from test ride to doorstep delivery.',
+    name: 'Varadaraj K',
+    text: 'Impressive range of bicycles — stylish, durable and comfortable. The warranty reflects their confidence in product quality. Highly recommend!',
     rating: 5,
-    cycle: 'Emotorad T-Rex',
-    verified: true,
   },
   {
-    name: 'Vikram Singh',
-    location: 'Indiranagar',
-    lifestyle: 'https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'Got a puncture 2 months in. Contacted BCH and a technician was at my doorstep within 90 minutes. This level of after-sales service is truly rare.',
+    name: 'YogeeshGowda M',
+    text: 'Best product experience! Top cycling experience with nice servicing and best care. The team really knows their bikes and gives honest recommendations.',
+    rating: 5,
+  },
+  {
+    name: 'Jyothi K',
+    text: 'Very nice experience at the store. The collection is amazing, especially the electric cycles. Planning to get another one for my family soon.',
+    rating: 5,
+  },
+  {
+    name: 'Poorna Shekar',
+    text: 'My daughter absolutely loved the cycle we picked here. Great collection for kids with multiple color and size options. Staff helped her test ride a few.',
     rating: 4,
-    cycle: 'Tata Stryder Zeeta',
-    verified: true,
   },
   {
-    name: 'Meera Iyer',
-    location: 'JP Nagar',
-    lifestyle: 'https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=600&h=400&fit=crop&auto=format&q=70',
-    photo: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=80&h=80&fit=crop&auto=format&q=70',
-    text: 'As a parent, the 5-year warranty gave us real peace of mind. Exchange offer for our old cycle was genuinely fair. My daughter loves her new ride!',
-    rating: 5,
-    cycle: 'Firefox Flip',
-    verified: true,
+    name: 'Naval Kishore',
+    text: 'Good products at fair prices. The service warranty is a welcome addition. Staff is responsive and the store has a clean, well-organized display.',
+    rating: 4,
   },
 ];
 
@@ -657,59 +648,32 @@ function TestimonialScroller() {
         {testimonials.map((t, i) => (
           <div
             key={i}
-            className="group relative flex-shrink-0 w-[340px] sm:w-[480px] rounded-3xl overflow-hidden cursor-pointer snap-start"
+            className="flex-shrink-0 w-[300px] sm:w-[360px] rounded-2xl bg-gray-bg p-6 sm:p-8 snap-start flex flex-col justify-between"
           >
-            {/* Large Lifestyle Image — lazy loaded */}
-            <div className="relative h-[320px] sm:h-[380px] overflow-hidden">
-              <LazyImage
-                src={t.lifestyle}
-                alt={`${t.name} riding`}
-                className="absolute inset-0 w-full h-full"
-                objectFit="cover"
-              />
-              {/* Elegant gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-dark/80 via-dark/20 to-transparent z-[1]" />
-              <div className="absolute inset-0 bg-gradient-to-r from-dark/30 to-transparent z-[1]" />
-
-              {/* Quote overlay on image */}
-              <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 z-[2]">
-                <svg className="w-6 h-6 text-primary/80 mb-3" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z" />
-                </svg>
-                <p className="text-white/90 text-sm sm:text-base leading-relaxed font-light line-clamp-3">
-                  "{t.text}"
-                </p>
+            {/* Stars */}
+            <div>
+              <div className="flex gap-0.5 mb-4">
+                {[...Array(5)].map((_, j) => (
+                  <svg key={j} className={`w-5 h-5 ${j < t.rating ? 'text-yellow-400' : 'text-gray-200'} fill-current`} viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
               </div>
+
+              {/* Review text */}
+              <p className="text-gray-700 text-sm sm:text-base leading-relaxed mb-6">
+                "{t.text}"
+              </p>
             </div>
 
-            {/* Bottom info bar */}
-            <div className="bg-gray-bg p-5 sm:p-6 flex items-center gap-4">
-              <img
-                src={t.photo}
-                alt={t.name}
-                className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md flex-shrink-0"
-                loading="lazy"
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-semibold text-dark text-sm truncate">{t.name}</h4>
-                  {t.verified && (
-                    <svg className="w-4 h-4 text-primary flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 10-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </div>
-                <p className="text-gray-text/60 text-xs font-light">{t.location}, Bangalore</p>
+            {/* Name */}
+            <div className="flex items-center gap-3 pt-4 border-t border-gray-200">
+              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm">
+                {t.name.charAt(0)}
               </div>
-              <div className="text-right flex-shrink-0">
-                <div className="flex gap-0.5 justify-end mb-1">
-                  {[...Array(t.rating)].map((_, j) => (
-                    <svg key={j} className="w-3.5 h-3.5 text-yellow-400 fill-current" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
-                </div>
-                <p className="text-primary text-[11px] font-medium">{t.cycle}</p>
+              <div>
+                <h4 className="font-semibold text-dark text-sm">{t.name}</h4>
+                <p className="text-gray-text/60 text-xs">Google Review</p>
               </div>
             </div>
           </div>

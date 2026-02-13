@@ -29,6 +29,7 @@ export default function ProductsTab() {
   const [importFailed, setImportFailed] = useState(0);      // count of failed uploads
   const [importUnmatched, setImportUnmatched] = useState([]); // image names not found in Excel
   const [importTotalToUpload, setImportTotalToUpload] = useState(0); // matched images count
+  const [importMethod, setImportMethod] = useState('auto'); // 'auto' | 'row-order' | 'filename'
   const fileInputRef = useRef(null);
   const importExcelRef = useRef(null);
   const importImageRef = useRef(null);
@@ -401,8 +402,8 @@ export default function ProductsTab() {
         return;
       }
 
-      // === Excel + optional images mode ===
-      if (totalImages > 0) {
+      // === Excel + optional images mode (filename matching only) ===
+      if (totalImages > 0 && importMethod === 'filename') {
         // Parse Excel to find which image filenames are referenced
         setImportProgress('Reading Excel file to match images...');
         let referencedNames;
@@ -443,11 +444,24 @@ export default function ProductsTab() {
       }
 
       // Send Excel + imageMap to import API
-      setImportProgress('Importing products from Excel...');
+      if (importMethod === 'auto') {
+        setImportProgress('Extracting embedded images & importing products...');
+      } else {
+        setImportProgress('Importing products from Excel...');
+      }
 
       const formData = new FormData();
       formData.append('file', importExcelFile);
+      formData.append('importMethod', importMethod);
       formData.append('imageMap', JSON.stringify(imageMap));
+
+      // For row-order mode, append images in order
+      if (importMethod === 'row-order' && importImageFiles.length > 0) {
+        formData.append('rowOrderImages', 'true');
+        importImageFiles.forEach((file, i) => {
+          formData.append(`rowImage_${i}`, file);
+        });
+      }
 
       const response = await fetch('/api/products/import-excel', {
         method: 'POST',
@@ -461,7 +475,12 @@ export default function ProductsTab() {
         invalidateProductsCache();
         const imgCount = Object.keys(imageMap).length / 2;
         let msg = `Successfully imported ${data.data.created} products`;
-        if (imgCount > 0) msg += ` with ${imgCount} images`;
+        // Show embedded image count if applicable
+        if (data.data?.embeddedImagesFound > 0) {
+          msg += ` with ${data.data.embeddedImagesFound} auto-extracted images`;
+        } else if (imgCount > 0) {
+          msg += ` with ${imgCount} images`;
+        }
         if (data.data.failed > 0) msg += ` (${data.data.failed} products failed)`;
         if (unmatchedNames.length > 0) {
           msg += `. Skipped ${unmatchedNames.length} image(s) not in Excel: ${unmatchedNames.join(', ')}`;
@@ -1099,10 +1118,69 @@ export default function ProductsTab() {
                   className="hidden"
                 />
 
+                {/* Image Matching Method */}
+                <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
+                  <label className="block text-xs font-bold text-dark uppercase tracking-wide mb-2.5">
+                    Image Method
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="importMethod"
+                        value="auto"
+                        checked={importMethod === 'auto'}
+                        onChange={(e) => setImportMethod(e.target.value)}
+                        className="mt-0.5 accent-green-600"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-dark">
+                          Auto-Detect Embedded Images <span className="text-green-600">(Recommended)</span>
+                        </p>
+                        <p className="text-[10px] text-gray-text">
+                          Paste images directly into Excel cells. They'll be auto-extracted &amp; uploaded.
+                        </p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="importMethod"
+                        value="row-order"
+                        checked={importMethod === 'row-order'}
+                        onChange={(e) => setImportMethod(e.target.value)}
+                        className="mt-0.5 accent-green-600"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-dark">Match Images by Row Order</p>
+                        <p className="text-[10px] text-gray-text">
+                          Upload images separately — 1st image goes to row 1, 2nd to row 2, etc.
+                        </p>
+                      </div>
+                    </label>
+                    <label className="flex items-start gap-2.5 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="importMethod"
+                        value="filename"
+                        checked={importMethod === 'filename'}
+                        onChange={(e) => setImportMethod(e.target.value)}
+                        className="mt-0.5 accent-green-600"
+                      />
+                      <div>
+                        <p className="text-xs font-bold text-dark">Match by Filename</p>
+                        <p className="text-[10px] text-gray-text">
+                          Image filenames must match the "images" column in Excel (e.g., bike1.jpg).
+                        </p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
                 {/* Step 1: Excel File */}
                 <div>
                   <label className="block text-xs font-bold text-dark uppercase tracking-wide mb-2">
-                    1. Select Excel File <span className="text-gray-text font-normal">(for product import)</span>
+                    {importMethod === 'auto' ? 'Select Excel File (.xlsx with embedded images)' : '1. Select Excel File'}
                   </label>
                   <div
                     onClick={() => importExcelRef.current?.click()}
@@ -1136,110 +1214,135 @@ export default function ProductsTab() {
                   </div>
                 </div>
 
-                {/* Step 2: Product Images */}
-                <div>
-                  <label className="block text-xs font-bold text-dark uppercase tracking-wide mb-2">
-                    2. Add Product Images <span className="text-gray-text font-normal">(optional)</span>
-                  </label>
-                  <div
-                    onClick={() => importImageRef.current?.click()}
-                    className="border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all duration-300 border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
-                  >
-                    <div className="flex flex-col items-center gap-2">
-                      <Image className="w-8 h-8 text-gray-400" />
-                      <p className="text-sm font-bold text-gray-text">Click to select images</p>
-                      <p className="text-[10px] text-gray-text">JPEG, PNG, WebP (max 5MB each)</p>
-                    </div>
-                  </div>
-
-                  {/* Selected images summary + list */}
-                  {importImageFiles.length > 0 && (
-                    <div className="mt-3">
-                      {/* Summary bar */}
-                      <div className="flex items-center justify-between px-3 py-2 bg-blue-50 rounded-xl border border-blue-200 mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <Image className="w-4 h-4 text-blue-600" />
-                          <p className="text-xs font-bold text-blue-700">
-                            {importImageFiles.length} image{importImageFiles.length > 1 ? 's' : ''} selected
-                            <span className="font-normal text-blue-500 ml-1">
-                              ({(importImageFiles.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total)
-                            </span>
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <button
-                            onClick={() => importImageRef.current?.click()}
-                            className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide"
-                          >
-                            + Add More
-                          </button>
-                          <button
-                            onClick={() => setImportImageFiles([])}
-                            className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wide ml-2"
-                          >
-                            Clear All
-                          </button>
-                        </div>
+                {/* Step 2: Product Images (only for row-order or filename mode) */}
+                {importMethod !== 'auto' && (
+                  <div>
+                    <label className="block text-xs font-bold text-dark uppercase tracking-wide mb-2">
+                      2. Add Product Images <span className="text-gray-text font-normal">
+                        {importMethod === 'row-order' ? '(select in same order as Excel rows)' : '(optional)'}
+                      </span>
+                    </label>
+                    <div
+                      onClick={() => importImageRef.current?.click()}
+                      className="border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all duration-300 border-gray-300 hover:border-blue-400 hover:bg-blue-50/50"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <Image className="w-8 h-8 text-gray-400" />
+                        <p className="text-sm font-bold text-gray-text">Click to select images</p>
+                        <p className="text-[10px] text-gray-text">JPEG, PNG, WebP (max 5MB each)</p>
                       </div>
+                    </div>
 
-                      {/* Image grid - compact thumbnails for large quantities */}
-                      <div className={`${importImageFiles.length > 10 ? 'max-h-32' : 'max-h-48'} overflow-y-auto rounded-xl border border-gray-200 p-2`}>
-                        {importImageFiles.length <= 8 ? (
-                          /* Detailed list for small quantities */
-                          <div className="space-y-1.5">
-                            {importImageFiles.map((file, index) => (
-                              <div key={index} className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg">
-                                <img
-                                  src={URL.createObjectURL(file)}
-                                  alt={file.name}
-                                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                                />
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-xs font-bold text-dark truncate">{file.name}</p>
-                                  <p className="text-[10px] text-gray-text">{(file.size / 1024).toFixed(1)} KB</p>
+                    {/* Selected images summary + list */}
+                    {importImageFiles.length > 0 && (
+                      <div className="mt-3">
+                        {/* Summary bar */}
+                        <div className="flex items-center justify-between px-3 py-2 bg-blue-50 rounded-xl border border-blue-200 mb-1.5">
+                          <div className="flex items-center gap-2">
+                            <Image className="w-4 h-4 text-blue-600" />
+                            <p className="text-xs font-bold text-blue-700">
+                              {importImageFiles.length} image{importImageFiles.length > 1 ? 's' : ''} selected
+                              <span className="font-normal text-blue-500 ml-1">
+                                ({(importImageFiles.reduce((sum, f) => sum + f.size, 0) / (1024 * 1024)).toFixed(1)} MB total)
+                              </span>
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => importImageRef.current?.click()}
+                              className="text-[10px] font-bold text-blue-600 hover:text-blue-800 uppercase tracking-wide"
+                            >
+                              + Add More
+                            </button>
+                            <button
+                              onClick={() => setImportImageFiles([])}
+                              className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wide ml-2"
+                            >
+                              Clear All
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Image grid - compact thumbnails for large quantities */}
+                        <div className={`${importImageFiles.length > 10 ? 'max-h-32' : 'max-h-48'} overflow-y-auto rounded-xl border border-gray-200 p-2`}>
+                          {importImageFiles.length <= 8 ? (
+                            /* Detailed list for small quantities */
+                            <div className="space-y-1.5">
+                              {importImageFiles.map((file, index) => (
+                                <div key={index} className="flex items-center gap-2 px-2 py-1.5 bg-gray-50 rounded-lg">
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name}
+                                    className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                                  />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-bold text-dark truncate">
+                                      {importMethod === 'row-order' ? `Row ${index + 1}: ` : ''}{file.name}
+                                    </p>
+                                    <p className="text-[10px] text-gray-text">{(file.size / 1024).toFixed(1)} KB</p>
+                                  </div>
+                                  <button
+                                    onClick={() => removeImportImage(index)}
+                                    className="w-5 h-5 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-text hover:text-red-500 transition-colors flex-shrink-0"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
                                 </div>
-                                <button
-                                  onClick={() => removeImportImage(index)}
-                                  className="w-5 h-5 rounded-full hover:bg-red-100 flex items-center justify-center text-gray-text hover:text-red-500 transition-colors flex-shrink-0"
-                                >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          /* Compact grid for large quantities */
-                          <div className="flex flex-wrap gap-1.5">
-                            {importImageFiles.map((file, index) => (
-                              <div key={index} className="relative group" title={file.name}>
-                                <img
-                                  src={URL.createObjectURL(file)}
-                                  alt={file.name}
-                                  className="w-10 h-10 rounded-lg object-cover"
-                                />
-                                <button
-                                  onClick={() => removeImportImage(index)}
-                                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white items-center justify-center text-[8px] hidden group-hover:flex"
-                                >
-                                  <X className="w-2.5 h-2.5" />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                              ))}
+                            </div>
+                          ) : (
+                            /* Compact grid for large quantities */
+                            <div className="flex flex-wrap gap-1.5">
+                              {importImageFiles.map((file, index) => (
+                                <div key={index} className="relative group" title={importMethod === 'row-order' ? `Row ${index + 1}: ${file.name}` : file.name}>
+                                  <img
+                                    src={URL.createObjectURL(file)}
+                                    alt={file.name}
+                                    className="w-10 h-10 rounded-lg object-cover"
+                                  />
+                                  {importMethod === 'row-order' && (
+                                    <span className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-[7px] text-center rounded-b-lg">{index + 1}</span>
+                                  )}
+                                  <button
+                                    onClick={() => removeImportImage(index)}
+                                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white items-center justify-center text-[8px] hidden group-hover:flex"
+                                  >
+                                    <X className="w-2.5 h-2.5" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* How it works */}
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
                   <p className="text-xs font-bold text-amber-800 mb-1">How it works:</p>
-                  <ol className="text-[11px] text-amber-700 space-y-0.5 list-decimal list-inside">
-                    <li><strong>Excel + Images:</strong> Fill template, add image filenames in <code className="bg-amber-100 px-1 rounded">images</code> column, upload both</li>
-                    <li><strong>Excel only:</strong> Import products without images</li>
-                    <li><strong>Images only:</strong> Upload images — filenames must match product ID or name (e.g., <code className="bg-amber-100 px-1 rounded">kids-001.jpg</code>)</li>
-                  </ol>
+                  {importMethod === 'auto' ? (
+                    <ol className="text-[11px] text-amber-700 space-y-0.5 list-decimal list-inside">
+                      <li>Open Excel (.xlsx), fill in product details (name, price, category, etc.)</li>
+                      <li><strong>Paste/insert images directly into any cell</strong> in the image row</li>
+                      <li>Upload the .xlsx file — images are auto-extracted &amp; matched to rows</li>
+                      <li>Everything imports at once: product data + images from one file!</li>
+                    </ol>
+                  ) : importMethod === 'row-order' ? (
+                    <ol className="text-[11px] text-amber-700 space-y-0.5 list-decimal list-inside">
+                      <li>Fill Excel template with product details</li>
+                      <li>Select images in the <strong>same order</strong> as your Excel rows</li>
+                      <li>1st selected image = Row 1, 2nd = Row 2, and so on</li>
+                      <li>No renaming needed — just keep the order right!</li>
+                    </ol>
+                  ) : (
+                    <ol className="text-[11px] text-amber-700 space-y-0.5 list-decimal list-inside">
+                      <li>Fill template, add image filenames in <code className="bg-amber-100 px-1 rounded">images</code> column</li>
+                      <li>Upload images with matching filenames (e.g., <code className="bg-amber-100 px-1 rounded">bike1.jpg</code>)</li>
+                      <li>Or use full URLs in the images column</li>
+                    </ol>
+                  )}
                 </div>
 
                 {/* Unmatched images warning */}
@@ -1302,7 +1405,12 @@ export default function ProductsTab() {
 
                 {/* Import Button */}
                 {!importExcelFile && importImageFiles.length === 0 && (
-                  <p className="text-xs text-red-500 font-bold text-center">Select an Excel file or images to continue</p>
+                  <p className="text-xs text-red-500 font-bold text-center">Select an Excel file to continue</p>
+                )}
+                {importMethod === 'auto' && importExcelFile && !importExcelFile.name.toLowerCase().endsWith('.xlsx') && (
+                  <p className="text-xs text-amber-600 font-bold text-center">
+                    Embedded images only work with .xlsx files. Non-.xlsx files will import without images.
+                  </p>
                 )}
                 <button
                   onClick={handleImportWithImages}
@@ -1312,16 +1420,20 @@ export default function ProductsTab() {
                   {uploadingExcel ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      {importExcelFile ? 'Importing...' : 'Uploading...'}
+                      {importMethod === 'auto' ? 'Extracting & Importing...' : 'Importing...'}
                     </>
                   ) : (
                     <>
                       <Upload className="w-4 h-4" />
-                      {importExcelFile && importImageFiles.length > 0
-                        ? `Import (${importImageFiles.length} images + Excel)`
-                        : importExcelFile
-                          ? 'Import Excel'
-                          : `Upload ${importImageFiles.length} Image${importImageFiles.length !== 1 ? 's' : ''}`
+                      {importMethod === 'auto' && importExcelFile
+                        ? 'Import Excel (Auto-Extract Images)'
+                        : importMethod === 'row-order' && importExcelFile && importImageFiles.length > 0
+                          ? `Import (${importImageFiles.length} images by row order)`
+                          : importExcelFile && importImageFiles.length > 0
+                            ? `Import (${importImageFiles.length} images + Excel)`
+                            : importExcelFile
+                              ? 'Import Excel'
+                              : `Upload ${importImageFiles.length} Image${importImageFiles.length !== 1 ? 's' : ''}`
                       }
                     </>
                   )}

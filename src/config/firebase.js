@@ -63,12 +63,8 @@ try {
     console.log('🔧 Connected to Firebase Auth Emulator');
   }
 
-  console.log('✅ Firebase initialized successfully');
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error);
 }
 
 export { app, auth };
-
-console.log("🔥 ENV CHECK FULL:", import.meta.env);
-console.log("🔥 FIREBASE KEY:", import.meta.env.VITE_FIREBASE_API_KEY);

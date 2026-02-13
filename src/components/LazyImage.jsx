@@ -102,16 +102,14 @@ export default function LazyImage({
           src={imageSrc}
           alt={alt}
           loading={eager ? 'eager' : 'lazy'}
-          fetchpriority={eager ? 'high' : 'auto'}
+          decoding="async"
+          fetchpriority={props.fetchpriority || (eager ? 'high' : 'auto')}
           onLoad={handleLoad}
           onError={handleError}
-          className={`w-full h-full ${
-            imageLoaded ? 'opacity-100' : 'opacity-0'
-          } ${
-            alreadyCached ? '' : 'transition-opacity duration-300'
-          } ${
-            objectFit === 'contain' ? 'object-contain' : 'object-cover'
-          }`}
+          className={`w-full h-full ${imageLoaded ? 'opacity-100' : 'opacity-0'
+            } ${alreadyCached ? '' : 'transition-opacity duration-300'
+            } ${objectFit === 'contain' ? 'object-contain' : 'object-cover'
+            }`}
           {...props}
         />
       )}
