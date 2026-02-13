@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PayButton from './PayButton';
 
-export default function RazorpayPayment({ userData: rawUserData, quizAnswers, leadId, onSuccess, onError, onBack, onCancel }) {
+export default function RazorpayPayment({ userData: rawUserData, quizAnswers, leadId, onSuccess, onError, onBack, onCancel, selectedProduct }) {
   const userData = rawUserData ?? {};
   const [loading, setLoading] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
@@ -207,6 +207,18 @@ export default function RazorpayPayment({ userData: rawUserData, quizAnswers, le
               </p>
             </div>
 
+            {/* Selected Product Card */}
+            {selectedProduct && (
+              <div className="flex items-center gap-3 p-3 mb-6 bg-gray-bg rounded-xl border border-gray-200">
+                <img src={selectedProduct.image} alt={selectedProduct.name} className="w-16 h-14 rounded-lg object-cover flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-dark truncate">{selectedProduct.name}</p>
+                  <p className="text-xs text-gray-text">Test ride this bike at our store</p>
+                </div>
+                <span className="ml-auto text-sm font-bold text-primary flex-shrink-0">₹{selectedProduct.price?.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+
             {/* Payment Details */}
             <div className="bg-gray-bg rounded-[20px] p-6 mb-6">
               <div className="flex items-center justify-between mb-4 pb-4 border-b border-dark/10">
@@ -231,7 +243,7 @@ export default function RazorpayPayment({ userData: rawUserData, quizAnswers, le
                   <svg className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <span className="text-gray-text">5 curated bicycle options</span>
+                  <span className="text-gray-text">{selectedProduct ? 'Test ride at our store' : '5 curated bicycle options'}</span>
                 </div>
               </div>
             </div>
@@ -287,16 +299,15 @@ export default function RazorpayPayment({ userData: rawUserData, quizAnswers, le
 
             {/* Progress indicator */}
             <div className="mt-8 flex items-center justify-center gap-2">
-              {[1, 2, 3].map((step) => (
+              {(selectedProduct ? [1, 2] : [1, 2, 3]).map((step) => (
                 <div
                   key={step}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${step <= 3 ? 'w-8 bg-primary' : 'w-4 bg-dark/20'
-                    }`}
+                  className="h-1.5 rounded-full transition-all duration-300 w-8 bg-primary"
                 />
               ))}
             </div>
             <p className="text-center text-xs text-gray-text mt-2 font-bold uppercase tracking-wide">
-              Step 3 of 3 • Almost Done
+              {selectedProduct ? 'Step 2 of 2' : 'Step 3 of 3'} • Almost Done
             </p>
           </div>
         </motion.div>

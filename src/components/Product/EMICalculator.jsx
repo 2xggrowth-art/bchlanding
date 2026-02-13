@@ -71,11 +71,11 @@ export default function EMICalculator({ price }) {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.9, y: 20 }}
                 transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-                className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative"
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-md relative max-h-[90vh] flex flex-col"
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Header */}
-                <div className="flex items-center justify-between p-5 border-b border-gray-100">
+                <div className="flex items-center justify-between p-5 border-b border-gray-100 flex-shrink-0">
                   <h3 className="text-xl font-bold text-dark">EMI Calculator</h3>
                   <button
                     onClick={() => setShowCalculator(false)}
@@ -88,7 +88,7 @@ export default function EMICalculator({ price }) {
                 </div>
 
                 {/* Body */}
-                <div className="p-5">
+                <div className="p-5 overflow-y-auto flex-1">
                   {/* Product Summary */}
                   <div className="bg-gray-50 p-4 rounded-lg mb-6">
                     <p className="text-sm text-gray-600 mb-1">Total Amount</p>
@@ -108,17 +108,15 @@ export default function EMICalculator({ price }) {
                         <button
                           key={option.months}
                           onClick={() => setSelectedTenure(option.months)}
-                          className={`w-full p-4 rounded-xl border-2 transition-all ${
-                            isSelected
-                              ? 'border-primary bg-primary/5'
-                              : 'border-gray-200 hover:border-gray-300'
-                          }`}
+                          className={`w-full p-4 rounded-xl border-2 transition-all ${isSelected
+                            ? 'border-primary bg-primary/5'
+                            : 'border-gray-200 hover:border-gray-300'
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             {/* Radio Button */}
-                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                              isSelected ? 'border-primary' : 'border-gray-300'
-                            }`}>
+                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-primary' : 'border-gray-300'
+                              }`}>
                               {isSelected && (
                                 <div className="w-3 h-3 rounded-full bg-primary" />
                               )}
@@ -180,7 +178,7 @@ export default function EMICalculator({ price }) {
                 </div>
 
                 {/* Footer */}
-                <div className="p-5 border-t border-gray-100">
+                <div className="p-5 border-t border-gray-100 flex-shrink-0">
                   <button
                     onClick={() => setShowCalculator(false)}
                     className="w-full py-3 bg-primary text-white rounded-full font-bold hover:bg-primary-dark transition-colors"

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { electricFreebies } from '../../data/electricFreebies';
+import LazyImage from '../LazyImage';
 
 const specLabels = {
   wheelSize: 'Wheel Size',
@@ -15,7 +16,7 @@ const specLabels = {
   range: 'Range',
 };
 
-export default function ProductTabs({ product }) {
+export default function ProductTabs({ product, allProducts = [] }) {
   const [activeTab, setActiveTab] = useState('overview');
 
   const tabs = [
@@ -36,7 +37,7 @@ export default function ProductTabs({ product }) {
     .filter((s) => s.value);
 
   return (
-    <div className="mt-8 sm:mt-12">
+    <div className="mt-6 sm:mt-8">
       {/* Tab Navigation */}
       <div className="border-b border-gray-200 mb-6">
         <div className="flex overflow-x-auto scrollbar-hide -mb-px">
@@ -109,6 +110,11 @@ export default function ProductTabs({ product }) {
                   </ul>
                 </div>
               </section>
+
+              {/* Compare Bikes */}
+              {allProducts.length > 0 && (
+                <CompareBikes currentProduct={product} allProducts={allProducts} />
+              )}
             </div>
           )}
 
@@ -437,4 +443,229 @@ function getKeyBenefits(product) {
   benefits.push('Backed by 1-year warranty');
 
   return benefits;
+}
+
+// ────────────────────────────────────────
+// Compare Bikes (inside Overview tab)
+// ────────────────────────────────────────
+
+const compareSpecKeys = [
+  'wheelSize', 'frameType', 'gearCount', 'brakeType', 'weight',
+  'ageRange', 'suspension', 'motor', 'battery', 'range',
+];
+
+function CompareBikes({ currentProduct, allProducts = [] }) {
+  const [bikeA, setBikeA] = useState(currentProduct.id);
+  const [bikeB, setBikeB] = useState('');
+  const [isOpenA, setIsOpenA] = useState(false);
+  const [isOpenB, setIsOpenB] = useState(false);
+  const [searchA, setSearchA] = useState('');
+  const [searchB, setSearchB] = useState('');
+
+  useEffect(() => {
+    setBikeA(currentProduct.id);
+    setBikeB('');
+  }, [currentProduct.id]);
+
+  const productA = allProducts.find((p) => p.id === bikeA) || currentProduct;
+  const productB = bikeB ? allProducts.find((p) => p.id === bikeB) : null;
+
+  const activeSpecKeys = compareSpecKeys.filter(
+    (key) => productA.specs?.[key] || (productB && productB.specs?.[key])
+  );
+
+  const discountA = productA.mrp > productA.price ? Math.round(((productA.mrp - productA.price) / productA.mrp) * 100) : 0;
+  const discountB = productB && productB.mrp > productB.price ? Math.round(((productB.mrp - productB.price) / productB.mrp) * 100) : 0;
+
+  return (
+    <section className="mt-6">
+      <h3 className="text-lg sm:text-xl font-bold text-dark mb-4">
+        Compare <span className="text-primary">Bikes</span>
+      </h3>
+
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        {/* Bike Selectors + Images */}
+        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] gap-0 min-w-0">
+          <div className="hidden sm:block" />
+
+          {/* Bike A Selector */}
+          <div className="border-r border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
+            <div className="relative">
+              <button
+                onClick={() => { setIsOpenA(!isOpenA); setIsOpenB(false); setSearchA(''); }}
+                className="w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 bg-dark text-white rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px]"
+              >
+                <span className="truncate">{productA.name}</span>
+                <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenA ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {isOpenA && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col"
+                  >
+                    <div className="sticky top-0 p-1.5 bg-white border-b border-gray-100">
+                      <input
+                        type="text"
+                        value={searchA}
+                        onChange={(e) => setSearchA(e.target.value)}
+                        placeholder="Search bike..."
+                        className="w-full px-2.5 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary text-dark placeholder:text-gray-400"
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="overflow-y-auto">
+                    {allProducts.filter((p) => !searchA || p.name.toLowerCase().includes(searchA.toLowerCase())).map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setBikeA(p.id); setIsOpenA(false); }}
+                        className={`w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-gray-bg transition-colors ${p.id === bikeA ? 'bg-primary/10 text-primary font-bold' : 'text-dark'}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {allProducts.filter((p) => !searchA || p.name.toLowerCase().includes(searchA.toLowerCase())).length === 0 && (
+                      <p className="px-3 py-2 text-xs text-gray-400 text-center">No bikes found</p>
+                    )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            <div className="mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-gray-bg">
+              <LazyImage src={productA.image} alt={productA.name} className="w-full h-full" />
+            </div>
+          </div>
+
+          {/* Bike B Selector */}
+          <div className="border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
+            <div className="relative">
+              <button
+                onClick={() => { setIsOpenB(!isOpenB); setIsOpenA(false); setSearchB(''); }}
+                className={`w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px] ${productB ? 'bg-primary text-white' : 'bg-gray-200 text-gray-text'}`}
+              >
+                <span className="truncate">{productB ? productB.name : 'Select a bike'}</span>
+                <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenB ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              <AnimatePresence>
+                {isOpenB && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-hidden flex flex-col"
+                  >
+                    <div className="sticky top-0 p-1.5 bg-white border-b border-gray-100">
+                      <input
+                        type="text"
+                        value={searchB}
+                        onChange={(e) => setSearchB(e.target.value)}
+                        placeholder="Search bike..."
+                        className="w-full px-2.5 py-1.5 text-xs sm:text-sm bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-primary text-dark placeholder:text-gray-400"
+                        autoFocus
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div className="overflow-y-auto">
+                    {allProducts.filter((p) => p.id !== bikeA).filter((p) => !searchB || p.name.toLowerCase().includes(searchB.toLowerCase())).map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => { setBikeB(p.id); setIsOpenB(false); }}
+                        className={`w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-gray-bg transition-colors ${p.id === bikeB ? 'bg-primary/10 text-primary font-bold' : 'text-dark'}`}
+                      >
+                        {p.name}
+                      </button>
+                    ))}
+                    {allProducts.filter((p) => p.id !== bikeA).filter((p) => !searchB || p.name.toLowerCase().includes(searchB.toLowerCase())).length === 0 && (
+                      <p className="px-3 py-2 text-xs text-gray-400 text-center">No bikes found</p>
+                    )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {productB ? (
+              <div className="mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-gray-bg">
+                <LazyImage src={productB.image} alt={productB.name} className="w-full h-full" />
+              </div>
+            ) : (
+              <div className="mt-3 aspect-[4/3] rounded-xl bg-gray-bg flex items-center justify-center">
+                <div className="text-center text-gray-text">
+                  <svg className="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <p className="text-xs font-medium">Pick a bike to compare</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Price Row */}
+        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] border-b border-gray-100">
+          <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
+            <span className="text-xs font-bold text-dark uppercase tracking-wide">Price</span>
+          </div>
+          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4 border-r border-gray-100">
+            <span className="text-sm sm:text-2xl font-bold text-primary">₹{productA.price.toLocaleString('en-IN')}</span>
+            {discountA > 0 && (
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-gray-text line-through">₹{productA.mrp.toLocaleString('en-IN')}</span>
+                <span className="text-xs font-bold text-green-600">{discountA}% off</span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4">
+            {productB ? (
+              <>
+                <span className="text-sm sm:text-2xl font-bold text-primary">₹{productB.price.toLocaleString('en-IN')}</span>
+                {discountB > 0 && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs text-gray-text line-through">₹{productB.mrp.toLocaleString('en-IN')}</span>
+                    <span className="text-xs font-bold text-green-600">{discountB}% off</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-gray-300">—</span>
+            )}
+          </div>
+        </div>
+
+        {/* Spec Rows */}
+        {activeSpecKeys.map((key) => {
+          const valA = productA.specs?.[key] || '—';
+          const valB = productB ? (productB.specs?.[key] || '—') : null;
+          return (
+            <div key={key} className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] border-b border-gray-100 last:border-b-0">
+              <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
+                <span className="text-xs font-bold text-dark uppercase tracking-wide">{specLabels[key]}</span>
+              </div>
+              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 border-r border-gray-100 text-center">
+                <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
+                <span className="text-[11px] sm:text-sm font-semibold text-dark">{valA}</span>
+              </div>
+              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 text-center">
+                {productB ? (
+                  <>
+                    <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
+                    <span className="text-[11px] sm:text-sm font-semibold text-dark">{valB}</span>
+                  </>
+                ) : (
+                  <span className="text-sm text-gray-300">—</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }

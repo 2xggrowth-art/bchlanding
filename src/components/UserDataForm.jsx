@@ -75,7 +75,7 @@ const quizQuestionLabels = {
   growth: "Adjustability"
 };
 
-export default function UserDataForm({ onSubmit, onBack, quizAnswers, skipConfirmation = false, submitLabel = "Continue", stepLabel = "Step 1 of 3" }) {
+export default function UserDataForm({ onSubmit, onBack, quizAnswers, skipConfirmation = false, submitLabel = "Continue", stepLabel = "Step 1 of 3", selectedProduct }) {
   const [step, setStep] = useState(1); // 1 = contact info, 2 = confirmation
   const [formData, setFormData] = useState({
     name: '',
@@ -178,6 +178,24 @@ export default function UserDataForm({ onSubmit, onBack, quizAnswers, skipConfir
                   </button>
                 )}
 
+                {/* Product info card — shown when booking from product page */}
+                {selectedProduct && (
+                  <div className="flex items-center gap-3 p-3 mb-5 bg-gray-bg rounded-xl border border-gray-200">
+                    <img
+                      src={selectedProduct.image}
+                      alt={selectedProduct.name}
+                      className="w-16 h-14 rounded-lg object-cover flex-shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-dark truncate">{selectedProduct.name}</p>
+                      <p className="text-xs text-gray-text">Test ride this bike at our store</p>
+                    </div>
+                    <span className="ml-auto text-sm font-bold text-primary flex-shrink-0">
+                      ₹{selectedProduct.price?.toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                )}
+
                 <div className="text-center mb-6">
                   <motion.div
                     initial={{ scale: 0 }}
@@ -191,10 +209,10 @@ export default function UserDataForm({ onSubmit, onBack, quizAnswers, skipConfir
                   </motion.div>
 
                   <h2 className="font-display text-2xl sm:text-3xl font-normal text-dark mb-2 uppercase tracking-wider">
-                    Contact Details
+                    {selectedProduct ? 'Book Your Test Ride' : 'Contact Details'}
                   </h2>
                   <p className="text-gray-text text-sm">
-                    Share your details so our expert can reach you
+                    {selectedProduct ? 'Enter your details to book for ₹99' : 'Share your details so our expert can reach you'}
                   </p>
                 </div>
 
@@ -326,7 +344,7 @@ export default function UserDataForm({ onSubmit, onBack, quizAnswers, skipConfir
 
                 {/* Form progress indicator */}
                 <div className="mt-6 flex items-center justify-center gap-2">
-                  {[1, 2, 3].map((s) => (
+                  {(selectedProduct ? [1, 2] : [1, 2, 3]).map((s) => (
                     <div
                       key={s}
                       className={`h-1.5 rounded-full transition-all duration-300 ${s === 1 ? 'w-8 bg-primary' : 'w-4 bg-dark/20'

@@ -52,7 +52,7 @@ function LazyPage({ children }) {
 function AppRoutes() {
   const location = useLocation();
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence>
       <Routes location={location} key={location.pathname}>
         {/* Main Landing Page */}
           <Route

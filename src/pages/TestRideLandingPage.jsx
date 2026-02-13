@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, lazy, Suspense } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { api } from '../utils/api';
+import { getCachedProducts } from '../utils/productsCache';
 
 // Critical above-the-fold components (load immediately)
 import Hero from '../components/Hero';
@@ -32,6 +33,7 @@ const ComponentLoader = () => (
 );
 
 export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
+  const navigate = useNavigate();
   const [currentStage, setCurrentStage] = useState(() => sessionStorage.getItem('test_ride_stage') || 'landing');
   const [quizAnswers, setQuizAnswers] = useState(() => {
     const saved = sessionStorage.getItem('test_ride_quiz');
@@ -41,6 +43,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   const [leadId, setLeadId] = useState(() => sessionStorage.getItem('test_ride_lead_id'));
   const [showStickyCTA, setShowStickyCTA] = useState(false);
   const [ctaSource, setCtaSource] = useState(null);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const heroRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -64,10 +67,36 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
     if (leadId) sessionStorage.setItem('test_ride_lead_id', leadId);
   }, [leadId]);
 
+  // Handle ?product=xxx — product-specific test ride flow (skip quiz)
   useEffect(() => {
+    const productParam = searchParams.get('product');
+    if (productParam) {
+      (async () => {
+        try {
+          const allProducts = await getCachedProducts();
+          const found = allProducts.find((p) => p.id === productParam);
+          if (found) {
+            setSelectedProduct(found);
+            setCtaSource('product-detail');
+            // Clear stale data for fresh lead
+            setLeadId(null);
+            setQuizAnswers(null);
+            setUserData(null);
+            sessionStorage.removeItem('test_ride_lead_id');
+            sessionStorage.removeItem('test_ride_quiz');
+            setCurrentStage('userdata');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
+        } catch (err) {
+          console.error('Failed to load product for test ride:', err);
+        }
+      })();
+      setSearchParams({}, { replace: true });
+      return;
+    }
+
     if (searchParams.get('open') === 'true') {
       handleStartQuiz('direct-nav');
-      // Clean up search params
       setSearchParams({}, { replace: true });
     }
   }, [searchParams, setSearchParams]);
@@ -136,12 +165,30 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   const handleUserDataSubmit = async (data) => {
     setUserData(data);
 
+    // Build lead data — include product info if coming from product page
+    const leadData = {
+      name: data.name,
+      phone: data.phone,
+      category: 'Test Ride',
+      source: ctaSource || 'test-ride-landing',
+    };
+
+    if (selectedProduct) {
+      leadData.quizAnswers = {
+        interestedProduct: selectedProduct.name,
+        productId: selectedProduct.id,
+        category: selectedProduct.category,
+        price: selectedProduct.price,
+      };
+    }
+
     // If lead already exists, update it instead of creating a new one
     if (leadId) {
       try {
         await api.updateLead(leadId, {
           name: data.name,
           phone: data.phone,
+          ...(selectedProduct ? { quizAnswers: leadData.quizAnswers } : {}),
           updatedAt: new Date().toISOString()
         });
         console.log('✅ Lead updated with new contact info:', leadId);
@@ -151,12 +198,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
     } else {
       // Create lead immediately after contact info is submitted
       try {
-        const lead = await api.saveLead({
-          name: data.name,
-          phone: data.phone,
-          category: 'Test Ride',
-          source: ctaSource || 'test-ride-landing'
-        });
+        const lead = await api.saveLead(leadData);
         setLeadId(lead.id);
         console.log('✅ Lead created early:', lead.id, lead);
       } catch (error) {
@@ -164,7 +206,13 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
       }
     }
 
-    setCurrentStage('quiz');
+    // If product-specific flow, skip quiz → go straight to payment
+    if (selectedProduct) {
+      setQuizAnswers(leadData.quizAnswers);
+      setCurrentStage('payment');
+    } else {
+      setCurrentStage('quiz');
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -229,10 +277,11 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         <Suspense fallback={<ComponentLoader />}>
           <UserDataForm
             onSubmit={handleUserDataSubmit}
-            onBack={() => setCurrentStage('landing')}
+            onBack={() => { if (selectedProduct) { navigate(`/products/${selectedProduct.id}`); } else { setCurrentStage('landing'); } }}
             skipConfirmation={true}
-            submitLabel="Continue"
-            stepLabel="Step 1 of 3"
+            submitLabel={selectedProduct ? 'Continue to Payment' : 'Continue'}
+            stepLabel={selectedProduct ? 'Step 1 of 2' : 'Step 1 of 3'}
+            selectedProduct={selectedProduct}
           />
         </Suspense>
       )}
@@ -254,8 +303,9 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
             leadId={leadId}
             onSuccess={handlePaymentSuccess}
             onError={handlePaymentError}
-            onBack={() => setCurrentStage('quiz')}
-            onCancel={() => setCurrentStage('landing')}
+            onBack={() => setCurrentStage(selectedProduct ? 'userdata' : 'quiz')}
+            onCancel={() => { if (selectedProduct) { navigate(`/products/${selectedProduct.id}`); } else { setCurrentStage('landing'); } }}
+            selectedProduct={selectedProduct}
           />
         </Suspense>
       )}

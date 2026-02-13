@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, lazy, Suspense } from 'react';
 import { useParams, useNavigate, Link, useNavigationType } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { categories } from '../data/products';
@@ -6,7 +6,6 @@ import ProductCard from '../components/ProductCard';
 import LazyImage from '../components/LazyImage';
 // Phase 1 Components
 import ReviewSummary from '../components/Product/ReviewSummary';
-import TrustBadges from '../components/Product/TrustBadges';
 import StockStatus from '../components/Product/StockStatus';
 import EMICalculator from '../components/Product/EMICalculator';
 import ProductTabs from '../components/Product/ProductTabs';
@@ -15,6 +14,11 @@ import SizeGuideSection from '../components/Product/SizeGuideSection';
 import WarrantyServiceSection from '../components/Product/WarrantyServiceSection';
 import { getCachedProducts } from '../utils/productsCache';
 import { api } from '../utils/api';
+
+// Lazy load booking flow components
+const UserDataForm = lazy(() => import('../components/UserDataForm'));
+const RazorpayPayment = lazy(() => import('../components/RazorpayPayment'));
+const SuccessScreen = lazy(() => import('../components/SuccessScreen'));
 
 const WHATSAPP_NUMBER = '919876543210';
 
@@ -50,6 +54,11 @@ export default function ProductDetailPage() {
   const [selectedColor, setSelectedColor] = useState(null);
   const [selectedImageIdx, setSelectedImageIdx] = useState(0);
   const navType = useNavigationType();
+
+  // Booking flow state (inline modal)
+  const [bookingStage, setBookingStage] = useState(null); // null | 'userdata' | 'payment' | 'success'
+  const [bookingUserData, setBookingUserData] = useState(null);
+  const [bookingLeadId, setBookingLeadId] = useState(null);
 
   const category = useMemo(
     () => (product ? categories.find((c) => c.slug === product.category) : null),
@@ -234,14 +243,66 @@ export default function ProductDetailPage() {
     setSelectedImageIdx(0);
   };
 
-  // Build specs array from all available fields
-  const specsArray = Object.entries(product.specs || {})
-    .map(([key, value]) => ({
-      label: specLabels[key] || key,
-      value,
-      key,
-    }))
-    .filter((s) => s.value);
+  // ── Booking flow handlers ──
+  const handleStartBooking = () => {
+    setBookingLeadId(null);
+    setBookingUserData(null);
+    setBookingStage('userdata');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBookingUserDataSubmit = async (data) => {
+    setBookingUserData(data);
+
+    const leadData = {
+      name: data.name,
+      phone: data.phone,
+      category: 'Test Ride',
+      source: 'product-detail',
+      quizAnswers: {
+        interestedProduct: product.name,
+        productId: product.id,
+        category: product.category,
+        price: product.price,
+      },
+    };
+
+    try {
+      const lead = await api.saveLead(leadData);
+      setBookingLeadId(lead.id);
+    } catch (err) {
+      console.error('Error creating lead:', err);
+    }
+
+    setBookingStage('payment');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBookingPaymentSuccess = (paymentData) => {
+    if (window.gtag) {
+      window.gtag('event', 'conversion', {
+        'send_to': 'AW-11326000229/O5i-CNWt6-kbEOWY1Jgq',
+        'transaction_id': paymentData.paymentId || '',
+        'value': 99.0,
+        'currency': 'INR'
+      });
+    }
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ 'event': 'purchase_success' });
+    setBookingStage('success');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBookingPaymentError = (err) => {
+    console.error('Payment error:', err);
+    alert('Payment failed: ' + err.description + '. Please try again.');
+  };
+
+  const handleCloseBooking = () => {
+    setBookingStage(null);
+    setBookingUserData(null);
+    setBookingLeadId(null);
+  };
 
   return (
     <div className="min-h-screen bg-gray-bg pb-20 lg:pb-0 pt-[72px] sm:pt-[80px]">
@@ -276,7 +337,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
+      <div className="max-w-6xl mx-auto px-4 pt-6 sm:pt-8 pb-0">
         <div className="lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
           {/* Left — Image Gallery */}
           <motion.div
@@ -298,7 +359,7 @@ export default function ProductDetailPage() {
                   <LazyImage
                     src={activeGallery[selectedImageIdx] || activeGallery[0]}
                     alt={`${product.name}${selectedColor ? ` - ${selectedColor}` : ''}`}
-                    className={`w-full aspect-square sm:aspect-[4/3] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
+                    className={`w-full aspect-[4/3] sm:aspect-[16/10] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
                     objectFit={(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'contain' : 'cover'}
                     eager
                   />
@@ -367,7 +428,7 @@ export default function ProductDetailPage() {
 
             {/* Color Swatches */}
             {product.colors?.length > 0 && (
-              <div className="mt-4 bg-white rounded-xl p-3 border border-gray-100">
+              <div className="mt-2 bg-white rounded-xl p-3 border border-gray-100">
                 <p className="text-xs font-bold text-dark uppercase tracking-wide mb-2">
                   Colour: <span className="text-primary font-semibold normal-case">{selectedColor || 'All'}</span>
                 </p>
@@ -452,8 +513,6 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* PHASE 1: Trust Badges */}
-            <TrustBadges />
 
             {/* PHASE 1: Stock Status */}
             <StockStatus
@@ -465,59 +524,118 @@ export default function ProductDetailPage() {
             <EMICalculator price={product.price} />
 
             {/* CTA buttons - visible on desktop, hidden on mobile (shown in sticky bar) */}
-            <div className="hidden lg:flex gap-3 mb-8">
+            <div className="hidden lg:flex flex-col gap-3 mb-8">
+              <div className="flex gap-3">
+                <button
+                  onClick={handleStartBooking}
+                  className="flex-1 py-3.5 rounded-full bg-primary text-white font-bold text-base transition-all hover:bg-primary-dark hover:shadow-lg text-center"
+                >
+                  Book a Test Ride — ₹99
+                </button>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-white font-bold text-base hover:bg-green-600 transition-colors flex-shrink-0"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                  </svg>
+                  WhatsApp
+                </a>
+              </div>
               <button
                 onClick={() => setEnquiryOpen(true)}
-                className="flex-1 py-3.5 rounded-full bg-dark text-white font-bold text-base transition-colors hover:bg-primary"
+                className="text-sm text-gray-text hover:text-primary transition-colors font-medium text-left"
               >
-                Enquire Now
+                Have questions? Send an enquiry
               </button>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-green-500 text-white font-bold text-base hover:bg-green-600 transition-colors flex-shrink-0"
-              >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                </svg>
-                WhatsApp
-              </a>
             </div>
 
-            {/* Mobile inline CTA - shows before scroll to sticky bar */}
-            <div className="flex lg:hidden gap-2 mb-6">
+            {/* How It Works — desktop */}
+            <div className="hidden lg:flex items-center gap-0 mt-8 mb-8 bg-red-50 rounded-xl p-4 border border-red-200">
+              <div className="flex-1 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
+                <div>
+                  <p className="text-xs font-bold text-dark leading-tight">Book for ₹99</p>
+                  <p className="text-[10px] text-gray-text leading-tight">Takes only 2 minutes</p>
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <div className="flex-1 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
+                <div>
+                  <p className="text-xs font-bold text-dark leading-tight">We Call You</p>
+                  <p className="text-[10px] text-gray-text leading-tight">Expert calls within 24 hrs</p>
+                </div>
+              </div>
+              <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <div className="flex-1 flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
+                <div>
+                  <p className="text-xs font-bold text-dark leading-tight">Visit & Ride</p>
+                  <p className="text-[10px] text-gray-text leading-tight">Test ride · ₹99 adjusted on purchase</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile inline CTA */}
+            <div className="flex flex-col gap-2 lg:hidden mb-6">
+              <div className="flex gap-2">
+                <button
+                  onClick={handleStartBooking}
+                  className="flex-1 py-3 rounded-full bg-primary text-white font-bold text-sm transition-all active:scale-[0.98] text-center min-h-[44px] flex items-center justify-center"
+                >
+                  Book a Test Ride — ₹99
+                </button>
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+                    <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
+                  </svg>
+                  WhatsApp
+                </a>
+              </div>
               <button
                 onClick={() => setEnquiryOpen(true)}
-                className="flex-1 py-3 rounded-full bg-dark text-white font-bold text-sm transition-colors hover:bg-primary active:bg-primary min-h-[44px]"
+                className="text-xs text-gray-text hover:text-primary transition-colors font-medium text-left"
               >
-                Enquire Now
+                Have questions? Send an enquiry
               </button>
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm hover:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
-                  <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
-                </svg>
-                WhatsApp
-              </a>
+            </div>
+
+            {/* How It Works — mobile */}
+            <div className="flex lg:hidden items-center gap-0 mt-8 mb-6 bg-red-50 rounded-xl p-3 border border-red-200">
+              <div className="flex-1 text-center">
+                <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">1</div>
+                <p className="text-[10px] font-bold text-dark leading-tight">Book ₹99</p>
+                <p className="text-[9px] text-gray-text leading-tight">2 min</p>
+              </div>
+              <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <div className="flex-1 text-center">
+                <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">2</div>
+                <p className="text-[10px] font-bold text-dark leading-tight">We Call You</p>
+                <p className="text-[9px] text-gray-text leading-tight">Within 24 hrs</p>
+              </div>
+              <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+              <div className="flex-1 text-center">
+                <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">3</div>
+                <p className="text-[10px] font-bold text-dark leading-tight">Visit & Ride</p>
+                <p className="text-[9px] text-gray-text leading-tight">₹99 adjusted</p>
+              </div>
             </div>
 
           </motion.div>
         </div>
 
         {/* PHASE 1: Product Tabs (replaces old specs table) */}
-        <ProductTabs product={product} />
-
-        {/* Compare Bikes — not for electric (info is in BCH tab) */}
-        {product.category !== 'electric' && (
-          <CompareBikes currentProduct={product} allProducts={productsList} />
-        )}
+        <ProductTabs product={product} allProducts={productsList} />
 
         {/* PHASE 2: Size Guide Section */}
         {product.sizeGuide?.hasGuide && (
@@ -561,10 +679,10 @@ export default function ProductDetailPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] safe-bottom">
         <div className="flex gap-2 px-4 py-3">
           <button
-            onClick={() => setEnquiryOpen(true)}
-            className="flex-1 py-3 rounded-full bg-dark text-white font-bold text-sm transition-colors active:bg-primary min-h-[44px]"
+            onClick={handleStartBooking}
+            className="flex-1 py-3 rounded-full bg-primary text-white font-bold text-sm active:scale-[0.98] transition-all min-h-[44px] flex items-center justify-center text-center"
           >
-            Enquire Now
+            Book a Test Ride — ₹99
           </button>
           <a
             href={whatsappUrl}
@@ -581,6 +699,41 @@ export default function ProductDetailPage() {
         </div>
       </div>
 
+      {/* Booking Flow Modals */}
+      {bookingStage === 'userdata' && (
+        <Suspense fallback={null}>
+          <UserDataForm
+            onSubmit={handleBookingUserDataSubmit}
+            onBack={handleCloseBooking}
+            skipConfirmation={true}
+            submitLabel="Continue to Payment"
+            stepLabel="Step 1 of 2"
+            selectedProduct={product}
+          />
+        </Suspense>
+      )}
+
+      {bookingStage === 'payment' && bookingUserData && (
+        <Suspense fallback={null}>
+          <RazorpayPayment
+            userData={bookingUserData}
+            quizAnswers={{ interestedProduct: product.name, productId: product.id, category: product.category, price: product.price }}
+            leadId={bookingLeadId}
+            onSuccess={handleBookingPaymentSuccess}
+            onError={handleBookingPaymentError}
+            onBack={() => setBookingStage('userdata')}
+            onCancel={handleCloseBooking}
+            selectedProduct={product}
+          />
+        </Suspense>
+      )}
+
+      {bookingStage === 'success' && (
+        <Suspense fallback={null}>
+          <SuccessScreen userData={bookingUserData} />
+        </Suspense>
+      )}
+
       {/* Enquiry Modal */}
       <AnimatePresence>
         {enquiryOpen && (
@@ -591,207 +744,6 @@ export default function ProductDetailPage() {
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-// ────────────────────────────────────────
-// Compare Bikes
-// ────────────────────────────────────────
-
-// All comparable spec keys in display order
-const compareSpecKeys = [
-  'wheelSize', 'frameType', 'gearCount', 'brakeType', 'weight',
-  'ageRange', 'suspension', 'motor', 'battery', 'range',
-];
-
-function CompareBikes({ currentProduct, allProducts = [] }) {
-  const [bikeA, setBikeA] = useState(currentProduct.id);
-  const [bikeB, setBikeB] = useState('');
-  const [isOpenA, setIsOpenA] = useState(false);
-  const [isOpenB, setIsOpenB] = useState(false);
-
-  // Reset bikeA when current product changes
-  useEffect(() => {
-    setBikeA(currentProduct.id);
-    setBikeB('');
-  }, [currentProduct.id]);
-
-  const productA = allProducts.find((p) => p.id === bikeA) || currentProduct;
-  const productB = bikeB ? allProducts.find((p) => p.id === bikeB) : null;
-
-  // Get all spec keys present in either bike
-  const activeSpecKeys = compareSpecKeys.filter(
-    (key) => productA.specs?.[key] || (productB && productB.specs?.[key])
-  );
-
-  const discountA = productA.mrp > productA.price ? Math.round(((productA.mrp - productA.price) / productA.mrp) * 100) : 0;
-  const discountB = productB && productB.mrp > productB.price ? Math.round(((productB.mrp - productB.price) / productB.mrp) * 100) : 0;
-
-  return (
-    <motion.section
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="mt-12 sm:mt-16"
-    >
-      <h2 className="font-display text-xl sm:text-2xl font-bold text-dark uppercase tracking-wider mb-6">
-        Compare <span className="text-primary">Bikes</span>
-      </h2>
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        {/* Bike Selectors + Images */}
-        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] gap-0 min-w-0">
-          {/* Empty top-left cell (desktop only) */}
-          <div className="hidden sm:block" />
-
-          {/* Bike A Selector */}
-          <div className="border-r border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
-            <div className="relative">
-              <button
-                onClick={() => { setIsOpenA(!isOpenA); setIsOpenB(false); }}
-                className="w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 bg-dark text-white rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px]"
-              >
-                <span className="truncate">{productA.name}</span>
-                <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenA ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <AnimatePresence>
-                {isOpenA && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto"
-                  >
-                    {allProducts.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => { setBikeA(p.id); setIsOpenA(false); }}
-                        className={`w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-gray-bg transition-colors ${p.id === bikeA ? 'bg-primary/10 text-primary font-bold' : 'text-dark'}`}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <div className="mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-gray-bg">
-              <LazyImage src={productA.image} alt={productA.name} className="w-full h-full" />
-            </div>
-          </div>
-
-          {/* Bike B Selector */}
-          <div className="border-b border-gray-100 p-2.5 sm:p-4 min-w-0">
-            <div className="relative">
-              <button
-                onClick={() => { setIsOpenB(!isOpenB); setIsOpenA(false); }}
-                className={`w-full flex items-center justify-between gap-1 sm:gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2.5 rounded-xl text-[11px] sm:text-sm font-bold min-h-[40px] ${productB ? 'bg-primary text-white' : 'bg-gray-200 text-gray-text'}`}
-              >
-                <span className="truncate">{productB ? productB.name : 'Select a bike'}</span>
-                <svg className={`w-4 h-4 flex-shrink-0 transition-transform ${isOpenB ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              <AnimatePresence>
-                {isOpenB && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="absolute top-full left-0 right-0 z-20 mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-60 overflow-y-auto"
-                  >
-                    {allProducts.filter((p) => p.id !== bikeA).map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => { setBikeB(p.id); setIsOpenB(false); }}
-                        className={`w-full text-left px-3 py-2 text-xs sm:text-sm hover:bg-gray-bg transition-colors ${p.id === bikeB ? 'bg-primary/10 text-primary font-bold' : 'text-dark'}`}
-                      >
-                        {p.name}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            {productB ? (
-              <div className="mt-3 aspect-[4/3] rounded-xl overflow-hidden bg-gray-bg">
-                <LazyImage src={productB.image} alt={productB.name} className="w-full h-full" />
-              </div>
-            ) : (
-              <div className="mt-3 aspect-[4/3] rounded-xl bg-gray-bg flex items-center justify-center">
-                <div className="text-center text-gray-text">
-                  <svg className="w-10 h-10 mx-auto mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <p className="text-xs font-medium">Pick a bike to compare</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Price Row */}
-        <div className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] border-b border-gray-100">
-          <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
-            <span className="text-xs font-bold text-dark uppercase tracking-wide">Price</span>
-          </div>
-          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4 border-r border-gray-100">
-            <span className="text-sm sm:text-2xl font-bold text-primary">₹{productA.price.toLocaleString('en-IN')}</span>
-            {discountA > 0 && (
-              <div className="flex items-center gap-2 mt-1">
-                <span className="text-xs text-gray-text line-through">₹{productA.mrp.toLocaleString('en-IN')}</span>
-                <span className="text-xs font-bold text-green-600">{discountA}% off</span>
-              </div>
-            )}
-          </div>
-          <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-4">
-            {productB ? (
-              <>
-                <span className="text-sm sm:text-2xl font-bold text-primary">₹{productB.price.toLocaleString('en-IN')}</span>
-                {discountB > 0 && (
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs text-gray-text line-through">₹{productB.mrp.toLocaleString('en-IN')}</span>
-                    <span className="text-xs font-bold text-green-600">{discountB}% off</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <span className="text-sm text-gray-300">—</span>
-            )}
-          </div>
-        </div>
-
-        {/* Spec Rows */}
-        {activeSpecKeys.map((key) => {
-          const valA = productA.specs?.[key] || '—';
-          const valB = productB ? (productB.specs?.[key] || '—') : null;
-          return (
-            <div key={key} className="grid grid-cols-[1fr_1fr] sm:grid-cols-[120px_1fr_1fr] border-b border-gray-100 last:border-b-0">
-              {/* Label — hidden on mobile, shown on sm+ */}
-              <div className="hidden sm:flex items-center px-4 py-3 bg-gray-bg">
-                <span className="text-xs font-bold text-dark uppercase tracking-wide">{specLabels[key]}</span>
-              </div>
-              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 border-r border-gray-100 text-center">
-                <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
-                <span className="text-[11px] sm:text-sm font-semibold text-dark">{valA}</span>
-              </div>
-              <div className="flex flex-col items-center justify-center px-2 sm:px-3 py-2.5 sm:py-3 text-center">
-                {productB ? (
-                  <>
-                    <span className="text-[10px] font-bold text-gray-text uppercase tracking-wide sm:hidden mb-0.5">{specLabels[key]}</span>
-                    <span className="text-[11px] sm:text-sm font-semibold text-dark">{valB}</span>
-                  </>
-                ) : (
-                  <span className="text-sm text-gray-300">—</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </motion.section>
   );
 }
 

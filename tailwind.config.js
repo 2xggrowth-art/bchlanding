@@ -22,6 +22,10 @@ export default {
           light: '#D4D4D4',
           bg: '#F5F5F5',
         },
+        accent: {
+          DEFAULT: '#d4a853',
+          dark: '#b8902e',
+        },
         neon: {
           blue: '#00D4FF',
           green: '#39FF14',
