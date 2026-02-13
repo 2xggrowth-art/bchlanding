@@ -30,10 +30,8 @@ export function trackVisitor(action, page, extra = {}) {
       ...extra
     };
 
-    navigator.sendBeacon(
-      '/api/analytics/visitor',
-      JSON.stringify(payload)
-    );
+    const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+    navigator.sendBeacon('/api/analytics/visitor', blob);
   } catch (_) {
     // Silent fail — tracking should never break UX
   }
