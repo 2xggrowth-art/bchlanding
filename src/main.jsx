@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
-import { PageSkeleton } from './components/Skeleton';
+import PageLoader from './components/PageLoader';
 import './index.css';
 
 // Lazy load pages for code splitting
@@ -16,9 +16,6 @@ const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const ProductsPage = lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const AdminPanel = lazy(() => import('./AdminPanel'));
-
-// Skeleton-based loading (replaces spinner)
-const PageLoader = () => <PageSkeleton />;
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -43,18 +40,28 @@ function PageTransition({ children }) {
   );
 }
 
+// Wraps a lazy component with Suspense + glass loader overlay
+function LazyPage({ children }) {
+  return (
+    <Suspense fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  );
+}
+
 function AppRoutes() {
   const location = useLocation();
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         {/* Main Landing Page */}
-          {/* Main Landing Page */}
           <Route
             path="/"
             element={
               <Layout headerTransparent={true}>
-                <PageTransition><MainLandingPage /></PageTransition>
+                <PageTransition>
+                  <LazyPage><MainLandingPage /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -64,7 +71,9 @@ function AppRoutes() {
             path="/test-ride/*"
             element={
               <Layout headerTransparent showFooter>
-                <PageTransition><TestRideLandingPage /></PageTransition>
+                <PageTransition>
+                  <LazyPage><TestRideLandingPage /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -74,7 +83,9 @@ function AppRoutes() {
             path="/products"
             element={
               <Layout headerTransparent>
-                <PageTransition><ProductsPage /></PageTransition>
+                <PageTransition>
+                  <LazyPage><ProductsPage /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -83,8 +94,10 @@ function AppRoutes() {
           <Route
             path="/products/:productId"
             element={
-              <Layout>
-                <PageTransition><ProductDetailPage /></PageTransition>
+              <Layout headerTransparent>
+                <PageTransition>
+                  <LazyPage><ProductDetailPage /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -100,7 +113,9 @@ function AppRoutes() {
             path="/privacy-policy"
             element={
               <Layout>
-                <PageTransition><PrivacyPolicy /></PageTransition>
+                <PageTransition>
+                  <LazyPage><PrivacyPolicy /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -108,7 +123,9 @@ function AppRoutes() {
             path="/terms"
             element={
               <Layout>
-                <PageTransition><Terms /></PageTransition>
+                <PageTransition>
+                  <LazyPage><Terms /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
@@ -116,13 +133,17 @@ function AppRoutes() {
             path="/disclaimer"
             element={
               <Layout>
-                <PageTransition><Disclaimer /></PageTransition>
+                <PageTransition>
+                  <LazyPage><Disclaimer /></LazyPage>
+                </PageTransition>
               </Layout>
             }
           />
 
           {/* Admin Panel - no layout */}
-          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin" element={
+            <LazyPage><AdminPanel /></LazyPage>
+          } />
 
           {/* 404 - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
@@ -135,9 +156,7 @@ function App() {
   return (
     <BrowserRouter>
       <ScrollToTop />
-      <Suspense fallback={<PageLoader />}>
-        <AppRoutes />
-      </Suspense>
+      <AppRoutes />
     </BrowserRouter>
   );
 }

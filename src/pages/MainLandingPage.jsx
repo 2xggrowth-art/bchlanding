@@ -64,8 +64,8 @@ function PremiumHero({ onCTAClick }) {
       />
 
       {/* Cinematic Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-dark/60 via-dark/40 to-dark/80 z-[1]" />
-      <div className="absolute inset-0 bg-gradient-to-r from-dark/30 to-transparent z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-dark/30 via-dark/10 to-dark/50 z-[1]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-dark/15 to-transparent z-[1]" />
 
       {/* Hero Content */}
       <motion.div
@@ -121,7 +121,7 @@ function PremiumHero({ onCTAClick }) {
             >
               <Link
                 to="/test-ride"
-                className="group inline-flex items-center gap-2 sm:gap-3 bg-white text-dark px-6 sm:px-10 py-3 sm:py-5 rounded-full font-semibold text-sm sm:text-base tracking-wide hover:bg-primary hover:text-white transition-all duration-500 shadow-2xl"
+                className="group inline-flex items-center gap-2 sm:gap-3 bg-red-600 text-white px-6 sm:px-10 py-3 sm:py-5 rounded-full font-semibold text-sm sm:text-base tracking-wide hover:bg-red-700 transition-all duration-500 shadow-2xl"
               >
                 Book a Test Ride
                 <svg

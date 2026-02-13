@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ContactFormModal from '../ContactFormModal';
 import { categories, products } from '../../data/products';
+import { accessories } from '../../data/accessories';
 
 export default function Header({ transparent = false, onCTAClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -66,7 +67,12 @@ export default function Header({ transparent = false, onCTAClick }) {
   const handleProductClick = useCallback((product) => {
     setMegaMenuOpen(false);
     setMobileMenuOpen(false);
-    navigate(`/products/${product.id}`);
+    // Accessories don't have detail pages — go to filtered list
+    if (product.id?.startsWith('acc-')) {
+      navigate('/products?category=accessories');
+    } else {
+      navigate(`/products/${product.id}`);
+    }
   }, [navigate]);
 
   const handleCategoryClick = useCallback((slug) => {
@@ -103,6 +109,9 @@ export default function Header({ transparent = false, onCTAClick }) {
 
   // Get products for a category (limit for mega menu)
   const getCategoryProducts = (categorySlug, subCategorySlug) => {
+    if (categorySlug === 'accessories') {
+      return accessories.slice(0, 6);
+    }
     let filtered = products.filter((p) => p.category === categorySlug);
     if (subCategorySlug) {
       filtered = filtered.filter((p) => p.subCategory === subCategorySlug);

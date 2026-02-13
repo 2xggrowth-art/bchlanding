@@ -1,10 +1,11 @@
 /**
  * Analytics API Hub
- * Handles both Visitor tracking and Engagement stats
- * 
+ * Handles Visitor tracking, Engagement stats, and Tracking settings
+ *
  * Routes:
  * /api/analytics/visitor    - POST (track), GET (events feed)
  * /api/analytics/engagement - POST (track), GET (stats)
+ * /api/analytics/settings   - GET (status), POST (toggle)
  */
 
 import { handleCors, requireAdmin } from '../_lib/auth-middleware.js';
@@ -12,7 +13,9 @@ import {
     recordVisitorEvent,
     getVisitorEvents,
     recordEngagementEvent,
-    getEngagementStats
+    getEngagementStats,
+    getTrackingSetting,
+    setTrackingSetting
 } from '../_lib/firestore-service.js';
 
 export default async function handler(req, res) {
@@ -20,11 +23,56 @@ export default async function handler(req, res) {
 
     const { slug } = req.query;
 
+    // --- TRACKING SETTINGS ---
+    if (slug === 'settings') {
+        const admin = await requireAdmin(req, res);
+        if (!admin) return;
+
+        // GET - Get tracking status
+        if (req.method === 'GET') {
+            try {
+                const visitor = await getTrackingSetting('visitor_tracking');
+                const engagement = await getTrackingSetting('engagement_tracking');
+                return res.status(200).json({ success: true, visitor, engagement });
+            } catch (error) {
+                console.error('❌ Failed to get tracking settings:', error);
+                return res.status(500).json({ success: false, error: 'Failed to get settings' });
+            }
+        }
+
+        // POST - Update tracking status
+        if (req.method === 'POST') {
+            try {
+                let body = req.body;
+                if (typeof body === 'string') body = JSON.parse(body);
+
+                const { key, enabled } = body || {};
+                const validKeys = ['visitor_tracking', 'engagement_tracking'];
+
+                if (!key || !validKeys.includes(key) || typeof enabled !== 'boolean') {
+                    return res.status(400).json({ success: false, error: 'Invalid key or enabled value' });
+                }
+
+                await setTrackingSetting(key, enabled);
+                return res.status(200).json({ success: true, key, enabled });
+            } catch (error) {
+                console.error('❌ Failed to update tracking setting:', error);
+                return res.status(500).json({ success: false, error: 'Failed to update setting' });
+            }
+        }
+    }
+
     // --- VISITOR ANALYTICS ---
     if (slug === 'visitor') {
         // POST - Record event
         if (req.method === 'POST') {
             try {
+                // Check if visitor tracking is paused
+                const setting = await getTrackingSetting('visitor_tracking');
+                if (!setting.enabled) {
+                    return res.status(200).json({ success: true, paused: true });
+                }
+
                 let body = req.body;
                 if (typeof body === 'string') body = JSON.parse(body);
 
@@ -58,7 +106,9 @@ export default async function handler(req, res) {
                 const limit = parseInt(req.query.limit) || 100;
                 const action = req.query.action || 'all';
                 const result = await getVisitorEvents({ limit, action });
-                return res.status(200).json({ success: true, ...result });
+                // Include tracking status in response
+                const setting = await getTrackingSetting('visitor_tracking');
+                return res.status(200).json({ success: true, ...result, trackingEnabled: setting.enabled });
             } catch (error) {
                 console.error('❌ Failed to get visitor events:', error);
                 return res.status(500).json({ success: false, error: 'Failed to retrieve visitor events' });

@@ -74,20 +74,14 @@ const loadHandler = async (handlerPath) => {
 };
 
 // API Routes
-app.post('/api/razorpay/create-order', async (req, res) => {
+// Razorpay (dynamic [action] handler)
+app.all('/api/razorpay/:action', async (req, res) => {
   try {
-    const handler = await loadHandler('./api/razorpay/create-order.js');
+    req.query.action = req.params.action;
+    const handler = await loadHandler('./api/razorpay/[action].js');
     await handler(req, res);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.post('/api/razorpay/verify-payment', async (req, res) => {
-  try {
-    const handler = await loadHandler('./api/razorpay/verify-payment.js');
-    await handler(req, res);
-  } catch (error) {
+    console.error(`❌ /api/razorpay/${req.params.action} error:`, error);
     res.status(500).json({ success: false, error: error.message });
   }
 });
@@ -167,11 +161,11 @@ app.all('/api/products', async (req, res) => {
   }
 });
 
-// Category API routes
+// Category API routes (catch-all [[...path]] handler)
 app.all('/api/categories/:slug', async (req, res) => {
   try {
-    req.query = { ...req.query, slug: req.params.slug };
-    const handler = await loadHandler('./api/categories/[slug].js');
+    req.query.path = [req.params.slug];
+    const handler = await loadHandler('./api/categories/[[...path]].js');
     await handler(req, res);
   } catch (error) {
     console.error('❌ /api/categories/:slug error:', error);
@@ -181,7 +175,8 @@ app.all('/api/categories/:slug', async (req, res) => {
 
 app.all('/api/categories', async (req, res) => {
   try {
-    const handler = await loadHandler('./api/categories/index.js');
+    req.query.path = [];
+    const handler = await loadHandler('./api/categories/[[...path]].js');
     await handler(req, res);
   } catch (error) {
     console.error('❌ /api/categories error:', error);
@@ -189,23 +184,14 @@ app.all('/api/categories', async (req, res) => {
   }
 });
 
-// Analytics API routes
-app.all('/api/analytics/engagement', async (req, res) => {
+// Analytics API routes (dynamic [slug] handler)
+app.all('/api/analytics/:slug', async (req, res) => {
   try {
-    const handler = await loadHandler('./api/analytics/engagement.js');
+    req.query.slug = req.params.slug;
+    const handler = await loadHandler('./api/analytics/[slug].js');
     await handler(req, res);
   } catch (error) {
-    console.error('❌ /api/analytics/engagement error:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
-});
-
-app.all('/api/analytics/visitor', async (req, res) => {
-  try {
-    const handler = await loadHandler('./api/analytics/visitor.js');
-    await handler(req, res);
-  } catch (error) {
-    console.error('❌ /api/analytics/visitor error:', error);
+    console.error(`❌ /api/analytics/${req.params.slug} error:`, error);
     res.status(500).json({ success: false, error: error.message });
   }
 });

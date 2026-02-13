@@ -38,6 +38,11 @@ export const categories = [
       { name: "Raleigh", slug: "raleigh" },
     ],
   },
+  {
+    name: "Accessories",
+    slug: "accessories",
+    description: "Essential biking gear, safety equipment, and performance upgrades for every rider",
+  },
 ];
 
 export const products = [
@@ -50,7 +55,7 @@ export const products = [
     category: "kids",
     price: 3299,
     mrp: 4499,
-    image: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '12"',
       frameType: "Steel",
@@ -88,7 +93,7 @@ export const products = [
     category: "kids",
     price: 3999,
     mrp: 5299,
-    image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1485965120184-e220f721d03e?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '14"',
       frameType: "Steel",
@@ -114,7 +119,7 @@ export const products = [
     category: "kids",
     price: 4499,
     mrp: 5999,
-    image: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1507035895480-2b3156c31fc8?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '16"',
       frameType: "Steel",
@@ -132,7 +137,7 @@ export const products = [
     category: "kids",
     price: 4999,
     mrp: 6499,
-    image: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1576435728678-68d0fbf94e91?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '16"',
       frameType: "Steel",
@@ -150,7 +155,7 @@ export const products = [
     category: "kids",
     price: 4799,
     mrp: 6299,
-    image: "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1544191696-102dbdaeeaa0?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '16"',
       frameType: "Steel",
@@ -168,7 +173,7 @@ export const products = [
     category: "kids",
     price: 5999,
     mrp: 7999,
-    image: "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Steel",
@@ -186,7 +191,7 @@ export const products = [
     category: "kids",
     price: 7499,
     mrp: 9499,
-    image: "https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1559348349-86f1f65817fe?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Steel",
@@ -204,7 +209,7 @@ export const products = [
     category: "kids",
     price: 6499,
     mrp: 8499,
-    image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Hi-Ten Steel",
@@ -222,7 +227,7 @@ export const products = [
     category: "kids",
     price: 8999,
     mrp: 10999,
-    image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Alloy",
@@ -240,7 +245,7 @@ export const products = [
     category: "kids",
     price: 11499,
     mrp: 13999,
-    image: "https://images.unsplash.com/photo-1596495577886-d920f1fb7238?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1596495577886-d920f1fb7238?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Alloy",
@@ -262,7 +267,7 @@ export const products = [
     category: "geared",
     price: 8499,
     mrp: 11999,
-    image: "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1502744688674-c619d1586c9e?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel",
@@ -300,7 +305,7 @@ export const products = [
     category: "geared",
     price: 9499,
     mrp: 12999,
-    image: "https://images.unsplash.com/photo-1571188654248-7a89213915f7?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1571188654248-7a89213915f7?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel",
@@ -338,7 +343,7 @@ export const products = [
     category: "geared",
     price: 10999,
     mrp: 14499,
-    image: "https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1593764592116-bfb2a97c642a?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Steel",
@@ -355,7 +360,7 @@ export const products = [
     category: "geared",
     price: 12499,
     mrp: 15999,
-    image: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Alloy",
@@ -372,7 +377,7 @@ export const products = [
     category: "geared",
     price: 11499,
     mrp: 14999,
-    image: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1532298229144-0ec0c57515c7?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Steel",
@@ -389,7 +394,7 @@ export const products = [
     category: "geared",
     price: 13999,
     mrp: 17499,
-    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Alloy",
@@ -406,7 +411,7 @@ export const products = [
     category: "geared",
     price: 15499,
     mrp: 18999,
-    image: "https://images.unsplash.com/photo-1583467875263-d50dec37a88c?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1583467875263-d50dec37a88c?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy",
@@ -423,7 +428,7 @@ export const products = [
     category: "geared",
     price: 14499,
     mrp: 18499,
-    image: "https://images.unsplash.com/photo-1606117331085-5760e3b58520?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1606117331085-5760e3b58520?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Alloy",
@@ -440,7 +445,7 @@ export const products = [
     category: "geared",
     price: 19999,
     mrp: 23999,
-    image: "https://images.unsplash.com/photo-1505158498176-0150297fbd7d?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1505158498176-0150297fbd7d?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy 6061",
@@ -457,7 +462,7 @@ export const products = [
     category: "geared",
     price: 24499,
     mrp: 28999,
-    image: "https://images.unsplash.com/photo-1634117622592-114e3024ff27?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1634117622592-114e3024ff27?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Alloy 6061",
@@ -478,7 +483,7 @@ export const products = [
     category: "mountain",
     price: 12499,
     mrp: 15999,
-    image: "https://images.unsplash.com/photo-1605559911160-a3d95d213904?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1605559911160-a3d95d213904?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel",
@@ -518,7 +523,7 @@ export const products = [
     category: "mountain",
     price: 15499,
     mrp: 19499,
-    image: "https://images.unsplash.com/photo-1614851099511-773084f6911d?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1614851099511-773084f6911d?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy",
@@ -558,7 +563,7 @@ export const products = [
     category: "mountain",
     price: 18999,
     mrp: 22999,
-    image: "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1571333250630-f0230c320b6d?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy 6061",
@@ -576,7 +581,7 @@ export const products = [
     category: "mountain",
     price: 22499,
     mrp: 26999,
-    image: "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1527018601619-a508a2be00cd?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Alloy 6061",
@@ -594,7 +599,7 @@ export const products = [
     category: "mountain",
     price: 24999,
     mrp: 29999,
-    image: "https://images.unsplash.com/photo-1504279577054-acfeccf8fc52?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1504279577054-acfeccf8fc52?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5+"',
       frameType: "Alloy 6061",
@@ -612,7 +617,7 @@ export const products = [
     category: "mountain",
     price: 27999,
     mrp: 33999,
-    image: "https://images.unsplash.com/photo-1517231925375-bf2cb42917a5?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1517231925375-bf2cb42917a5?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy",
@@ -630,7 +635,7 @@ export const products = [
     category: "mountain",
     price: 32499,
     mrp: 38499,
-    image: "https://images.unsplash.com/photo-1558470598-a5dda9640f68?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1558470598-a5dda9640f68?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Alloy 6061 Hydroformed",
@@ -648,7 +653,7 @@ export const products = [
     category: "mountain",
     price: 35999,
     mrp: 41999,
-    image: "https://images.unsplash.com/photo-1523740856324-f2ce89135981?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1523740856324-f2ce89135981?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '27.5"',
       frameType: "Alloy 6061",
@@ -666,7 +671,7 @@ export const products = [
     category: "mountain",
     price: 39999,
     mrp: 46999,
-    image: "https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1534787238916-9ba6764efd4f?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Carbon Fibre",
@@ -684,7 +689,7 @@ export const products = [
     category: "mountain",
     price: 44999,
     mrp: 52999,
-    image: "https://images.unsplash.com/photo-1482029255085-35a4a48b7084?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1482029255085-35a4a48b7084?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '29"',
       frameType: "Alloy 6061 Hydroformed",
@@ -706,7 +711,7 @@ export const products = [
     category: "city",
     price: 5499,
     mrp: 6999,
-    image: "https://images.unsplash.com/photo-1475666675596-cca2035b3d79?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1475666675596-cca2035b3d79?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel",
@@ -731,7 +736,7 @@ export const products = [
     category: "city",
     price: 5999,
     mrp: 7499,
-    image: "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1511994298241-608e28f14fde?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel (Step-Through)",
@@ -756,7 +761,7 @@ export const products = [
     category: "city",
     price: 8499,
     mrp: 10999,
-    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Steel",
@@ -773,7 +778,7 @@ export const products = [
     category: "city",
     price: 7299,
     mrp: 9499,
-    image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1543002588-bfa74002ed7e?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel",
@@ -790,7 +795,7 @@ export const products = [
     category: "city",
     price: 9999,
     mrp: 12999,
-    image: "https://images.unsplash.com/photo-1501147830916-ce44a6359892?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1501147830916-ce44a6359892?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Alloy",
@@ -807,7 +812,7 @@ export const products = [
     category: "city",
     price: 8999,
     mrp: 11499,
-    image: "https://images.unsplash.com/photo-1623018035782-b269248df916?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1623018035782-b269248df916?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '26"',
       frameType: "Steel (Retro Curve)",
@@ -824,7 +829,7 @@ export const products = [
     category: "city",
     price: 11999,
     mrp: 14999,
-    image: "https://images.unsplash.com/photo-1529422643029-d4585747aaf2?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1529422643029-d4585747aaf2?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Alloy",
@@ -841,7 +846,7 @@ export const products = [
     category: "city",
     price: 12999,
     mrp: 15999,
-    image: "https://images.unsplash.com/photo-1538991383142-36c4edeaffde?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1538991383142-36c4edeaffde?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: '20"',
       frameType: "Alloy (Folding)",
@@ -858,7 +863,7 @@ export const products = [
     category: "city",
     price: 14999,
     mrp: 17999,
-    image: "https://images.unsplash.com/photo-1548438294-1ad5d5f4f063?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1548438294-1ad5d5f4f063?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Chromoly Steel",
@@ -875,7 +880,7 @@ export const products = [
     category: "city",
     price: 17499,
     mrp: 20999,
-    image: "https://images.unsplash.com/photo-1486754735734-325b5831c3ad?w=400&h=300&fit=crop&q=80",
+    image: "https://images.unsplash.com/photo-1486754735734-325b5831c3ad?w=800&h=600&fit=crop&q=90",
     specs: {
       wheelSize: "700C",
       frameType: "Alloy 6061",

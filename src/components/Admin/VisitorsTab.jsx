@@ -30,6 +30,8 @@ export default function VisitorsTab() {
   const [error, setError] = useState(null);
   const [filter, setFilter] = useState('all');
   const [autoRefresh, setAutoRefresh] = useState(true);
+  const [trackingEnabled, setTrackingEnabled] = useState(true);
+  const [togglingTracking, setTogglingTracking] = useState(false);
 
   const { getIdToken } = useAuth();
   const adminAPI = new AdminAPI(getIdToken);
@@ -42,12 +44,32 @@ export default function VisitorsTab() {
       if (response.success) {
         setEvents(response.events || []);
         setSummary(response.summary || null);
+        if (response.trackingEnabled !== undefined) {
+          setTrackingEnabled(response.trackingEnabled);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch visitor events:', err);
       setError(err.message || 'Failed to load visitor data');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleTracking = async () => {
+    setTogglingTracking(true);
+    try {
+      const newState = !trackingEnabled;
+      const response = await adminAPI.setTrackingStatus('visitor_tracking', newState);
+      if (response.success) {
+        setTrackingEnabled(newState);
+        // Stop auto-refresh when paused
+        if (!newState) setAutoRefresh(false);
+      }
+    } catch (err) {
+      console.error('Failed to toggle tracking:', err);
+    } finally {
+      setTogglingTracking(false);
     }
   };
 
@@ -87,6 +109,30 @@ export default function VisitorsTab() {
 
   return (
     <div>
+      {/* Paused Banner */}
+      {!trackingEnabled && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⏸️</span>
+            <div>
+              <p className="font-bold text-amber-800 text-sm uppercase tracking-wide">Tracking Paused</p>
+              <p className="text-amber-600 text-xs">New visitor events are not being recorded. Click "Go Live" to resume.</p>
+            </div>
+          </div>
+          <button
+            onClick={toggleTracking}
+            disabled={togglingTracking}
+            className="px-4 py-2 rounded-full bg-green-600 text-white font-bold text-xs uppercase tracking-wide hover:bg-green-700 transition-colors disabled:opacity-50"
+          >
+            {togglingTracking ? 'Starting...' : 'Go Live'}
+          </button>
+        </motion.div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
         <div>
@@ -94,19 +140,33 @@ export default function VisitorsTab() {
             Visitors
           </h2>
           <p className="text-gray-text text-sm mt-1">
-            Live feed of every visitor action on your site
+            {trackingEnabled ? 'Live feed of every visitor action on your site' : 'Tracking is paused — showing historical data'}
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Pause/Live Toggle */}
           <button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`px-3 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all border ${autoRefresh
-              ? 'bg-green-100 text-green-700 border-green-200'
-              : 'bg-gray-100 text-gray-text border-gray-200'
+            onClick={toggleTracking}
+            disabled={togglingTracking}
+            className={`px-3 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all border disabled:opacity-50 ${trackingEnabled
+              ? 'bg-green-100 text-green-700 border-green-200 hover:bg-red-100 hover:text-red-700 hover:border-red-200'
+              : 'bg-red-100 text-red-700 border-red-200 hover:bg-green-100 hover:text-green-700 hover:border-green-200'
             }`}
+            title={trackingEnabled ? 'Click to pause tracking' : 'Click to resume tracking'}
           >
-            {autoRefresh ? 'Live' : 'Paused'}
+            {togglingTracking ? '...' : trackingEnabled ? '● Live' : '⏸ Paused'}
           </button>
+          {trackingEnabled && (
+            <button
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`px-3 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all border ${autoRefresh
+                ? 'bg-blue-100 text-blue-700 border-blue-200'
+                : 'bg-gray-100 text-gray-text border-gray-200'
+              }`}
+            >
+              {autoRefresh ? 'Auto-Refresh' : 'Manual'}
+            </button>
+          )}
           <button
             onClick={fetchEvents}
             className="px-4 py-2 rounded-full bg-dark text-white font-bold text-xs uppercase tracking-wide hover:bg-dark/90 transition-colors"
@@ -223,7 +283,9 @@ export default function VisitorsTab() {
 
       {/* Footer */}
       <div className="mt-4 text-center text-xs text-gray-text">
-        Showing latest {events.length} events {autoRefresh && '· Auto-refreshing every 30s'}
+        Showing latest {events.length} events
+        {trackingEnabled && autoRefresh && ' · Auto-refreshing every 30s'}
+        {!trackingEnabled && ' · Tracking paused — no new events being recorded'}
       </div>
     </div>
   );

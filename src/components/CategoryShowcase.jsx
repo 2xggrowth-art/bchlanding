@@ -39,6 +39,13 @@ const categoryData = [
     description: 'Pedal-assist & throttle e-bikes with long-range batteries',
     image: 'https://images.unsplash.com/photo-1571068316344-75bc76f77890?w=800&q=70&fit=crop&crop=center&auto=format',
   },
+  {
+    name: 'Accessories',
+    slug: 'accessories',
+    tagline: 'Gear & Safety',
+    description: 'Essential biking gear, safety equipment & performance upgrades',
+    image: '/acc.jpeg',
+  },
 ];
 
 export default function CategoryShowcase() {
@@ -69,7 +76,7 @@ export default function CategoryShowcase() {
             Find Your Perfect Ride
           </h2>
           <p className="text-gray-text/70 text-sm sm:text-base max-w-lg mx-auto leading-relaxed font-light hidden sm:block">
-            Explore our curated collection across 5 categories — hover to discover
+            Explore our curated collection across 6 categories — hover to discover
           </p>
         </div>
 

@@ -322,6 +322,29 @@ export class AdminAPI {
   }
 
   /**
+   * Get tracking settings (pause/live status)
+   */
+  async getTrackingSettings() {
+    return await authenticatedFetch('/api/analytics/settings', {
+      method: 'GET',
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
+   * Toggle tracking on/off
+   * @param {string} key - 'visitor_tracking' or 'engagement_tracking'
+   * @param {boolean} enabled - true = live, false = paused
+   */
+  async setTrackingStatus(key, enabled) {
+    return await authenticatedFetch('/api/analytics/settings', {
+      method: 'POST',
+      body: { key, enabled },
+      getIdToken: this.getIdToken
+    });
+  }
+
+  /**
    * Export all products
    */
   async exportProducts() {

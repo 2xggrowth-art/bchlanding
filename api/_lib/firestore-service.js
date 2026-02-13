@@ -1217,6 +1217,63 @@ async function seedDefaultCategories() {
 }
 
 // ============================================
+// TRACKING SETTINGS (Pause/Live toggle)
+// ============================================
+
+// Cache tracking settings to avoid Firestore read on every visitor event
+const _trackingCache = {};
+const TRACKING_TTL = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * Get tracking setting (visitor/engagement pause status)
+ * Uses server-side cache to avoid Firestore read per visitor event
+ * @param {string} key - Setting key (e.g., 'visitor_tracking', 'engagement_tracking')
+ * @returns {Promise<Object>} { enabled: boolean, updatedAt }
+ */
+async function getTrackingSetting(key = 'visitor_tracking') {
+  try {
+    const cached = _trackingCache[key];
+    if (cached && (Date.now() - cached.ts < TRACKING_TTL)) {
+      return cached.data;
+    }
+
+    const db = getFirestore();
+    const doc = await db.collection('settings').doc(key).get();
+    const data = doc.exists ? doc.data() : { enabled: true };
+
+    _trackingCache[key] = { data, ts: Date.now() };
+    return data;
+  } catch (error) {
+    console.error('❌ Failed to get tracking setting:', error);
+    return { enabled: true };
+  }
+}
+
+/**
+ * Set tracking setting (pause/resume)
+ * Immediately invalidates cache so the change takes effect
+ * @param {string} key - Setting key
+ * @param {boolean} enabled - true = live, false = paused
+ * @returns {Promise<Object>} Updated setting
+ */
+async function setTrackingSetting(key = 'visitor_tracking', enabled = true) {
+  try {
+    const db = getFirestore();
+    const data = { enabled, updatedAt: getTimestamp() };
+    await db.collection('settings').doc(key).set(data, { merge: true });
+
+    // Invalidate cache immediately
+    _trackingCache[key] = { data, ts: Date.now() };
+
+    console.log(`✅ Tracking setting "${key}" set to ${enabled ? 'LIVE' : 'PAUSED'}`);
+    return data;
+  } catch (error) {
+    console.error('❌ Failed to set tracking setting:', error);
+    throw new Error(`Failed to update tracking setting: ${error.message}`);
+  }
+}
+
+// ============================================
 // ENGAGEMENT EVENTS (Exit Intent Popup tracking)
 // ============================================
 
@@ -1479,6 +1536,10 @@ export class FirestoreService {
   recordVisitorEvent = recordVisitorEvent;
   getVisitorEvents = getVisitorEvents;
 
+  // Tracking settings
+  getTrackingSetting = getTrackingSetting;
+  setTrackingSetting = setTrackingSetting;
+
   // Cache management
   invalidateStatsCache = invalidateStatsCache;
   invalidateCategoriesCache = invalidateCategoriesCache;
@@ -1526,6 +1587,10 @@ export {
   // Visitor operations
   recordVisitorEvent,
   getVisitorEvents,
+
+  // Tracking settings
+  getTrackingSetting,
+  setTrackingSetting,
 
   // Cache management
   invalidateStatsCache,

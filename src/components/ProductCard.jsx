@@ -17,17 +17,25 @@ function ProductCard({ product, onEnquire, onClick }) {
   const [selectedColor, setSelectedColor] = useState(0);
 
   // Find the first gallery image matching the selected color
+  // Skip color swatch images (short filenames in /uploads/ root like "Dual Silver Red.jpg")
+  const isProductPhoto = (url) => {
+    const lower = url.toLowerCase();
+    // Product photos use hashed filenames or are in subdirectories (mobile/, thumbs/)
+    return lower.includes('/image_new/') || lower.includes('/uploads/mobile/') || lower.includes('/uploads/thumbs/') || /\/[a-f0-9]{20,}\.\w+$/.test(lower);
+  };
+
   const getImageForColor = (colorIdx) => {
     if (!colors?.length || !gallery?.length) return image;
     const color = colors[colorIdx];
     if (!color) return image;
+    const productPhotos = gallery.filter(isProductPhoto);
     if (color.urlKey) {
       const key = color.urlKey.toLowerCase();
-      const match = gallery.find((url) => url.toLowerCase().includes(key));
+      const match = productPhotos.find((url) => url.toLowerCase().includes(key));
       if (match) return match;
     }
     const keywords = color.name.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
-    const match = gallery.find((url) => {
+    const match = productPhotos.find((url) => {
       const urlLower = url.toLowerCase();
       return keywords.some((kw) => kw.length >= 3 && urlLower.includes(kw));
     });
@@ -59,8 +67,8 @@ function ProductCard({ product, onEnquire, onClick }) {
           <LazyImage
             src={displayImage}
             alt={name}
-            className={`w-full aspect-[4/3] transition-transform duration-700 ease-out group-hover:scale-105 ${isHercules ? 'p-4' : ''}`}
-            objectFit={isHercules ? "contain" : "cover"}
+            className="w-full aspect-[4/3] transition-transform duration-700 ease-out group-hover:scale-105"
+            objectFit="cover"
           />
         </div>
         {badge && (

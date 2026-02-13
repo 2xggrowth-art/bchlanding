@@ -113,6 +113,38 @@ export default function ProductDetailPage() {
     return () => { cancelled = true; };
   }, [productId]);
 
+  // Match gallery images to a color using urlKey (exact substring) or color name keywords (fallback)
+  const getImagesForColor = (colorName) => {
+    if (!colorName || allGalleryImages.length <= 1) return allGalleryImages;
+    const colorObj = product?.colors?.find((c) => c.name === colorName);
+    let matched;
+    if (colorObj?.urlKey) {
+      const key = colorObj.urlKey.toLowerCase();
+      matched = allGalleryImages.filter((url) => url.toLowerCase().includes(key));
+    } else {
+      const keywords = colorName.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+      matched = allGalleryImages.filter((url) => {
+        const urlLower = url.toLowerCase();
+        return keywords.some((kw) => kw.length >= 3 && urlLower.includes(kw));
+      });
+    }
+    if (matched.length === 0) return allGalleryImages;
+    if (matched.length >= 3) return matched;
+    const rest = allGalleryImages.filter((url) => !matched.includes(url));
+    return [...matched, ...rest];
+  };
+
+  // Active gallery based on selected color
+  const activeGallery = selectedColor ? getImagesForColor(selectedColor) : allGalleryImages;
+
+  // Preload all gallery images so switching is instant
+  useEffect(() => {
+    activeGallery.forEach((url) => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [activeGallery]);
+
   // Loading state - skeleton
   if (loading) {
     return (
@@ -196,42 +228,6 @@ export default function ProductDetailPage() {
     }
   };
 
-  // Match gallery images to a color using urlKey (exact substring) or color name keywords (fallback)
-  const getImagesForColor = (colorName) => {
-    if (!colorName || allGalleryImages.length <= 1) return allGalleryImages;
-    const colorObj = product.colors?.find((c) => c.name === colorName);
-    let matched;
-    if (colorObj?.urlKey) {
-      // Exact substring match for explicit urlKey (handles path segments like "7.65Ah/BLUE")
-      const key = colorObj.urlKey.toLowerCase();
-      matched = allGalleryImages.filter((url) => url.toLowerCase().includes(key));
-    } else {
-      // Keyword matching fallback for color name
-      const keywords = colorName.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
-      matched = allGalleryImages.filter((url) => {
-        const urlLower = url.toLowerCase();
-        return keywords.some((kw) => kw.length >= 3 && urlLower.includes(kw));
-      });
-    }
-    if (matched.length === 0) return allGalleryImages;
-    // Full per-color gallery (3+ matches, e.g. Emotorad): show only matched
-    if (matched.length >= 3) return matched;
-    // Few matches (1-2 swatch images): show them first, then remaining photos
-    const rest = allGalleryImages.filter((url) => !matched.includes(url));
-    return [...matched, ...rest];
-  };
-
-  // Active gallery based on selected color
-  const activeGallery = selectedColor ? getImagesForColor(selectedColor) : allGalleryImages;
-
-  // Preload all gallery images so switching is instant
-  useEffect(() => {
-    activeGallery.forEach((url) => {
-      const img = new Image();
-      img.src = url;
-    });
-  }, [activeGallery]);
-
   // Handle color selection
   const handleColorSelect = (colorName) => {
     setSelectedColor(colorName);
@@ -248,9 +244,9 @@ export default function ProductDetailPage() {
     .filter((s) => s.value);
 
   return (
-    <div className="min-h-screen bg-gray-bg pb-20 lg:pb-0">
+    <div className="min-h-screen bg-gray-bg pb-20 lg:pb-0 pt-[72px] sm:pt-[80px]">
       {/* Back Nav */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-30 -mt-[72px] sm:-mt-[80px]">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <button
             onClick={() => {
@@ -518,17 +514,20 @@ export default function ProductDetailPage() {
         {/* PHASE 1: Product Tabs (replaces old specs table) */}
         <ProductTabs product={product} />
 
-
-        {/* Compare Bikes */}
-        <CompareBikes currentProduct={product} allProducts={productsList} />
+        {/* Compare Bikes — not for electric (info is in BCH tab) */}
+        {product.category !== 'electric' && (
+          <CompareBikes currentProduct={product} allProducts={productsList} />
+        )}
 
         {/* PHASE 2: Size Guide Section */}
         {product.sizeGuide?.hasGuide && (
           <SizeGuideSection sizeGuide={product.sizeGuide} productName={product.name} />
         )}
 
-        {/* PHASE 2: Warranty & Service Section */}
-        <WarrantyServiceSection warranty={product.warranty} category={product.category} />
+        {/* PHASE 2: Warranty & Service Section — not for electric (info is in BCH tab) */}
+        {product.category !== 'electric' && (
+          <WarrantyServiceSection warranty={product.warranty} category={product.category} />
+        )}
 
         {/* Similar Products */}
         {similarProducts.length > 0 && (

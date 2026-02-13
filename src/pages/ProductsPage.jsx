@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSearchParams, useNavigate, useNavigationType } from 'react-router-dom';
 import { categories } from '../data/products';
+import { accessories } from '../data/accessories';
 import CategoryTabBar from '../components/CategoryTabBar';
 import ProductCard from '../components/ProductCard';
 import LazyImage from '../components/LazyImage';
@@ -101,9 +102,33 @@ export default function ProductsPage() {
     }
   };
 
-  const handleProductClick = useCallback((p) => navigate(`/products/${p.id}`), [navigate]);
+  const handleProductClick = useCallback((p) => {
+    if (p.category === 'accessories') {
+      setEnquiryProduct(p);
+    } else {
+      navigate(`/products/${p.id}`);
+    }
+  }, [navigate]);
+
+  // Map accessories to product-like format for the grid
+  const accessoryProducts = useMemo(() => {
+    return accessories.map((acc) => ({
+      id: acc.id,
+      name: acc.name,
+      price: acc.price,
+      mrp: acc.mrp,
+      image: acc.image,
+      badge: acc.badge || null,
+      shortDescription: acc.shortDescription,
+      category: 'accessories',
+      specs: {},
+    }));
+  }, []);
 
   const filteredProducts = useMemo(() => {
+    if (activeCategory === 'accessories') {
+      return accessoryProducts;
+    }
     let result = products;
     if (activeCategory !== 'all') {
       result = result.filter((p) => p.category === activeCategory);
@@ -112,7 +137,7 @@ export default function ProductsPage() {
       result = result.filter((p) => p.subCategory === activeSubCategory);
     }
     return result;
-  }, [activeCategory, activeSubCategory, activeSubCategories, products]);
+  }, [activeCategory, activeSubCategory, activeSubCategories, products, accessoryProducts]);
 
   return (
     <div className="min-h-screen bg-gray-bg">
