@@ -1,33 +1,33 @@
 import { createPortal } from 'react-dom';
-import styled from 'styled-components';
 
 function PageLoader() {
   const loaderRoot = document.getElementById('loader-root');
 
   const content = (
-    <StyledWrapper>
-      <div className="loader-overlay">
-        <div className="loader">
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="text"><span>Loading</span></div>
-          <div className="line" />
+    <>
+      <style>{loaderStyles}</style>
+      <div className="page-loader-overlay">
+        <div className="page-loader">
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-text"><span>Loading</span></div>
+          <div className="page-loader-line" />
         </div>
       </div>
-    </StyledWrapper>
+    </>
   );
 
   return loaderRoot ? createPortal(content, loaderRoot) : content;
 }
 
-const StyledWrapper = styled.div`
-  .loader-overlay {
+const loaderStyles = `
+  .page-loader-overlay {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -39,7 +39,7 @@ const StyledWrapper = styled.div`
     -webkit-backdrop-filter: blur(20px);
   }
 
-  .loader {
+  .page-loader {
     --main-size: 3em;
     --text-color: #ffffff;
     --shine-color: #ffffff40;
@@ -59,7 +59,7 @@ const StyledWrapper = styled.div`
     filter: drop-shadow(0 0 0.05em var(--shine-color));
   }
 
-  .loader .text {
+  .page-loader-text {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -69,132 +69,132 @@ const StyledWrapper = styled.div`
     position: absolute;
   }
 
-  .loader .text:nth-child(1) {
+  .page-loader-text:nth-child(1) {
     clip-path: polygon(0% 0%, 11.11% 0%, 11.11% 100%, 0% 100%);
     font-size: calc(var(--main-size) / 20);
     margin-left: -2.1em;
     opacity: 0.6;
   }
 
-  .loader .text:nth-child(2) {
+  .page-loader-text:nth-child(2) {
     clip-path: polygon(11.11% 0%, 22.22% 0%, 22.22% 100%, 11.11% 100%);
     font-size: calc(var(--main-size) / 16);
     margin-left: -0.98em;
     opacity: 0.7;
   }
 
-  .loader .text:nth-child(3) {
+  .page-loader-text:nth-child(3) {
     clip-path: polygon(22.22% 0%, 33.33% 0%, 33.33% 100%, 22.22% 100%);
     font-size: calc(var(--main-size) / 13);
     margin-left: -0.33em;
     opacity: 0.8;
   }
 
-  .loader .text:nth-child(4) {
+  .page-loader-text:nth-child(4) {
     clip-path: polygon(33.33% 0%, 44.44% 0%, 44.44% 100%, 33.33% 100%);
     font-size: calc(var(--main-size) / 11);
     margin-left: -0.05em;
     opacity: 0.9;
   }
 
-  .loader .text:nth-child(5) {
+  .page-loader-text:nth-child(5) {
     clip-path: polygon(44.44% 0%, 55.55% 0%, 55.55% 100%, 44.44% 100%);
     font-size: calc(var(--main-size) / 10);
     margin-left: 0em;
     opacity: 1;
   }
 
-  .loader .text:nth-child(6) {
+  .page-loader-text:nth-child(6) {
     clip-path: polygon(55.55% 0%, 66.66% 0%, 66.66% 100%, 55.55% 100%);
     font-size: calc(var(--main-size) / 11);
     margin-left: 0.05em;
     opacity: 0.9;
   }
 
-  .loader .text:nth-child(7) {
+  .page-loader-text:nth-child(7) {
     clip-path: polygon(66.66% 0%, 77.77% 0%, 77.77% 100%, 66.66% 100%);
     font-size: calc(var(--main-size) / 13);
     margin-left: 0.33em;
     opacity: 0.8;
   }
 
-  .loader .text:nth-child(8) {
+  .page-loader-text:nth-child(8) {
     clip-path: polygon(77.77% 0%, 88.88% 0%, 88.88% 100%, 77.77% 100%);
     font-size: calc(var(--main-size) / 16);
     margin-left: 0.98em;
     opacity: 0.7;
   }
 
-  .loader .text:nth-child(9) {
+  .page-loader-text:nth-child(9) {
     clip-path: polygon(88.88% 0%, 100% 0%, 100% 100%, 88.88% 100%);
     font-size: calc(var(--main-size) / 20);
     margin-left: 2.1em;
     opacity: 0.6;
   }
 
-  .loader .text span {
+  .page-loader-text span {
     animation:
-      scrolling 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite,
-      shadow 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite;
+      pl-scrolling 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite,
+      pl-shadow 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite;
   }
 
-  .loader .text:nth-child(1) span {
+  .page-loader-text:nth-child(1) span {
     background: linear-gradient(to right, var(--text-color) 4%, var(--shadow-color) 7%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(2) span {
+  .page-loader-text:nth-child(2) span {
     background: linear-gradient(to right, var(--text-color) 9%, var(--shadow-color) 13%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(3) span {
+  .page-loader-text:nth-child(3) span {
     background: linear-gradient(to right, var(--text-color) 15%, var(--shadow-color) 18%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(4) span {
+  .page-loader-text:nth-child(4) span {
     background: linear-gradient(to right, var(--text-color) 20%, var(--shadow-color) 23%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(6) span {
+  .page-loader-text:nth-child(6) span {
     background: linear-gradient(to right, var(--shadow-color) 29%, var(--text-color) 32%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(7) span {
+  .page-loader-text:nth-child(7) span {
     background: linear-gradient(to right, var(--shadow-color) 34%, var(--text-color) 37%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(8) span {
+  .page-loader-text:nth-child(8) span {
     background: linear-gradient(to right, var(--shadow-color) 39%, var(--text-color) 42%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .text:nth-child(9) span {
+  .page-loader-text:nth-child(9) span {
     background: linear-gradient(to right, var(--shadow-color) 45%, var(--text-color) 48%);
     background-size: 200% auto;
     background-clip: text;
     color: transparent;
   }
 
-  .loader .line {
+  .page-loader-line {
     position: relative;
     display: flex;
     align-items: center;
@@ -206,7 +206,7 @@ const StyledWrapper = styled.div`
     border-radius: 0.05em;
   }
 
-  .loader .line::before {
+  .page-loader-line::before {
     content: "";
     position: absolute;
     height: 100%;
@@ -215,7 +215,7 @@ const StyledWrapper = styled.div`
     opacity: 0.3;
   }
 
-  .loader .line::after {
+  .page-loader-line::after {
     content: "";
     position: absolute;
     height: 100%;
@@ -223,21 +223,21 @@ const StyledWrapper = styled.div`
     background-color: var(--text-color);
     border-radius: 0.05em;
     transform: translateX(-90%);
-    animation: wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
+    animation: pl-wobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
   }
 
-  @keyframes wobble {
+  @keyframes pl-wobble {
     0% { transform: translateX(-90%); }
     50% { transform: translateX(90%); }
     100% { transform: translateX(-90%); }
   }
 
-  @keyframes scrolling {
+  @keyframes pl-scrolling {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
   }
 
-  @keyframes shadow {
+  @keyframes pl-shadow {
     0% { background-position: -98% 0; }
     100% { background-position: 102% 0; }
   }
