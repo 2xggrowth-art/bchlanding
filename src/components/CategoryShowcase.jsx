@@ -86,7 +86,7 @@ export default function CategoryShowcase() {
             return (
               <div
                 key={cat.slug}
-                className="relative overflow-hidden cursor-pointer"
+                className="relative overflow-hidden cursor-pointer group"
                 style={{
                   flex: isActive ? 4 : 1,
                   transition: 'flex 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -102,18 +102,12 @@ export default function CategoryShowcase() {
                   alt={cat.name}
                   loading="lazy"
                   decoding="async"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                 />
 
                 {/* Gradient Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-dark via-dark/40 to-dark/10 z-[1]" />
-                <div
-                  className="absolute inset-0 z-[1]"
-                  style={{
-                    backgroundColor: isActive ? 'rgba(26, 31, 60, 0.1)' : 'transparent',
-                    transition: 'background-color 0.4s ease',
-                  }}
-                />
+                <div className="absolute inset-0 bg-primary/0 group-hover:bg-primary/10 transition-colors duration-500 z-[1]" />
 
                 {/* Collapsed State - Vertical Label */}
                 <div
