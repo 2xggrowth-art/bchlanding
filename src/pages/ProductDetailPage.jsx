@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
   // Loading state - skeleton
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-bg px-4 py-8">
+      <div className="min-h-screen bg-gray-bg px-4 py-8 pt-[72px] sm:pt-[80px]">
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-2 gap-8">
             <div className="animate-pulse bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] w-full aspect-square rounded-2xl" style={{ animation: 'shimmer 1.5s ease-in-out infinite' }} />
@@ -184,7 +184,7 @@ export default function ProductDetailPage() {
   // 404 — product not found
   if (!product || error) {
     return (
-      <div className="min-h-screen bg-gray-bg flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gray-bg flex items-center justify-center px-4 pt-[72px] sm:pt-[80px]">
         <div className="text-center">
           <h1 className="text-6xl font-bold text-dark mb-4">404</h1>
           <p className="text-gray-text text-lg mb-6">

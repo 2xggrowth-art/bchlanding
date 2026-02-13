@@ -1,7 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import PageLoader from './components/PageLoader';
@@ -26,20 +25,6 @@ function ScrollToTop() {
   return null;
 }
 
-// Page transition wrapper
-function PageTransition({ children }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-    >
-      {children}
-    </motion.div>
-  );
-}
-
 // Wraps a lazy component with Suspense + glass loader overlay
 function LazyPage({ children }) {
   return (
@@ -50,105 +35,88 @@ function LazyPage({ children }) {
 }
 
 function AppRoutes() {
-  const location = useLocation();
   return (
-    <AnimatePresence>
-      <Routes location={location} key={location.pathname}>
-        {/* Main Landing Page */}
-          <Route
-            path="/"
-            element={
-              <Layout headerTransparent={true}>
-                <PageTransition>
-                  <LazyPage><MainLandingPage /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
+    <Routes>
+      {/* Main Landing Page */}
+        <Route
+          path="/"
+          element={
+            <Layout headerTransparent={true}>
+              <LazyPage><MainLandingPage /></LazyPage>
+            </Layout>
+          }
+        />
 
-          {/* Test Ride Landing Page - New URL */}
-          <Route
-            path="/test-ride/*"
-            element={
-              <Layout headerTransparent showFooter>
-                <PageTransition>
-                  <LazyPage><TestRideLandingPage /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
+        {/* Test Ride Landing Page - New URL */}
+        <Route
+          path="/test-ride/*"
+          element={
+            <Layout headerTransparent showFooter>
+              <LazyPage><TestRideLandingPage /></LazyPage>
+            </Layout>
+          }
+        />
 
-          {/* Products Catalog Page */}
-          <Route
-            path="/products"
-            element={
-              <Layout headerTransparent>
-                <PageTransition>
-                  <LazyPage><ProductsPage /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
+        {/* Products Catalog Page */}
+        <Route
+          path="/products"
+          element={
+            <Layout headerTransparent>
+              <LazyPage><ProductsPage /></LazyPage>
+            </Layout>
+          }
+        />
 
-          {/* Product Detail Page */}
-          <Route
-            path="/products/:productId"
-            element={
-              <Layout headerTransparent>
-                <PageTransition>
-                  <LazyPage><ProductDetailPage /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
+        {/* Product Detail Page */}
+        <Route
+          path="/products/:productId"
+          element={
+            <Layout headerTransparent>
+              <LazyPage><ProductDetailPage /></LazyPage>
+            </Layout>
+          }
+        />
 
-          {/* Redirect old URL to new URL */}
-          <Route
-            path="/test-5-get-1/*"
-            element={<Navigate to="/test-ride" replace />}
-          />
+        {/* Redirect old URL to new URL */}
+        <Route
+          path="/test-5-get-1/*"
+          element={<Navigate to="/test-ride" replace />}
+        />
 
-          {/* Legal Pages */}
-          <Route
-            path="/privacy-policy"
-            element={
-              <Layout>
-                <PageTransition>
-                  <LazyPage><PrivacyPolicy /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
-          <Route
-            path="/terms"
-            element={
-              <Layout>
-                <PageTransition>
-                  <LazyPage><Terms /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
-          <Route
-            path="/disclaimer"
-            element={
-              <Layout>
-                <PageTransition>
-                  <LazyPage><Disclaimer /></LazyPage>
-                </PageTransition>
-              </Layout>
-            }
-          />
+        {/* Legal Pages */}
+        <Route
+          path="/privacy-policy"
+          element={
+            <Layout>
+              <LazyPage><PrivacyPolicy /></LazyPage>
+            </Layout>
+          }
+        />
+        <Route
+          path="/terms"
+          element={
+            <Layout>
+              <LazyPage><Terms /></LazyPage>
+            </Layout>
+          }
+        />
+        <Route
+          path="/disclaimer"
+          element={
+            <Layout>
+              <LazyPage><Disclaimer /></LazyPage>
+            </Layout>
+          }
+        />
 
-          {/* Admin Panel - no layout */}
-          <Route path="/admin" element={
-            <LazyPage><AdminPanel /></LazyPage>
-          } />
+        {/* Admin Panel - no layout */}
+        <Route path="/admin" element={
+          <LazyPage><AdminPanel /></LazyPage>
+        } />
 
-          {/* 404 - redirect to home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-    </AnimatePresence>
+        {/* 404 - redirect to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
   );
 }
 
