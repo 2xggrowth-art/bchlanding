@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import PayButton from './PayButton';
 
-export default function RazorpayPayment({ userData = {}, quizAnswers, leadId, onSuccess, onError, onBack, onCancel }) {
+export default function RazorpayPayment({ userData: rawUserData, quizAnswers, leadId, onSuccess, onError, onBack, onCancel }) {
+  const userData = rawUserData ?? {};
   const [loading, setLoading] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 

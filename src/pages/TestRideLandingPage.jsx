@@ -44,6 +44,13 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
   const heroRef = useRef(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // If restored to payment/success stage but missing required data, reset to userdata
+  useEffect(() => {
+    if ((currentStage === 'payment' || currentStage === 'success') && !userData) {
+      setCurrentStage('userdata');
+    }
+  }, []);
+
   // Sync state to session storage
   useEffect(() => {
     sessionStorage.setItem('test_ride_stage', currentStage);
@@ -233,7 +240,7 @@ export default function TestRideLandingPage({ onCTAClick: externalCTAClick }) {
         </Suspense>
       )}
 
-      {currentStage === 'payment' && (
+      {currentStage === 'payment' && userData && (
         <Suspense fallback={<ComponentLoader />}>
           <RazorpayPayment
             userData={userData}

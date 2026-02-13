@@ -8,7 +8,7 @@
  * /api/analytics/settings   - GET (status), POST (toggle)
  */
 
-import { handleCors, requireAdmin } from '../_lib/auth-middleware.js';
+import { requireAdmin } from '../_lib/auth-middleware.js';
 import {
     recordVisitorEvent,
     getVisitorEvents,
@@ -19,7 +19,14 @@ import {
 } from '../_lib/firestore-service.js';
 
 export default async function handler(req, res) {
-    if (handleCors(req, res)) return;
+    // Set permissive CORS for public tracking endpoints (visitor/engagement POST)
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
 
     const { slug } = req.query;
 
@@ -155,5 +162,5 @@ export default async function handler(req, res) {
         }
     }
 
-    return res.status(404).json({ success: false, error: 'Not found' });
+    return res.status(404).json({ success: false, error: `Not found: slug=${slug}, method=${req.method}` });
 }
