@@ -341,8 +341,24 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       className="w-full px-4 py-2 rounded-full border-2 border-dark/10 focus:border-primary focus:outline-none text-sm font-medium"
                     />
 
-                    {/* File Upload */}
+                    {/* Camera + File Upload */}
                     <div className="flex items-center gap-2">
+                      {/* Camera capture */}
+                      <input
+                        type="file"
+                        id="image-camera"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="image-camera"
+                        className={`flex-1 px-4 py-2 rounded-full border-2 border-primary/30 bg-primary/5 text-center text-sm font-bold text-primary cursor-pointer hover:bg-primary/10 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        {uploading ? 'Processing...' : '📷 Take Photo'}
+                      </label>
+                      {/* File picker */}
                       <input
                         type="file"
                         id="image-upload"
@@ -352,14 +368,13 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       />
                       <label
                         htmlFor="image-upload"
-                        className={`flex-1 px-4 py-2 rounded-full border-2 border-dark/10 text-center text-sm font-bold text-dark cursor-pointer hover:bg-gray-50 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''
-                          }`}
+                        className={`flex-1 px-4 py-2 rounded-full border-2 border-dark/10 text-center text-sm font-bold text-dark cursor-pointer hover:bg-gray-50 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
-                        {uploading ? 'Uploading...' : '📤 Upload Image'}
+                        {uploading ? 'Processing...' : '📤 Upload File'}
                       </label>
                     </div>
                     <p className="text-xs text-gray-text">
-                      Paste an image URL or upload a file (max 5MB, JPG/PNG/WebP)
+                      Paste a URL, take a photo with camera, or upload from gallery (max 2MB, JPG/PNG/WebP)
                     </p>
                   </div>
                 </div>
@@ -769,6 +784,23 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       Gallery Images
                     </label>
                     <div className="flex gap-2">
+                      {/* Camera capture for gallery */}
+                      <input
+                        type="file"
+                        id="gallery-camera"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handleGalleryUpload}
+                        className="hidden"
+                        disabled={galleryUploading}
+                      />
+                      <label
+                        htmlFor="gallery-camera"
+                        className={`px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors cursor-pointer ${galleryUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        📷 Camera
+                      </label>
+                      {/* File picker for gallery */}
                       <input
                         type="file"
                         id="gallery-upload"
@@ -784,7 +816,7 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       >
                         {galleryUploading
                           ? `Uploading ${galleryUploadProgress.done}/${galleryUploadProgress.total}...`
-                          : '+ Upload Images'}
+                          : '+ Upload Files'}
                       </label>
                       <button
                         type="button"
