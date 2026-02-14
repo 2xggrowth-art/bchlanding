@@ -1,7 +1,154 @@
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminAPI } from '../../utils/auth-api';
+
+// ─── Live Camera Capture Modal ───────────────────────────────────
+function CameraCapture({ onCapture, onClose }) {
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const [ready, setReady] = useState(false);
+  const [cameraError, setCameraError] = useState(null);
+  const [facingMode, setFacingMode] = useState('environment');
+
+  const startCamera = useCallback(async (facing) => {
+    // Stop any existing stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+    setReady(false);
+    setCameraError(null);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: facing, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        audio: false,
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => setReady(true);
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      setCameraError(
+        err.name === 'NotAllowedError'
+          ? 'Camera access denied. Please allow camera permission in your browser.'
+          : 'Could not access camera. Make sure no other app is using it.'
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    startCamera(facingMode);
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((t) => t.stop());
+      }
+    };
+  }, [facingMode, startCamera]);
+
+  const handleCapture = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+    // Stop camera
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+    }
+    onCapture(dataUrl);
+  };
+
+  const flipCamera = () => {
+    setFacingMode((prev) => (prev === 'environment' ? 'user' : 'environment'));
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black z-[60] flex flex-col"
+    >
+      {/* Camera viewfinder */}
+      <div className="flex-1 relative overflow-hidden bg-black flex items-center justify-center">
+        {cameraError ? (
+          <div className="text-center p-6">
+            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <p className="text-white text-sm mb-4">{cameraError}</p>
+            <button onClick={onClose} className="px-6 py-2 bg-white text-dark rounded-full font-bold text-sm">
+              Go Back
+            </button>
+          </div>
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="w-full h-full object-cover"
+            />
+            {!ready && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black">
+                <div className="animate-spin rounded-full h-10 w-10 border-4 border-white border-t-transparent" />
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Controls */}
+      <canvas ref={canvasRef} className="hidden" />
+      <div className="bg-black/90 px-6 py-5 flex items-center justify-between safe-bottom">
+        {/* Close */}
+        <button
+          onClick={() => {
+            if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop());
+            onClose();
+          }}
+          className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {/* Shutter */}
+        <button
+          onClick={handleCapture}
+          disabled={!ready || !!cameraError}
+          className="w-18 h-18 rounded-full bg-white border-4 border-white/30 flex items-center justify-center disabled:opacity-30 active:scale-90 transition-transform"
+          style={{ width: 72, height: 72 }}
+        >
+          <div className="w-14 h-14 rounded-full bg-white border-2 border-gray-300" />
+        </button>
+
+        {/* Flip camera */}
+        <button
+          onClick={flipCamera}
+          className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export default function ProductForm({ product, categories = [], onClose }) {
   const isEditing = !!product;
@@ -11,6 +158,8 @@ export default function ProductForm({ product, categories = [], onClose }) {
   const [uploading, setUploading] = useState(false);
   const [galleryUploading, setGalleryUploading] = useState(false);
   const [galleryUploadProgress, setGalleryUploadProgress] = useState({ done: 0, total: 0 });
+  const [cameraTarget, setCameraTarget] = useState(null); // null | 'main' | 'gallery'
+  const [isMobile] = useState(() => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
 
   const [formData, setFormData] = useState({
     id: product?.id || '',
@@ -51,6 +200,16 @@ export default function ProductForm({ product, categories = [], onClose }) {
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Camera capture callback — sets main image or adds to gallery
+  const handleCameraCapture = (dataUrl) => {
+    if (cameraTarget === 'main') {
+      handleChange('image', dataUrl);
+    } else if (cameraTarget === 'gallery') {
+      handleChange('gallery', [...formData.gallery, dataUrl]);
+    }
+    setCameraTarget(null);
   };
 
   const handleSpecChange = (field, value) => {
@@ -343,21 +502,25 @@ export default function ProductForm({ product, categories = [], onClose }) {
 
                     {/* Camera + File Upload */}
                     <div className="flex items-center gap-2">
-                      {/* Camera capture */}
-                      <input
-                        type="file"
-                        id="image-camera"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleImageUpload}
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="image-camera"
-                        className={`flex-1 px-4 py-2 rounded-full border-2 border-primary/30 bg-primary/5 text-center text-sm font-bold text-primary cursor-pointer hover:bg-primary/10 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {uploading ? 'Processing...' : '📷 Take Photo'}
-                      </label>
+                      {/* Native camera capture — mobile only */}
+                      {isMobile && (
+                        <>
+                          <input
+                            type="file"
+                            id="image-camera"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor="image-camera"
+                            className={`flex-1 px-4 py-2.5 rounded-full border-2 border-primary/30 bg-primary/5 text-center text-sm font-bold text-primary cursor-pointer hover:bg-primary/10 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            {uploading ? 'Processing...' : '📷 Take Photo'}
+                          </label>
+                        </>
+                      )}
                       {/* File picker */}
                       <input
                         type="file"
@@ -368,13 +531,13 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       />
                       <label
                         htmlFor="image-upload"
-                        className={`flex-1 px-4 py-2 rounded-full border-2 border-dark/10 text-center text-sm font-bold text-dark cursor-pointer hover:bg-gray-50 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        className={`flex-1 px-4 py-2.5 rounded-full border-2 border-dark/10 text-center text-sm font-bold text-dark cursor-pointer hover:bg-gray-50 transition-all ${uploading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {uploading ? 'Processing...' : '📤 Upload File'}
                       </label>
                     </div>
                     <p className="text-xs text-gray-text">
-                      Paste a URL, take a photo with camera, or upload from gallery (max 2MB, JPG/PNG/WebP)
+                      Paste a URL, take a photo with camera, or upload from device (max 2MB, JPG/PNG/WebP)
                     </p>
                   </div>
                 </div>
@@ -784,22 +947,26 @@ export default function ProductForm({ product, categories = [], onClose }) {
                       Gallery Images
                     </label>
                     <div className="flex gap-2">
-                      {/* Camera capture for gallery */}
-                      <input
-                        type="file"
-                        id="gallery-camera"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handleGalleryUpload}
-                        className="hidden"
-                        disabled={galleryUploading}
-                      />
-                      <label
-                        htmlFor="gallery-camera"
-                        className={`px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors cursor-pointer ${galleryUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        📷 Camera
-                      </label>
+                      {/* Native camera capture for gallery — mobile only */}
+                      {isMobile && (
+                        <>
+                          <input
+                            type="file"
+                            id="gallery-camera"
+                            accept="image/*"
+                            capture="environment"
+                            onChange={handleGalleryUpload}
+                            className="hidden"
+                            disabled={galleryUploading}
+                          />
+                          <label
+                            htmlFor="gallery-camera"
+                            className={`px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20 transition-colors cursor-pointer ${galleryUploading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          >
+                            📷 Camera
+                          </label>
+                        </>
+                      )}
                       {/* File picker for gallery */}
                       <input
                         type="file"

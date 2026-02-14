@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import http from 'http';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -251,9 +252,22 @@ async function startServer() {
   });
 
   server.listen(PORT, HOST, () => {
+    // Find the LAN IP address
+    const nets = os.networkInterfaces();
+    let lanIP = '127.0.0.1';
+    for (const iface of Object.values(nets)) {
+      for (const cfg of iface) {
+        if (cfg.family === 'IPv4' && !cfg.internal) {
+          lanIP = cfg.address;
+          break;
+        }
+      }
+      if (lanIP !== '127.0.0.1') break;
+    }
+
     console.log(`\n  ✅ SERVER READY`);
     console.log(`  🔗 Local:   http://localhost:${PORT}`);
-    console.log(`  🔗 Network: http://127.0.0.1:${PORT}`);
+    console.log(`  🔗 Network: http://${lanIP}:${PORT}  ← open this on your phone`);
     console.log(`  🔗 Admin:   http://localhost:${PORT}/admin\n`);
   });
 
