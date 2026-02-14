@@ -75,22 +75,9 @@ export default function LeadsTable({
                 <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
                   Category
                 </th>
-                <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
-                  Source
+                <th className="hidden lg:table-cell px-6 py-4 text-right text-xs font-bold text-dark uppercase tracking-wider">
+                  Actions
                 </th>
-                {activeTab === 'all' && (
-                  <>
-                    <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
-                      Requirements
-                    </th>
-                    <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-bold text-dark uppercase tracking-wider">
-                      Payment ID
-                    </th>
-                    <th className="hidden lg:table-cell px-6 py-4 text-right text-xs font-bold text-dark uppercase tracking-wider">
-                      Actions
-                    </th>
-                  </>
-                )}
               </tr>
             </thead>
 
@@ -155,68 +142,22 @@ export default function LeadsTable({
                     {getCategoryBadge(lead.category || 'General', lead)}
                   </td>
 
-                  {/* Source Column - Desktop only (lg+) */}
-                  <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-text">
-                      {lead.source || 'unknown'}
-                    </span>
+                  {/* Actions Column - Desktop only (lg+) */}
+                  <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-right">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteLead(lead.id, lead.name);
+                      }}
+                      disabled={loading}
+                      className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 disabled:opacity-50"
+                      title="Delete Lead"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   </td>
-
-                  {activeTab === 'all' && (
-                    <>
-                      {/* Requirements Column - Desktop only (lg+) */}
-                      <td className="hidden lg:table-cell px-6 py-4">
-                        <div className="flex flex-wrap gap-1 max-w-xs">
-                          {lead.message && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 max-w-[200px] truncate">
-                              {lead.message}
-                            </span>
-                          )}
-                          {lead.quizAnswers && Object.entries(lead.quizAnswers).slice(0, 2).map(([key, value]) => (
-                            <span
-                              key={key}
-                              className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-dark/5 text-dark border border-dark/10"
-                            >
-                              {value}
-                            </span>
-                          ))}
-                          {lead.quizAnswers && Object.keys(lead.quizAnswers).length > 2 && (
-                            <span className="text-xs text-gray-text">
-                              +{Object.keys(lead.quizAnswers).length - 2}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Payment ID Column - Desktop only (lg+) */}
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-sm">
-                        {lead.payment?.transactionId ? (
-                          <span className="font-mono text-xs text-gray-600">
-                            {lead.payment.transactionId.substring(0, 12)}...
-                          </span>
-                        ) : (
-                          <span className="text-gray-text italic">No payment</span>
-                        )}
-                      </td>
-
-                      {/* Actions Column - Desktop only (lg+) */}
-                      <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap text-right">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteLead(lead.id, lead.name);
-                          }}
-                          disabled={loading}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors rounded-full hover:bg-red-50 disabled:opacity-50"
-                          title="Delete Lead"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </td>
-                    </>
-                  )}
                 </motion.tr>
               ))}
             </tbody>
