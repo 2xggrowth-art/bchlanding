@@ -177,7 +177,7 @@ export default function ProductShowcase({ onCTAClick }) {
                   </div>
 
                   {/* Product Name */}
-                  <h3 className="text-2xl font-bold text-dark mb-1 group-hover:text-primary transition-colors">
+                  <h3 className="font-display text-2xl font-bold text-dark mb-1 group-hover:text-primary transition-colors tracking-wide uppercase">
                     {product.name}
                   </h3>
                   <p className="text-sm text-gray-text mb-4">{product.tagline}</p>
