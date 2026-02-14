@@ -31,8 +31,6 @@ export default function AdminDashboard() {
   const adminAPI = new AdminAPI(getIdToken);
 
   useEffect(() => {
-    fetchLeads(true); // Initial load
-
     // Update time every minute
     const timer = setInterval(() => {
       setCurrentTime(new Date());
@@ -41,9 +39,7 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Refetch when filters change
-  // Refetch when filters change
-  // Refetch when filters or activeTab change
+  // Fetch leads on mount and when filters/activeTab change
   useEffect(() => {
     fetchLeads(true);
   }, [filters, activeTab]);

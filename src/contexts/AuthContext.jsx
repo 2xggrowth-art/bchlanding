@@ -263,7 +263,10 @@ export const AuthProvider = ({ children }) => {
       }
 
       const token = await currentUser.getIdToken(forceRefresh);
-      setIdToken(token);
+      // Only update state when force-refreshing to avoid unnecessary re-renders
+      if (forceRefresh) {
+        setIdToken(token);
+      }
       return token;
 
     } catch (err) {
