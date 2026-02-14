@@ -60,6 +60,9 @@ export default function ProductDetailPage() {
   const [bookingUserData, setBookingUserData] = useState(null);
   const [bookingLeadId, setBookingLeadId] = useState(null);
 
+  // Parents FAQ toggle state
+  const [openFaq, setOpenFaq] = useState(null);
+
   const category = useMemo(
     () => (product ? categories.find((c) => c.slug === product.category) : null),
     [product]
@@ -340,7 +343,7 @@ export default function ProductDetailPage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 pt-6 sm:pt-8 pb-0">
+      <div className="max-w-6xl mx-auto px-4 pt-4 sm:pt-8 pb-0">
         <div className="lg:grid lg:grid-cols-2 lg:gap-10 lg:items-start">
           {/* Left — Image Gallery */}
           <motion.div
@@ -362,7 +365,7 @@ export default function ProductDetailPage() {
                   <LazyImage
                     src={activeGallery[selectedImageIdx] || activeGallery[0]}
                     alt={`${product.name}${selectedColor ? ` - ${selectedColor}` : ''}`}
-                    className={`w-full aspect-[4/3] sm:aspect-[16/10] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
+                    className={`w-full aspect-[4/3] sm:aspect-[16/10] lg:aspect-[4/3] ${(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'p-4' : ''}`}
                     objectFit={(activeGallery[selectedImageIdx] || activeGallery[0])?.toLowerCase().endsWith('.png') ? 'contain' : 'cover'}
                     eager
                   />
@@ -469,7 +472,7 @@ export default function ProductDetailPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
-            className="mt-6 lg:mt-0"
+            className="mt-4 lg:mt-0"
           >
             {/* Category breadcrumb */}
             {category && (
@@ -482,12 +485,25 @@ export default function ProductDetailPage() {
             )}
 
             {/* Name */}
-            <h1 className="font-display text-xl sm:text-3xl lg:text-4xl font-bold text-dark tracking-wide uppercase mb-2 break-words">
+            <h1 className="font-display text-lg sm:text-3xl lg:text-4xl font-bold text-dark tracking-wide uppercase mb-1 sm:mb-2 break-words">
               {product.name}
             </h1>
 
+            {/* Emotional tagline */}
+            {(() => {
+              const taglines = {
+                electric: 'The fastest e-cycle in your friend group',
+                kids: 'Built for the coolest kid on the block',
+                mountain: 'Built for trails your friends won\'t dare',
+                geared: 'Shift gears. Shift status.',
+                city: 'Your city. Your rules.',
+              };
+              const tagline = taglines[product.category];
+              return tagline ? <p className="text-sm font-bold text-accent mb-1">{tagline}</p> : null;
+            })()}
+
             {/* Short description */}
-            <p className="text-gray-text text-sm sm:text-base mb-4 leading-relaxed">
+            <p className="text-gray-text text-sm sm:text-base mb-2 sm:mb-4 leading-relaxed">
               {product.shortDescription}
             </p>
 
@@ -499,8 +515,22 @@ export default function ProductDetailPage() {
               />
             )}
 
+            {/* Social proof line */}
+            {(() => {
+              if (['kids', 'electric'].includes(product.category)) {
+                return <p className="text-xs text-gray-text mb-2">Popular with 14–17 yr olds · Families' top choice this season</p>;
+              }
+              if (['city', 'geared'].includes(product.category)) {
+                return <p className="text-xs text-gray-text mb-2">Trusted by daily commuters across Bangalore</p>;
+              }
+              if (product.category === 'mountain') {
+                return <p className="text-xs text-gray-text mb-2">Trail-tested by weekend warriors across Karnataka</p>;
+              }
+              return null;
+            })()}
+
             {/* Price */}
-            <div className="flex items-baseline gap-2 sm:gap-3 mb-6 flex-wrap">
+            <div className="flex items-baseline gap-2 sm:gap-3 mb-3 flex-wrap">
               <span className="text-2xl sm:text-4xl font-bold text-primary">
                 ₹{product.price.toLocaleString('en-IN')}
               </span>
@@ -514,6 +544,11 @@ export default function ProductDetailPage() {
                   </span>
                 </>
               )}
+              {product.price >= 10000 && (
+                <span className="text-sm text-blue-600 font-semibold">
+                  or ₹{Math.ceil(product.price / 12).toLocaleString('en-IN')}/mo EMI
+                </span>
+              )}
             </div>
 
 
@@ -526,20 +561,47 @@ export default function ProductDetailPage() {
             {/* PHASE 1: EMI Calculator */}
             <EMICalculator price={product.price} />
 
+            {/* Trust bar */}
+            <div className="flex flex-wrap gap-x-3 gap-y-1 sm:gap-3 mb-3 text-[10px] sm:text-[11px] text-gray-text">
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                Free Helmet
+              </span>
+              {product.category === 'electric' && (
+                <span className="flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                  Speed Lock 25 kmph
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                2-Year Warranty
+              </span>
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                8 Full-Time Mechanics
+              </span>
+            </div>
+
             {/* Urgency signal */}
             <p className="text-xs text-primary font-bold mb-2 flex items-center gap-1.5">
               <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               Book by tonight for same-week visit
             </p>
 
+            {/* Screen time swap — kids & electric only */}
+            {['kids', 'electric'].includes(product.category) && (
+              <p className="text-xs text-gray-text mb-2">Trade 2 hours of screen time for outdoor adventure</p>
+            )}
+
             {/* CTA buttons - visible on desktop, hidden on mobile (shown in sticky bar) */}
-            <div className="hidden lg:flex flex-col gap-3 mb-8">
+            <div className="hidden lg:flex flex-col gap-3 mb-4">
               <div className="flex gap-3">
                 <button
                   onClick={handleStartBooking}
                   className="flex-1 py-3.5 rounded-full bg-primary text-white font-bold text-base transition-all hover:bg-primary-dark hover:shadow-lg text-center"
                 >
-                  Book a Test Ride — ₹99
+                  Feel the Power — Test Ride ₹99
                 </button>
                 <a
                   href={whatsappUrl}
@@ -553,7 +615,15 @@ export default function ProductDetailPage() {
                   </svg>
                   WhatsApp
                 </a>
+                <a
+                  href="tel:+919844443844"
+                  className="flex items-center justify-center w-[52px] py-3.5 rounded-full bg-dark text-white hover:bg-primary transition-colors flex-shrink-0"
+                  aria-label="Call us"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                </a>
               </div>
+              <p className="text-[10px] text-gray-text">₹99 fully adjusted on purchase · Zero risk</p>
               <button
                 onClick={() => setEnquiryOpen(true)}
                 className="text-sm text-gray-text hover:text-primary transition-colors font-medium text-left"
@@ -563,80 +633,82 @@ export default function ProductDetailPage() {
             </div>
 
             {/* How It Works — desktop */}
-            <div className="hidden lg:flex items-center gap-0 mt-8 mb-8 bg-red-50 rounded-xl p-4 border border-red-200">
+            <div className="hidden lg:flex items-center gap-0 mt-4 mb-4 bg-red-50 rounded-xl p-4 border border-red-200">
               <div className="flex-1 flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">1</div>
                 <div>
                   <p className="text-xs font-bold text-dark leading-tight">Book for ₹99</p>
-                  <p className="text-[10px] text-gray-text leading-tight">Takes only 2 minutes</p>
+                  <p className="text-[10px] text-gray-text leading-tight">Zero risk · Adjusted on purchase</p>
                 </div>
               </div>
               <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               <div className="flex-1 flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">2</div>
                 <div>
-                  <p className="text-xs font-bold text-dark leading-tight">We Call You</p>
-                  <p className="text-[10px] text-gray-text leading-tight">Expert calls within 24 hrs</p>
+                  <p className="text-xs font-bold text-dark leading-tight">Expert Picks Your Ride</p>
+                  <p className="text-[10px] text-gray-text leading-tight">Personalized recommendation</p>
                 </div>
               </div>
               <svg className="w-4 h-4 text-gray-300 flex-shrink-0 mx-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               <div className="flex-1 flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-sm flex-shrink-0">3</div>
                 <div>
-                  <p className="text-xs font-bold text-dark leading-tight">Visit & Ride</p>
-                  <p className="text-[10px] text-gray-text leading-tight">Test ride · ₹99 adjusted on purchase</p>
+                  <p className="text-xs font-bold text-dark leading-tight">Feel the Throttle Magic</p>
+                  <p className="text-[10px] text-gray-text leading-tight">88% of families buy same day</p>
                 </div>
               </div>
             </div>
 
             {/* Mobile inline CTA */}
-            <div className="flex flex-col gap-2 lg:hidden mb-6">
+            <div className="flex flex-col gap-1.5 lg:hidden mb-4">
               <div className="flex gap-2">
                 <button
                   onClick={handleStartBooking}
                   className="flex-1 py-3 rounded-full bg-primary text-white font-bold text-sm transition-all active:scale-[0.98] text-center min-h-[44px] flex items-center justify-center"
                 >
-                  Book a Test Ride — ₹99
+                  Test Ride — ₹99
                 </button>
+                <a
+                  href="tel:+919844443844"
+                  className="flex items-center justify-center w-[44px] py-3 rounded-full bg-dark text-white active:bg-primary transition-colors flex-shrink-0 min-h-[44px]"
+                  aria-label="Call us"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                </a>
                 <a
                   href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+                  className="flex items-center justify-center w-[44px] py-3 rounded-full bg-green-500 text-white active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+                  aria-label="WhatsApp"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
                     <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
                   </svg>
-                  WhatsApp
                 </a>
               </div>
-              <button
-                onClick={() => setEnquiryOpen(true)}
-                className="text-xs text-gray-text hover:text-primary transition-colors font-medium text-left"
-              >
-                Have questions? Send an enquiry
-              </button>
+              <p className="text-[10px] text-gray-text">₹99 adjusted on purchase · Zero risk</p>
             </div>
 
             {/* How It Works — mobile */}
-            <div className="flex lg:hidden items-center gap-0 mt-8 mb-6 bg-red-50 rounded-xl p-3 border border-red-200">
+            <div className="flex lg:hidden items-center gap-0 mt-2 mb-4 bg-red-50 rounded-xl p-3 border border-red-200">
               <div className="flex-1 text-center">
                 <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">1</div>
                 <p className="text-[10px] font-bold text-dark leading-tight">Book ₹99</p>
-                <p className="text-[9px] text-gray-text leading-tight">2 min</p>
+                <p className="text-[9px] text-gray-text leading-tight">Zero risk</p>
               </div>
               <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               <div className="flex-1 text-center">
                 <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">2</div>
-                <p className="text-[10px] font-bold text-dark leading-tight">We Call You</p>
-                <p className="text-[9px] text-gray-text leading-tight">Within 24 hrs</p>
+                <p className="text-[10px] font-bold text-dark leading-tight">Expert Picks</p>
+                <p className="text-[9px] text-gray-text leading-tight">Personalized</p>
               </div>
               <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
               <div className="flex-1 text-center">
                 <div className="w-6 h-6 rounded-full bg-accent/20 text-accent flex items-center justify-center font-bold text-[10px] mx-auto mb-1">3</div>
-                <p className="text-[10px] font-bold text-dark leading-tight">Visit & Ride</p>
-                <p className="text-[9px] text-gray-text leading-tight">₹99 adjusted</p>
+                <p className="text-[10px] font-bold text-dark leading-tight">Feel the Magic</p>
+                <p className="text-[9px] text-gray-text leading-tight">88% buy same day</p>
               </div>
             </div>
 
@@ -646,6 +718,64 @@ export default function ProductDetailPage() {
         {/* PHASE 1: Product Tabs (replaces old specs table) */}
         <ProductTabs product={product} allProducts={productsList} />
 
+        {/* Parents Ask, We Answer — kids, electric, mountain only */}
+        {['kids', 'electric', 'mountain'].includes(product.category) && (
+          <motion.section
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-12 sm:mt-16"
+          >
+            <h2 className="font-display text-xl sm:text-2xl font-bold text-dark uppercase tracking-wider mb-6">
+              Parents Ask, <span className="text-primary">We Answer</span>
+            </h2>
+            <div className="space-y-3">
+              {[
+                {
+                  q: "Won't my kid stop using it after a month?",
+                  a: "20% of our riders clock 300+ km/month. The trick is the test ride — once they feel the throttle, it's not a bicycle anymore, it's freedom. We also see siblings and parents stealing rides regularly."
+                },
+                {
+                  q: "Is it really safe for my child?",
+                  a: "Speed locked at 25 kmph (government regulation). Free helmet included with every purchase. Disc brakes for instant stopping. Plus our 8 full-time mechanics ensure your cycle is always in perfect condition."
+                },
+                {
+                  q: "What if something breaks? What about service?",
+                  a: "8 full-time mechanics, 6-day turnaround guarantee. Free first 3 services included. We're not an online brand that disappears — we're a Bangalore store you can walk into anytime."
+                }
+              ].map((item, idx) => (
+                <div key={idx} className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+                  <button
+                    onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                    className="w-full flex items-center justify-between p-4 text-left"
+                  >
+                    <span className="text-sm font-bold text-dark pr-4">{item.q}</span>
+                    <svg
+                      className={`w-5 h-5 text-gray-400 flex-shrink-0 transition-transform ${openFaq === idx ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  <AnimatePresence>
+                    {openFaq === idx && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <p className="px-4 pb-4 text-sm text-gray-text leading-relaxed">{item.a}</p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
         {/* PHASE 2: Size Guide Section */}
         {product.sizeGuide?.hasGuide && (
           <SizeGuideSection sizeGuide={product.sizeGuide} productName={product.name} />
@@ -654,6 +784,21 @@ export default function ProductDetailPage() {
         {/* PHASE 2: Warranty & Service Section — not for electric (info is in BCH tab) */}
         {product.category !== 'electric' && (
           <WarrantyServiceSection warranty={product.warranty} category={product.category} />
+        )}
+
+        {/* Birthday Gift Banner — kids & electric only */}
+        {['kids', 'electric'].includes(product.category) && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mt-12 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-sm text-dark font-semibold text-center sm:text-left">
+              Perfect Birthday Gift · Free gift wrapping · Same-week delivery
+            </p>
+            <button
+              onClick={handleStartBooking}
+              className="px-5 py-2 rounded-full bg-primary text-white font-bold text-sm hover:bg-primary-dark transition-colors flex-shrink-0"
+            >
+              Book Now
+            </button>
+          </div>
         )}
 
         {/* Similar Products */}
@@ -686,24 +831,32 @@ export default function ProductDetailPage() {
 
       {/* Mobile Sticky Bottom CTA Bar */}
       <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-white border-t border-gray-200 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] safe-bottom">
-        <div className="flex gap-2 px-4 py-3">
+        <p className="text-[9px] text-gray-text text-center pt-1.5 px-4">₹99 fully adjusted on purchase · Zero risk</p>
+        <div className="flex gap-2 px-4 py-2">
           <button
             onClick={handleStartBooking}
             className="flex-1 py-3 rounded-full bg-primary text-white font-bold text-sm active:scale-[0.98] transition-all min-h-[44px] flex items-center justify-center text-center"
           >
-            Book a Test Ride — ₹99
+            Feel the Power — ₹99
           </button>
+          <a
+            href="tel:+919844443844"
+            className="flex items-center justify-center w-[44px] py-3 rounded-full bg-dark text-white active:bg-primary transition-colors flex-shrink-0 min-h-[44px]"
+            aria-label="Call us"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+          </a>
           <a
             href={whatsappUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 px-5 py-3 rounded-full bg-green-500 text-white font-bold text-sm active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+            className="flex items-center justify-center w-[44px] py-3 rounded-full bg-green-500 text-white active:bg-green-600 transition-colors flex-shrink-0 min-h-[44px]"
+            aria-label="WhatsApp"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
               <path d="M12 0C5.373 0 0 5.373 0 12c0 2.625.846 5.059 2.284 7.034L.789 23.492a.5.5 0 00.611.611l4.458-1.495A11.945 11.945 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-2.359 0-4.549-.678-6.413-1.848l-.446-.291-2.651.889.889-2.651-.291-.446A9.958 9.958 0 012 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10z" />
             </svg>
-            WhatsApp
           </a>
         </div>
       </div>

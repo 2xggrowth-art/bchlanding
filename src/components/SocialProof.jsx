@@ -36,10 +36,10 @@ export default function SocialProof({ onCTAClick }) {
           {/* 1. Header + Subtext combined */}
           <div className="text-center mb-4 sm:mb-6">
             <h2 className="font-display text-2xl sm:text-4xl md:text-5xl font-normal text-white mb-1 sm:mb-2 tracking-wider uppercase">
-              Bangalore's Most <span className="text-primary">Trusted</span> Cycling Experts
+              Trusted by <span className="text-primary">10,000+</span> Bangalore Families
             </h2>
             <p className="text-sm sm:text-lg text-gray-light max-w-2xl mx-auto">
-              From kids' first bikes to electric commuters — with <span className="text-white font-semibold"><CountUpNumber end={10} suffix=" Crore+" duration={1800} /></span> video views
+              Parents find us on YouTube & Instagram — <span className="text-white font-semibold"><CountUpNumber end={10} suffix=" Crore+" duration={1800} /></span> views and counting
             </p>
           </div>
 
@@ -68,21 +68,21 @@ export default function SocialProof({ onCTAClick }) {
           </div>
 
           {/* 3. Engagement metrics with CountUp */}
-          <div className="grid grid-cols-4 gap-2 sm:gap-3 max-w-4xl mx-auto mb-4 sm:mb-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 max-w-4xl mx-auto mb-4 sm:mb-6">
             {[
-              { end: 187, suffix: "K", label: "Total Likes", duration: 2000 },
-              { end: 388, suffix: "K", label: "Comments", duration: 2200 },
-              { end: 57, suffix: "L", label: "Views (7d)", duration: 1800 },
-              { end: 98, suffix: "%", label: "India Based", duration: 1600 }
+              { end: 10, suffix: "K+", label: "Families Served", duration: 2000 },
+              { end: 300, suffix: "+", label: "Bikes on Display", duration: 2200 },
+              { end: 25, suffix: " Yrs", label: "In Business", duration: 1800 },
+              { end: 8, suffix: "", label: "Expert Mechanics", duration: 1600 }
             ].map((metric, index) => (
               <div
                 key={index}
-                className="text-center p-2 sm:p-3 rounded-[15px] bg-dark border border-white/10"
+                className="text-center p-3 sm:p-3 rounded-[15px] bg-dark border border-white/10"
               >
-                <div className="font-display text-lg sm:text-2xl text-primary mb-0.5 sm:mb-1 tracking-wider">
+                <div className="font-display text-xl sm:text-2xl text-primary mb-0.5 sm:mb-1 tracking-wider">
                   <CountUpNumber end={metric.end} suffix={metric.suffix} duration={metric.duration} />
                 </div>
-                <div className="text-[9px] sm:text-xs text-gray-light font-semibold uppercase tracking-wide leading-tight">{metric.label}</div>
+                <div className="text-[10px] sm:text-xs text-gray-light font-semibold uppercase tracking-wide leading-tight">{metric.label}</div>
               </div>
             ))}
           </div>

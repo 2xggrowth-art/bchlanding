@@ -11,9 +11,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
         </svg>
       ),
-      title: "Certified Selection",
-      description: "Authorized dealer of premium bicycles with full manufacturer-backed warranty",
-      hoverText: "As an official partner, we provide only certified bicycles with authentic components, ensuring long-term safety and dedicated professional support."
+      title: "Safe & Certified Bikes",
+      description: "Every cycle is manufacturer-certified with full warranty — safe for your kid",
+      hoverText: "We only stock certified bicycles with authentic components. Your child's safety is our priority — every bike passes quality checks before delivery."
     },
     {
       icon: (
@@ -21,9 +21,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
-      title: "Tailored Home Consultations",
-      description: "We bring a curated selection of 5 bicycles directly to your residence",
-      hoverText: "Evaluate multiple options in your actual riding environment. Our specialists facilitate a thorough assessment to ensure the perfect fit for your child."
+      title: "We Come to You",
+      description: "5 bikes delivered to your door — your kid test rides all of them at home",
+      hoverText: "No showroom trips needed. Our team brings curated options to your neighbourhood so your child can test ride and pick their favourite."
     },
     {
       icon: (
@@ -31,9 +31,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
       ),
-      title: "Best Prices Guaranteed",
-      description: "Competitive pricing with 0% EMI options & exchange offers up to ₹10,000",
-      hoverText: "We match or beat any competitor's price. Plus, enjoy flexible payment with 0% interest EMI plans and get up to ₹10,000 off when you exchange your old cycle."
+      title: "Easy on Your Budget",
+      description: "0% EMI from ₹999/month + exchange old cycle for up to ₹10,000 off",
+      hoverText: "Flexible payments so the right bike fits your budget. Trade in your kid's outgrown cycle and upgrade without the full upfront cost."
     },
     {
       icon: (
@@ -42,9 +42,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
-      title: "Specialized Technical Support",
-      description: "Shimano authorized technicians providing professional doorstep maintenance",
-      hoverText: "Our certified technicians ensure every bicycle is assembled and maintained to the highest safety standards, providing ongoing peace of mind."
+      title: "Always Rideable",
+      description: "8 Shimano-certified mechanics — doorstep service across Bangalore",
+      hoverText: "Your kid's bike will never sit idle. Our technicians come to your area for repairs and maintenance so it's always ready to ride."
     },
     {
       icon: (
@@ -52,9 +52,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
         </svg>
       ),
-      title: "5 Years Warranty",
-      description: "Complete peace of mind with our industry-leading warranty coverage",
-      hoverText: "Industry-best 5-year comprehensive warranty covers frame, motor (for e-bikes), and major components. Ride worry-free knowing you're protected for years to come."
+      title: "5-Year Warranty",
+      description: "Frame, motor & components covered — ride worry-free for years",
+      hoverText: "Unlike other brands, we stand behind every sale. 5-year warranty on frame and motor plus free 1st year servicing gives parents real peace of mind."
     },
     {
       icon: (
@@ -63,9 +63,9 @@ export default function WhyUs() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
       ),
-      title: "All Bengaluru Delivery",
-      description: "Free delivery across all of Bangalore with expert assembly at your home",
-      hoverText: "Serving all areas of Bengaluru with free doorstep delivery. Our experts assemble your cycle at your home and provide a complete orientation on usage and maintenance."
+      title: "Free Delivery & Setup",
+      description: "We deliver, assemble & teach your kid to ride — anywhere in Bangalore",
+      hoverText: "From Whitefield to Yelahanka, we deliver free. Our team assembles the bike at your home and gives your child a complete riding orientation."
     }
   ];
 
@@ -104,8 +104,8 @@ export default function WhyUs() {
                   </div>
                   <div>
                     <h4 className="font-bold text-dark group-hover:text-primary transition-colors">Visit Our Showroom</h4>
-                    <p className="text-sm text-gray-text">Chikka Bommasandra, Yelahanka, Bengaluru</p>
-                    <p className="text-xs text-primary font-semibold mt-1">Open 7 Days: 10 AM - 8:30 PM</p>
+                    <p className="text-sm text-gray-text">Yelahanka, Bengaluru · 300+ bikes on display</p>
+                    <p className="text-xs text-primary font-semibold mt-1">Open 7 Days · Visited by 500+ families</p>
                   </div>
                 </a>
               </div>

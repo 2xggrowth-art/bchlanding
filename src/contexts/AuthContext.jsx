@@ -99,7 +99,7 @@ export const AuthProvider = ({ children }) => {
 
         } else {
           // User is signed out
-          console.log('ℹ️ User signed out');
+          // User signed out
           setUser(null);
           setIdToken(null);
           setIsAdmin(false);
@@ -129,7 +129,7 @@ export const AuthProvider = ({ children }) => {
         if (currentUser) {
           const token = await currentUser.getIdToken(true); // Force refresh
           setIdToken(token);
-          console.log('✅ ID token refreshed');
+          // Token refreshed
         }
       } catch (err) {
         console.error('❌ Token refresh failed:', err);
@@ -162,7 +162,7 @@ export const AuthProvider = ({ children }) => {
 
     } catch (err) {
       // Expected to fail if user doesn't have admin role - not an error
-      console.log('ℹ️ Admin verification: user is not admin or token expired');
+      // User is not admin or token expired
       setIsAdmin(false);
     }
   };
@@ -188,7 +188,7 @@ export const AuthProvider = ({ children }) => {
         throw new Error('You do not have admin privileges. Please contact support.');
       }
 
-      console.log('✅ Login successful:', email);
+      // Login successful
 
       return {
         success: true,
@@ -236,7 +236,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       setIdToken(null);
       setIsAdmin(false);
-      console.log('✅ Logout successful');
+      // Logout successful
 
       return { success: true };
 
@@ -300,7 +300,7 @@ export const AuthProvider = ({ children }) => {
         role: roleClaim
       }));
 
-      console.log('✅ Claims refreshed:', { admin: adminClaim, role: roleClaim });
+      // Claims refreshed
 
     } catch (err) {
       console.error('❌ Failed to refresh claims:', err);

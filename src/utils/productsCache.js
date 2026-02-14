@@ -13,7 +13,7 @@ import { products as localProducts } from '../data/products';
 import { api } from './api';
 
 const CACHE_KEY = 'bch_products_cache';
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL = 30 * 60 * 1000; // 30 minutes — products rarely change
 
 // In-memory cache (survives within same SPA session, fastest)
 let memoryCache = null;
@@ -86,7 +86,7 @@ export async function getCachedProducts({ forceRefresh = false } = {}) {
 
   inflightPromise = (async () => {
     try {
-      const res = await api.getProducts({ limit: 100, _t: Date.now() });
+      const res = await api.getProducts({ limit: 100 });
       const apiProducts = res.products || [];
       const deletedIds = res.deletedIds || [];
 

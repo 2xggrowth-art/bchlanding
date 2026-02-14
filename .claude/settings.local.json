@@ -69,7 +69,17 @@
       "WebSearch",
       "Bash(find:*)",
       "Bash(git checkout:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(npm ls:*)",
+      "WebFetch(domain:www.ninetyonecycles.com)",
+      "WebFetch(domain:www.outdoors91.com)",
+      "WebFetch(domain:d2f9uwgpmber13.cloudfront.net)",
+      "WebFetch(domain:www.google.com)",
+      "WebFetch(domain:www.justdial.com)",
+      "WebFetch(domain:www.mouthshut.com)",
+      "Bash(npm view:*)",
+      "Bash(git reset:*)",
+      "Bash(git status:*)"
     ]
   }
 }

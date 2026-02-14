@@ -2,13 +2,20 @@
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 
+// Module-level cache — survives remounts, fetched at most once per page load
+let _testimonialsCache = null;
+
 export default function GoogleMapsReviews() {
-    const [reviewData, setReviewData] = useState(null);
+    const [reviewData, setReviewData] = useState(_testimonialsCache);
 
     useEffect(() => {
+        if (_testimonialsCache) return; // already cached
         fetch('/testimonials.json')
             .then(res => res.json())
-            .then(data => setReviewData(data))
+            .then(data => {
+                _testimonialsCache = data;
+                setReviewData(data);
+            })
             .catch(() => setReviewData(null));
     }, []);
 

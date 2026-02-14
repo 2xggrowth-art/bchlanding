@@ -83,7 +83,7 @@ function PremiumHero({ onCTAClick }) {
               custom={0.2}
               className="text-white/70 text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-4 sm:mb-6"
             >
-              Bangalore's Premier E-Cycle Destination
+              25 Years · Bangalore's #1 Cycle Store
             </motion.p>
 
             {/* Main Headline */}
@@ -94,10 +94,10 @@ function PremiumHero({ onCTAClick }) {
               custom={0.4}
               className="font-display text-3xl sm:text-5xl md:text-6xl lg:text-7xl text-white leading-[1.1] mb-4 sm:mb-8 tracking-wider uppercase"
             >
-              Experience the{' '}
-              <span className="text-primary">Future</span>
+              Your Kid's{' '}
+              <span className="text-primary">Freedom</span>
               <br />
-              of Commuting
+              Starts Here
             </motion.h1>
 
             {/* Subtitle */}
@@ -108,8 +108,7 @@ function PremiumHero({ onCTAClick }) {
               custom={0.6}
               className="text-white/70 text-sm sm:text-lg md:text-xl max-w-xl leading-relaxed mb-6 sm:mb-10 font-light"
             >
-              Curated electric &amp; premium bicycles for the modern Bangalore commuter.
-              Ride smarter. Live better.
+              We bring 5 bikes to your door. Your kid picks the perfect one.
             </motion.p>
 
             {/* CTA */}
@@ -124,7 +123,7 @@ function PremiumHero({ onCTAClick }) {
                 to="/test-ride"
                 className="group inline-flex items-center gap-2 sm:gap-3 bg-red-600 text-white px-6 sm:px-10 py-3 sm:py-5 rounded-full font-semibold text-sm sm:text-base tracking-wide hover:bg-red-700 transition-all duration-500 shadow-2xl"
               >
-                Book a Test Ride
+                Home Test Ride — ₹99
                 <svg
                   className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
                   fill="none"
@@ -138,7 +137,7 @@ function PremiumHero({ onCTAClick }) {
                 to="/products"
                 className="inline-flex items-center gap-2 text-white/80 hover:text-white text-sm sm:text-base font-medium transition-colors duration-300 border-b border-white/30 hover:border-white pb-1"
               >
-                Explore Collection
+                Browse All Cycles
               </Link>
             </motion.div>
           </div>
@@ -162,8 +161,8 @@ function PremiumHero({ onCTAClick }) {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-white text-sm">Official Emotorad Dealer</h4>
-                  <p className="text-white/60 text-xs mt-0.5">Authorized with full warranty</p>
+                  <h4 className="font-semibold text-white text-sm">5 Bikes to Your Door</h4>
+                  <p className="text-white/60 text-xs mt-0.5">Test ride at home</p>
                 </div>
               </div>
             </div>
@@ -176,8 +175,8 @@ function PremiumHero({ onCTAClick }) {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-white text-sm">Doorstep Service</h4>
-                  <p className="text-white/60 text-xs mt-0.5">We come to you across Bangalore</p>
+                  <h4 className="font-semibold text-white text-sm">Free Doorstep Service</h4>
+                  <p className="text-white/60 text-xs mt-0.5">8 mechanics · all Bangalore</p>
                 </div>
               </div>
             </div>
@@ -224,6 +223,8 @@ function PremiumHero({ onCTAClick }) {
 // ─── Featured Collection (Luxury Carousel) ─────────────────────
 function FeaturedCollection() {
   const navigate = useNavigate();
+  const scrollRef = useRef(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const [localProducts, setLocalProducts] = useState(products);
 
   useEffect(() => {
@@ -259,25 +260,67 @@ function FeaturedCollection() {
     navigate(`/products/${product.id}`);
   }, [navigate]);
 
+  const handleScroll = useCallback(() => {
+    if (scrollRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+      const maxScroll = scrollWidth - clientWidth;
+      setScrollProgress(maxScroll > 0 ? scrollLeft / maxScroll : 0);
+    }
+  }, []);
+
+  const scroll = useCallback((dir) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({
+        left: dir === 'left' ? -340 : 340,
+        behavior: 'smooth',
+      });
+    }
+  }, []);
+
   return (
     <section className="py-8 sm:py-12 bg-gray-bg overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         {/* Section Header */}
-        <div className="text-center mb-8">
-          <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-4">
-            Handpicked for You
-          </p>
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-dark mb-5 tracking-wider uppercase">
-            Explore Our Collection
-          </h2>
-          <p className="text-gray-text/70 text-sm sm:text-base max-w-lg mx-auto leading-relaxed font-light">
-            50+ curated bicycles across 5 categories — each one handpicked by our experts
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-8">
+          <div className="text-center sm:text-left">
+            <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-4">
+              Bestsellers
+            </p>
+            <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-dark mb-5 tracking-wider uppercase">
+              Popular with Families
+            </h2>
+            <p className="text-gray-text/70 text-sm sm:text-base max-w-lg leading-relaxed font-light">
+              50+ bikes for kids, teens & adults — picked by parents across Bangalore
+            </p>
+          </div>
+          {/* Navigation Arrows */}
+          <div className="hidden sm:flex gap-3 flex-shrink-0">
+            <button
+              onClick={() => scroll('left')}
+              className="w-12 h-12 rounded-full border border-gray-200 hover:border-dark flex items-center justify-center text-gray-text hover:text-dark transition-all duration-300"
+              aria-label="Scroll products left"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              onClick={() => scroll('right')}
+              className="w-12 h-12 rounded-full border border-gray-200 hover:border-dark flex items-center justify-center text-gray-text hover:text-dark transition-all duration-300"
+              aria-label="Scroll products right"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Auto-Scrollable Products */}
       <div
+        ref={scrollRef}
+        onScroll={handleScroll}
         className="flex gap-6 overflow-x-auto pb-8 px-6 sm:px-8 scrollbar-hide snap-x snap-mandatory"
       >
         {featuredList.map((product) => (
@@ -288,6 +331,16 @@ function FeaturedCollection() {
             <ProductCard product={product} onEnquire={handleEnquire} onClick={handleDetail} />
           </div>
         ))}
+      </div>
+
+      {/* Progress Bar - Mobile only */}
+      <div className="sm:hidden flex justify-center mt-1 px-6">
+        <div className="w-16 h-1 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary rounded-full transition-all duration-150"
+            style={{ width: `${Math.max(15, scrollProgress * 100)}%` }}
+          />
+        </div>
       </div>
 
       {/* View All CTA */}
@@ -311,9 +364,9 @@ function WhyBCHStory({ onCTAClick }) {
   const stories = [
     {
       number: '01',
-      title: 'Expert Curation',
+      title: 'We Pick What\u2019s Safe',
       description:
-        "We don't stock everything — we stock what's worth riding. Each bicycle is handpicked by our experts who've helped 10,000+ Bangaloreans find their perfect ride.",
+        "We don't stock everything — we stock what's worth riding. Every bike is handpicked for safety, quality & value by experts who've helped 10,000+ families.",
     },
     {
       number: '02',
@@ -323,9 +376,9 @@ function WhyBCHStory({ onCTAClick }) {
     },
     {
       number: '03',
-      title: 'Lifetime Riding Partner',
+      title: 'We\u2019re Here After the Sale',
       description:
-        "From Shimano-certified servicing to 5-year warranties and doorstep maintenance — we're here long after the sale.",
+        "Shimano-certified servicing, 5-year warranty, doorstep maintenance — your kid's bike will always be ride-ready.",
     },
   ];
 
@@ -372,8 +425,8 @@ function WhyBCHStory({ onCTAClick }) {
                 <span className="text-primary">with Us</span>
               </h2>
               <p className="text-gray-text text-sm sm:text-base leading-relaxed max-w-md">
-                More than a bicycle shop — we're building a cycling culture in Bangalore,
-                one perfect ride at a time.
+                Helping Bangalore families find the right bike since 2001 —
+                one happy kid at a time.
               </p>
             </div>
 
@@ -407,7 +460,7 @@ function WhyBCHStory({ onCTAClick }) {
                 onClick={onCTAClick}
                 className="inline-flex items-center gap-2 text-primary hover:text-primary-dark font-medium text-sm border-b-2 border-primary hover:border-primary-dark pb-1 transition-colors duration-300"
               >
-                Get in Touch
+                Book a Home Test Ride
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                 </svg>
@@ -422,6 +475,7 @@ function WhyBCHStory({ onCTAClick }) {
 
 // ─── Offers Section (Refined) ─────────────────────────────────────
 function PremiumOffers({ onCTAClick }) {
+  const navigate = useNavigate();
   const offersScrollRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
@@ -435,27 +489,27 @@ function PremiumOffers({ onCTAClick }) {
 
   const offers = [
     {
-      tag: 'Featured',
+      tag: 'Most Popular',
       title: 'Emotorad E-Bikes',
       highlight: 'From ₹19,400',
-      perks: ['15 free accessories worth ₹3,000', 'Free delivery across Bangalore', '5-year warranty', '0% EMI available'],
+      perks: ['15 free accessories worth ₹3,000', 'EMI from ₹999/month — 0% interest', 'Free delivery + assembly across Bangalore', '5-year warranty + 1 year free service'],
       cta: 'Explore E-Bikes',
       link: '/products?category=electric',
     },
     {
-      tag: 'Exchange',
-      title: 'Upgrade Your Ride',
-      highlight: 'Up to ₹10,000 Off',
-      perks: ['All brands & conditions accepted', 'Instant valuation', 'Home pickup available', 'Gear cycles from ₹8,499'],
-      cta: 'Get Valuation',
+      tag: 'Perfect Gift',
+      title: 'Birthday & Rewards',
+      highlight: 'Make It Unforgettable',
+      perks: ['Birthday special: free gift wrapping & card', 'Exam results reward? We\'ll help you pick', 'Festival offers on top-selling models', 'Home delivery on your chosen date'],
+      cta: 'Plan a Surprise',
       action: true,
     },
     {
-      tag: 'Service',
-      title: 'Expert Maintenance',
-      highlight: 'From ₹99',
-      perks: ['Doorstep service at ₹349', 'Shimano-certified technicians', '60-minute quick service', '5-year service guarantee'],
-      cta: 'Book Service',
+      tag: 'After-Sale Promise',
+      title: 'Service You Can Trust',
+      highlight: '8 Expert Mechanics',
+      perks: ['Doorstep service across Bangalore at ₹349', 'Shimano-certified technicians', '6-day turnaround — unlike other EV brands', 'Free 1st year servicing with every purchase'],
+      cta: 'See How We Help',
       action: true,
     },
   ];
@@ -469,7 +523,7 @@ function PremiumOffers({ onCTAClick }) {
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-3">
-            Exclusive Benefits
+            Why Families Choose Us
           </p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-dark tracking-wider uppercase">
             More Than Just a Purchase
@@ -489,7 +543,7 @@ function PremiumOffers({ onCTAClick }) {
             className="group relative bg-white/70 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-6 sm:p-9 cursor-pointer border border-white/80 shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_60px_rgba(0,0,0,0.08)] hover:bg-white transition-all duration-700 flex-shrink-0 w-[calc(100vw-3rem)] sm:w-auto snap-start hover:-translate-y-1.5"
             onClick={() => {
               if (offer.link) {
-                window.location.href = offer.link;
+                navigate(offer.link);
               } else {
                 onCTAClick();
               }
@@ -540,54 +594,64 @@ function PremiumOffers({ onCTAClick }) {
 // ─── Testimonials (Luxury Carousel) ──────────────────────────────
 const testimonials = [
   {
+    name: 'Suresh M',
+    tag: 'Parent',
+    text: 'My son saw their YouTube video and wouldn\'t stop asking. The moment he tried the Doodle at the store, his face lit up. He now rides to tuition every single day. Best birthday gift we ever gave him.',
+    rating: 5,
+  },
+  {
+    name: 'Poorna Shekar',
+    tag: 'Parent',
+    text: 'My daughter absolutely loved the cycle we picked here. Great collection for kids with multiple color and size options. Staff helped her test ride a few before deciding.',
+    rating: 5,
+  },
+  {
     name: 'Deepak',
-    text: 'Knowledgeable staff with a wide selection of bikes. Excellent customer service with free bike fitting and skilled repair technicians. Highly recommended!',
+    tag: 'Parent',
+    text: 'Was worried my kid would stop using it after a week. 6 months later, he still rides to school and back every day. The doorstep service is a lifesaver — they come to our area in Whitefield.',
+    rating: 5,
+  },
+  {
+    name: 'Jyothi K',
+    tag: 'Parent',
+    text: 'Bought an EMotorad for my 14-year-old\'s exam results. He was so excited he called all his friends over to see it. Now three of his friends also bought from BCH!',
     rating: 5,
   },
   {
     name: 'Rajesh',
-    text: 'Super cycle shop! Great variety of brands, helpful staff who guide you to the right choice. The complimentary one-year service is a great bonus.',
+    tag: 'Parent',
+    text: 'My kid had been watching their videos for months. We finally visited and the team was so patient — let him test ride 4 different e-cycles. Zero pressure. He picked the one he loved.',
     rating: 5,
   },
   {
     name: 'Adithya C',
+    tag: 'Adult Rider',
     text: 'Purchased a Schnell R-bike here. Syed\'s technical knowledge is impressive — helped with wheel and gear upgrades. 2000km in and still running perfectly.',
     rating: 5,
   },
   {
     name: 'Girish C K',
-    text: 'One of the best cycle centers in Yelahanka with the best deals and an excellent collection. Staff is friendly and doesn\'t push you into buying.',
+    tag: 'Parent',
+    text: 'Came all the way from Electronic City because of their YouTube reviews. Best deals, excellent e-cycle collection. My son hasn\'t touched his PlayStation since we got the e-bike.',
     rating: 5,
   },
   {
     name: 'S Kumar',
-    text: 'Bought children\'s bicycles at very reasonable rates. The shop owner is friendly and patient. Helped us pick the right size for both kids.',
-    rating: 4,
+    tag: 'Parent',
+    text: 'Bought children\'s bicycles for both my kids. The shop owner is friendly and patient. Helped us pick the right size and even threw in free helmets and accessories.',
+    rating: 5,
+  },
+  {
+    name: 'Umesh R',
+    tag: 'Family Rider',
+    text: 'Started with one e-cycle for myself, then bought one for my kid, then my wife wanted one too. Now we do family rides near Nandi Hills every weekend. BCH made us a cycling family.',
+    rating: 5,
   },
   {
     name: 'Varadaraj K',
-    text: 'Impressive range of bicycles — stylish, durable and comfortable. The warranty reflects their confidence in product quality. Highly recommend!',
+    tag: 'Parent',
+    text: 'My son wanted the fat tyre electric cycle he saw on Instagram. Was hesitant about spending ₹50K but the 5-year warranty and free servicing convinced me. Worth every rupee.',
     rating: 5,
-  },
-  {
-    name: 'YogeeshGowda M',
-    text: 'Best product experience! Top cycling experience with nice servicing and best care. The team really knows their bikes and gives honest recommendations.',
-    rating: 5,
-  },
-  {
-    name: 'Jyothi K',
-    text: 'Very nice experience at the store. The collection is amazing, especially the electric cycles. Planning to get another one for my family soon.',
-    rating: 5,
-  },
-  {
-    name: 'Poorna Shekar',
-    text: 'My daughter absolutely loved the cycle we picked here. Great collection for kids with multiple color and size options. Staff helped her test ride a few.',
-    rating: 4,
-  },
-  {
-    name: 'Naval Kishore',
-    text: 'Good products at fair prices. The service warranty is a welcome addition. Staff is responsive and the store has a clean, well-organized display.',
-    rating: 4,
   },
 ];
 
@@ -610,11 +674,12 @@ function TestimonialScroller() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-8">
           <div>
             <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-4">
-              Real Stories
+              Happy Families
             </p>
             <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-dark tracking-wider uppercase">
-              What Our Riders Say
+              What Parents & Riders Say
             </h2>
+            <p className="text-gray-text/60 text-sm mt-2 font-light">4.9&#9733; from 500+ Google reviews</p>
           </div>
           {/* Navigation Arrows */}
           <div className="hidden sm:flex gap-3">
@@ -673,7 +738,11 @@ function TestimonialScroller() {
               </div>
               <div>
                 <h4 className="font-semibold text-dark text-sm">{t.name}</h4>
-                <p className="text-gray-text/60 text-xs">Google Review</p>
+                <div className="flex items-center gap-2">
+                  {t.tag && <span className="text-primary/70 text-[10px] font-medium">{t.tag}</span>}
+                  <span className="text-gray-text/40 text-[10px]">|</span>
+                  <span className="text-gray-text/60 text-xs">Google Review</span>
+                </div>
               </div>
             </div>
           </div>

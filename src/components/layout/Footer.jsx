@@ -13,7 +13,7 @@ export default function Footer() {
           <div className="col-span-2 md:col-span-1 text-center sm:text-left">
             <img src="/BCHlogo1.png" alt="Bharath Cycle Hub" className="h-10 sm:h-12 mb-3 mx-auto sm:mx-0" />
             <p className="text-gray-text text-xs sm:text-sm leading-relaxed mb-3">
-              First in Bangalore! 5 cycles delivered to your home for test ride at just ₹99.
+              Trusted by 10,000+ Bangalore families. 5 bikes to your door — test ride at just ₹99.
             </p>
             <div className="flex items-center gap-3 justify-center sm:justify-start">
               <a

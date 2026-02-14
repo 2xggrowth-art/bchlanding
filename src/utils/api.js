@@ -102,24 +102,6 @@ export const api = {
     }
   },
 
-  // Get single product (public)
-  async getProduct(productId) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/products/${productId}`);
-
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error('Failed to fetch product');
-      }
-
-      const data = await response.json();
-      return data.product || data;
-    } catch (error) {
-      console.error('Error fetching product:', error);
-      throw error;
-    }
-  },
-
   // Get all products (public)
   async getProducts(params = {}) {
     try {
@@ -134,7 +116,7 @@ export const api = {
       const queryString = searchParams.toString();
       const url = `${API_BASE_URL}/products${queryString ? `?${queryString}` : ''}`;
 
-      const response = await fetch(url, { cache: 'no-store' });
+      const response = await fetch(url);
 
       if (!response.ok) {
         throw new Error('Failed to fetch products');

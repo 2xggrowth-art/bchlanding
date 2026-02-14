@@ -1,12 +1,20 @@
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useEffect, useCallback, memo, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 const categoryData = [
   {
+    name: 'E-Bikes',
+    slug: 'electric',
+    tagline: 'Most Popular',
+    description: 'Throttle & pedal-assist e-bikes loved by kids and adults — from ₹19,400',
+    webp: '/ecyle.webp',
+    fallback: '/ecyle-opt.jpg',
+  },
+  {
     name: 'Kids',
     slug: 'kids',
-    tagline: 'Ages 3–12',
-    description: 'Safe, colourful cycles with training wheels & sturdy frames',
+    tagline: 'Ages 3–17',
+    description: 'Fun, safe cycles your kids will love — training wheels to teen e-bikes',
     webp: '/kids.webp',
     fallback: '/kids-opt.jpg',
   },
@@ -35,14 +43,6 @@ const categoryData = [
     fallback: '/city-opt.jpg',
   },
   {
-    name: 'E-Bikes',
-    slug: 'electric',
-    tagline: 'Power Assist',
-    description: 'Pedal-assist & throttle e-bikes with long-range batteries',
-    webp: '/ecyle.webp',
-    fallback: '/ecyle-opt.jpg',
-  },
-  {
     name: 'Accessories',
     slug: 'accessories',
     tagline: 'Gear & Safety',
@@ -52,10 +52,14 @@ const categoryData = [
   },
 ];
 
-const CategoryCard = memo(function CategoryCard({ cat, index, isActive, onHover, onLeave, onClick, isMobile }) {
+const CategoryCard = memo(function CategoryCard({ cat, index, isActive, onHover, onLeave, onClick, onFocus, isMobile }) {
   return (
     <div
-      className="relative overflow-hidden cursor-pointer"
+      className="relative overflow-hidden cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]"
+      role="button"
+      tabIndex={0}
+      aria-expanded={isActive}
+      aria-label={`${cat.name} — ${cat.tagline}. ${cat.description}`}
       style={{
         flex: isActive ? 4 : 1,
         transition: 'flex 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
@@ -65,6 +69,8 @@ const CategoryCard = memo(function CategoryCard({ cat, index, isActive, onHover,
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
       onClick={onClick}
+      onFocus={onFocus}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
     >
       {/* Background Image — WebP with JPG fallback */}
       <picture>
@@ -194,6 +200,7 @@ const CategoryCard = memo(function CategoryCard({ cat, index, isActive, onHover,
 export default function CategoryShowcase() {
   const [activeIndex, setActiveIndex] = useState(null);
   const [isMobile, setIsMobile] = useState(false);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 640);
@@ -207,24 +214,47 @@ export default function CategoryShowcase() {
     setActiveIndex((prev) => (prev === index ? null : index));
   }, [isMobile]);
 
+  // Keyboard arrow navigation within the strip
+  const handleContainerKeyDown = useCallback((e) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const cards = containerRef.current?.querySelectorAll('[role="button"]');
+      if (!cards) return;
+      const currentIdx = Array.from(cards).indexOf(document.activeElement);
+      const nextIdx = e.key === 'ArrowRight'
+        ? Math.min(currentIdx + 1, cards.length - 1)
+        : Math.max(currentIdx - 1, 0);
+      cards[nextIdx]?.focus();
+    }
+  }, []);
+
   return (
     <section className="py-8 sm:py-12 bg-gray-bg overflow-hidden">
       <div className="max-w-7xl mx-auto px-6 sm:px-8">
         {/* Section Header */}
         <div className="text-center mb-6 sm:mb-10">
           <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-4">
-            Browse by Category
+            Shop by Age & Type
           </p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-dark mb-5 tracking-wider uppercase">
-            Find Your Perfect Ride
+            Find Your Kid's Perfect Ride
           </h2>
           <p className="text-gray-text/70 text-sm sm:text-base max-w-lg mx-auto leading-relaxed font-light hidden sm:block">
             Explore our curated collection across 6 categories — hover to discover
           </p>
+          <p className="text-gray-text/70 text-sm max-w-lg mx-auto leading-relaxed font-light sm:hidden">
+            Tap a category to explore
+          </p>
         </div>
 
         {/* Category Strips */}
-        <div className="flex h-[420px] sm:h-[520px] md:h-[560px] gap-1.5 sm:gap-3 rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1)]">
+        <div
+          ref={containerRef}
+          role="group"
+          aria-label="Bicycle categories"
+          onKeyDown={handleContainerKeyDown}
+          className="flex h-[420px] sm:h-[520px] md:h-[560px] gap-1.5 sm:gap-3 rounded-2xl sm:rounded-3xl overflow-hidden shadow-[0_20px_60px_rgba(0,0,0,0.1)]"
+        >
           {categoryData.map((cat, index) => (
             <CategoryCard
               key={cat.slug}
@@ -235,6 +265,7 @@ export default function CategoryShowcase() {
               onHover={() => !isMobile && setActiveIndex(index)}
               onLeave={() => !isMobile && setActiveIndex(null)}
               onClick={() => handleClick(index)}
+              onFocus={() => setActiveIndex(index)}
             />
           ))}
         </div>

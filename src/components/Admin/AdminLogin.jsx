@@ -22,7 +22,6 @@ export default function AdminLogin({ onLogin }) {
       const result = await login(credentials.email, credentials.password);
 
       if (result.success) {
-        console.log('✅ Login successful');
         // Call onLogin callback to notify parent component
         if (onLogin) {
           onLogin();

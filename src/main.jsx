@@ -1,7 +1,6 @@
 import React, { lazy, Suspense, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/layout/Layout';
 import PageLoader from './components/PageLoader';
 import './index.css';
@@ -15,6 +14,11 @@ const Disclaimer = lazy(() => import('./pages/Disclaimer'));
 const ProductsPage = lazy(() => import('./pages/ProductsPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const AdminPanel = lazy(() => import('./AdminPanel'));
+
+// Lazy-load AuthProvider — only needed for /admin route
+const LazyAuthProvider = lazy(() =>
+  import('./contexts/AuthContext').then((m) => ({ default: m.AuthProvider }))
+);
 
 // Scroll to top on route change
 function ScrollToTop() {
@@ -109,9 +113,13 @@ function AppRoutes() {
           }
         />
 
-        {/* Admin Panel - no layout */}
+        {/* Admin Panel — AuthProvider loaded only here (no Firebase on public pages) */}
         <Route path="/admin" element={
-          <LazyPage><AdminPanel /></LazyPage>
+          <Suspense fallback={<PageLoader />}>
+            <LazyAuthProvider>
+              <AdminPanel />
+            </LazyAuthProvider>
+          </Suspense>
         } />
 
         {/* 404 - redirect to home */}
@@ -131,8 +139,6 @@ function App() {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <App />
   </React.StrictMode>,
 );

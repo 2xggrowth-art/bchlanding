@@ -3,36 +3,44 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const faqs = [
   {
+    question: 'What if my kid stops using it after a few months?',
+    answer: 'We hear this concern a lot. Here\'s what we\'ve seen: kids who integrate the e-cycle into daily commute (school, tuition, friends\' houses) ride it for years. Our team helps you pick the right model for your kid\'s actual routine — not just excitement. Plus, our doorstep service keeps the cycle in top shape so it\'s always ready to ride.',
+  },
+  {
+    question: 'Is it safe for my child in Bangalore traffic?',
+    answer: 'All our e-cycles come with custom speed lock (parents can limit max speed), disc brakes, and LED lights. We include a free helmet with every purchase. Most kids ride within 3km of home — school, tuition, friends\' houses — on familiar residential roads, not highways.',
+  },
+  {
     question: 'What is included in the ₹99 test ride?',
-    answer: 'We bring 5 curated bicycles to your home based on your preferences. You get to test ride all of them in your neighbourhood with expert guidance. The ₹99 booking fee is fully adjusted in your final purchase.',
+    answer: 'We bring 5 curated bicycles to your home based on your preferences. Your kid gets to test ride all of them in your neighbourhood with expert guidance. The ₹99 booking fee is fully adjusted in your final purchase. Zero pressure — if nothing clicks, that\'s okay.',
   },
   {
-    question: 'Do you deliver across all of Bangalore?',
-    answer: 'Yes! We deliver across Bangalore — from Whitefield to Yelahanka, Koramangala to Electronic City. Home test rides and free delivery are available across the city.',
+    question: '₹50K for a cycle — isn\'t a scooter better value?',
+    answer: 'A scooter needs a license (16+ years), fuel, insurance, and has serious accident risk. An e-cycle gives your kid independence NOW — no license needed, zero fuel cost, great exercise, and controlled speed (max 25kmph). Many parents tell us it replaced screen time with outdoor activity. The 5-year warranty and free servicing make the total cost of ownership very low.',
   },
   {
-    question: 'Is EMI / financing available?',
-    answer: 'Yes, we offer 0% EMI options on select bicycles through leading banks and NBFC partners. EMI starts from as low as ₹999/month. Our team will help you with the paperwork during purchase.',
+    question: 'Is EMI available? What if I don\'t qualify?',
+    answer: 'Yes, we offer 0% EMI from ₹999/month through leading banks and NBFCs. If EMI isn\'t available for you, we also accept credit cards and have flexible payment options. Our team will work with you to find the best way — many families pay comfortably in cash or card.',
+  },
+  {
+    question: 'What about servicing? I live far from your Yelahanka store.',
+    answer: 'We understand this is the #1 concern for parents. That\'s why we offer doorstep service across Bangalore — our technicians come to your area. We have 8 Shimano-certified mechanics with a 6-day turnaround. You also get free servicing for the first year and we\'re launching bicycle care insurance starting at ₹999.',
   },
   {
     question: 'What warranty do I get?',
-    answer: 'All bicycles come with the manufacturer\'s warranty (typically 2-5 years on frame). Additionally, we provide free servicing for the first year and doorstep maintenance support throughout the warranty period.',
-  },
-  {
-    question: 'Do you service all bicycle brands?',
-    answer: 'Yes, our Shimano-certified technicians service all brands — Hero, Firefox, Emotorad, Giant, Raleigh, and more. Doorstep service starts at just ₹349, and we also offer annual maintenance packages.',
+    answer: 'All e-cycles come with manufacturer warranty (2 years on electrical components, up to 5 years on frame). On top of that, BCH provides free servicing for the first year, free doorstep support, and our team is just a phone call away. Unlike large EV brands, we personally ensure every service issue is resolved.',
   },
   {
     question: 'Can I exchange my old bicycle?',
-    answer: 'Absolutely! We accept all brands and conditions for exchange. You can get up to ₹10,000 off on your new bicycle. We even offer home pickup for your old cycle — no need to bring it to us.',
+    answer: 'Absolutely! We accept all brands and conditions for exchange — up to ₹10,000 off on your new bicycle. We even offer home pickup for your old cycle. Many families exchange their kid\'s outgrown cycle when upgrading to an e-bike.',
   },
   {
-    question: 'What if I don\'t like any of the 5 bicycles?',
-    answer: 'No problem at all! There\'s zero pressure to buy. If none of the 5 bikes suit you, we can arrange another session with different models, or you can visit our Yelahanka showroom to explore our full collection.',
+    question: 'Do you deliver across all of Bangalore?',
+    answer: 'Yes! From Whitefield to Yelahanka, Koramangala to Electronic City — we deliver across Bangalore with free assembly. Home test rides are also available city-wide.',
   },
   {
     question: 'How do I reach you for support?',
-    answer: 'You can WhatsApp us at +91 98444 43844 (we reply within 5 minutes), call us directly, or email support@bharathcyclehub.store. Our showroom in Yelahanka is open Mon-Sun, 10AM to 8:30PM.',
+    answer: 'Call us at +91 98444 43844 (our 3 telecallers are available Mon-Sun, 10AM-8:30PM) or WhatsApp us for quick replies. You can also visit our 6,500 sqft showroom in Yelahanka with 300+ bicycles on display.',
   },
 ];
 
@@ -89,13 +97,13 @@ export default function FAQSection() {
           className="text-center mb-6 sm:mb-8"
         >
           <p className="text-primary text-xs sm:text-sm uppercase tracking-[0.25em] font-medium mb-3">
-            Got Questions?
+            Parents Ask Us
           </p>
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl text-white mb-3 tracking-wider uppercase">
-            Frequently Asked
+            Your Questions, Answered
           </h2>
           <p className="text-gray-400 text-sm sm:text-base max-w-lg mx-auto leading-relaxed font-light">
-            Everything you need to know about buying from Bharath Cycle Hub
+            The real concerns parents have before buying — and honest answers from 25 years of experience
           </p>
         </motion.div>
 
@@ -152,7 +160,7 @@ export default function FAQSection() {
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
             </svg>
-            Chat with us on WhatsApp
+            Ask us on WhatsApp
           </a>
         </motion.div>
       </div>
