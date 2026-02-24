@@ -40,7 +40,7 @@ const faqs = [
   },
   {
     question: 'How do I reach you for support?',
-    answer: 'Call us at +91 98444 43844 (our 3 telecallers are available Mon-Sun, 10AM-8:30PM) or WhatsApp us for quick replies. You can also visit our 6,500 sqft showroom in Yelahanka with 300+ bicycles on display.',
+    answer: 'Call us at +91 88920 31480 (our 3 telecallers are available Mon-Sun, 10AM-8:30PM) or WhatsApp us for quick replies. You can also visit our 6,500 sqft showroom in Yelahanka with 300+ bicycles on display.',
   },
 ];
 
@@ -152,7 +152,7 @@ export default function FAQSection() {
         >
           <p className="text-gray-500 text-sm mb-3">Still have questions?</p>
           <a
-            href="https://wa.me/919844443844?text=Hi%2C%20I%20have%20a%20question%20about%20your%20bicycles"
+            href="https://wa.me/918892031480?text=Hi%2C%20I%20have%20a%20question%20about%20your%20bicycles"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-[#25D366] hover:text-[#20BD5A] font-medium text-sm transition-colors"

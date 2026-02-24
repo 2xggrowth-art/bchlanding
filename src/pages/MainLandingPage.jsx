@@ -189,8 +189,8 @@ function PremiumHero({ onCTAClick }) {
                   </svg>
                 </div>
                 <div>
-                  <a href="tel:+919844443844" className="font-semibold text-white text-sm hover:text-primary transition-colors">
-                    Call: +91 98444 43844
+                  <a href="tel:+918892031480" className="font-semibold text-white text-sm hover:text-primary transition-colors">
+                    Call: +91 88920 31480
                   </a>
                   <p className="text-white/60 text-xs mt-0.5">Mon–Sun, 10AM – 8:30PM</p>
                 </div>
@@ -240,7 +240,9 @@ function FeaturedCollection() {
   }, []);
 
   const featuredList = useMemo(() => {
-    const featured = localProducts
+    const COMING_SOON = ['kids', 'geared', 'mountain', 'city', 'accessories'];
+    const realProducts = localProducts.filter((p) => !COMING_SOON.includes(p.category));
+    const featured = realProducts
       .filter(
         (p) =>
           p.badge === 'Bestseller' ||
@@ -249,7 +251,7 @@ function FeaturedCollection() {
           p.badge === 'Value Pick'
       )
       .slice(0, 12);
-    return featured.length > 0 ? featured : localProducts.slice(0, 12);
+    return featured.length > 0 ? featured : realProducts.slice(0, 12);
   }, [localProducts]);
 
   const handleEnquire = useCallback(() => {

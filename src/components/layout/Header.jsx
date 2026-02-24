@@ -4,6 +4,8 @@ import ContactFormModal from '../ContactFormModal';
 import { categories, products } from '../../data/products';
 import { accessories } from '../../data/accessories';
 
+const COMING_SOON_CATEGORIES = ['kids', 'geared', 'mountain', 'city', 'accessories'];
+
 export default function Header({ transparent = false, onCTAClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -281,58 +283,75 @@ export default function Header({ transparent = false, onCTAClick }) {
                       </div>
                     )}
 
-                    {/* Column 3 (or 2): Products Grid */}
+                    {/* Column 3 (or 2): Products Grid or Coming Soon */}
                     <div className="flex-1 p-4">
                       <p className="text-xs font-bold text-gray-text uppercase tracking-widest mb-3">
                         {activeMenuSubCategory
                           ? activeCat?.subCategories?.find((s) => s.slug === activeMenuSubCategory)?.name
                           : activeCat?.name || 'Products'}
                       </p>
-                      <div className="grid grid-cols-2 gap-3">
-                        {menuProducts.map((product) => (
+
+                      {COMING_SOON_CATEGORIES.includes(activeMenuCategory) ? (
+                        <div className="flex flex-col items-center justify-center py-8 text-center">
+                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-3">
+                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </div>
+                          <p className="text-sm font-bold text-dark mb-1">Coming Soon</p>
+                          <p className="text-xs text-gray-text max-w-[200px]">
+                            We're updating our {activeCat?.name} collection. Stay tuned!
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="grid grid-cols-2 gap-3">
+                            {menuProducts.map((product) => (
+                              <button
+                                key={product.id}
+                                onClick={() => handleProductClick(product)}
+                                className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-bg transition-colors text-left group"
+                              >
+                                <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                                  <img
+                                    src={product.image}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                    loading="lazy"
+                                  />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-dark truncate leading-tight">
+                                    {product.name}
+                                  </p>
+                                  <p className="text-sm font-bold text-primary mt-0.5">
+                                    ₹{product.price.toLocaleString('en-IN')}
+                                    {product.mrp > product.price && (
+                                      <span className="text-[10px] text-gray-text line-through ml-1 font-normal">
+                                        ₹{product.mrp.toLocaleString('en-IN')}
+                                      </span>
+                                    )}
+                                  </p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                          {/* Category CTA */}
                           <button
-                            key={product.id}
-                            onClick={() => handleProductClick(product)}
-                            className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-bg transition-colors text-left group"
+                            onClick={() => activeMenuSubCategory
+                              ? handleSubCategoryClick(activeMenuCategory, activeMenuSubCategory)
+                              : handleCategoryClick(activeMenuCategory)
+                            }
+                            className="mt-3 text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
                           >
-                            <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                              <img
-                                src={product.image}
-                                alt={product.name}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                loading="lazy"
-                              />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-dark truncate leading-tight">
-                                {product.name}
-                              </p>
-                              <p className="text-sm font-bold text-primary mt-0.5">
-                                ₹{product.price.toLocaleString('en-IN')}
-                                {product.mrp > product.price && (
-                                  <span className="text-[10px] text-gray-text line-through ml-1 font-normal">
-                                    ₹{product.mrp.toLocaleString('en-IN')}
-                                  </span>
-                                )}
-                              </p>
-                            </div>
+                            See all{' '}
+                            {activeMenuSubCategory
+                              ? activeCat?.subCategories?.find((s) => s.slug === activeMenuSubCategory)?.name
+                              : activeCat?.name}{' '}
+                            →
                           </button>
-                        ))}
-                      </div>
-                      {/* Category CTA */}
-                      <button
-                        onClick={() => activeMenuSubCategory
-                          ? handleSubCategoryClick(activeMenuCategory, activeMenuSubCategory)
-                          : handleCategoryClick(activeMenuCategory)
-                        }
-                        className="mt-3 text-xs font-semibold text-primary hover:text-primary-dark transition-colors"
-                      >
-                        See all{' '}
-                        {activeMenuSubCategory
-                          ? activeCat?.subCategories?.find((s) => s.slug === activeMenuSubCategory)?.name
-                          : activeCat?.name}{' '}
-                        →
-                      </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -478,8 +497,14 @@ export default function Header({ transparent = false, onCTAClick }) {
 
                           {isCatExpanded && (
                             <div className="ml-3 mb-1">
-                              {/* If category has subcategories, show them first */}
-                              {hasSubs ? (
+                              {COMING_SOON_CATEGORIES.includes(cat.slug) ? (
+                                <div className="px-3 py-4 text-center">
+                                  <p className={`text-xs font-semibold ${transparent ? 'text-white/80' : 'text-dark'} mb-1`}>Coming Soon</p>
+                                  <p className={`text-[11px] ${transparent ? 'text-white/50' : 'text-gray-text'}`}>
+                                    Updating {cat.name} collection. Stay tuned!
+                                  </p>
+                                </div>
+                              ) : hasSubs ? (
                                 <>
                                   {cat.subCategories.map((sub) => {
                                     const isSubExpanded = mobileActiveSubCategory === sub.slug;

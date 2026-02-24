@@ -20,7 +20,7 @@ const UserDataForm = lazy(() => import('../components/UserDataForm'));
 const RazorpayPayment = lazy(() => import('../components/RazorpayPayment'));
 const SuccessScreen = lazy(() => import('../components/SuccessScreen'));
 
-const WHATSAPP_NUMBER = '919876543210';
+const WHATSAPP_NUMBER = '918892031480';
 
 // Human-readable spec labels
 const specLabels = {
@@ -107,10 +107,14 @@ export default function ProductDetailPage() {
         const allProds = await getCachedProducts();
         if (cancelled) return;
 
-        setProductsList(allProds);
+        const COMING_SOON = ['kids', 'geared', 'mountain', 'city', 'accessories'];
+        const realProds = allProds.filter((p) => !COMING_SOON.includes(p.category));
+        setProductsList(realProds);
 
         const found = allProds.find((p) => p.id === productId);
         if (!found) {
+          setError('Product not found');
+        } else if (COMING_SOON.includes(found.category)) {
           setError('Product not found');
         } else {
           setProduct(found);
@@ -616,7 +620,7 @@ export default function ProductDetailPage() {
                   WhatsApp
                 </a>
                 <a
-                  href="tel:+919844443844"
+                  href="tel:+918892031480"
                   className="flex items-center justify-center w-[52px] py-3.5 rounded-full bg-dark text-white hover:bg-primary transition-colors flex-shrink-0"
                   aria-label="Call us"
                 >
@@ -669,7 +673,7 @@ export default function ProductDetailPage() {
                   Test Ride — ₹99
                 </button>
                 <a
-                  href="tel:+919844443844"
+                  href="tel:+918892031480"
                   className="flex items-center justify-center w-[44px] py-3 rounded-full bg-dark text-white active:bg-primary transition-colors flex-shrink-0 min-h-[44px]"
                   aria-label="Call us"
                 >
@@ -840,7 +844,7 @@ export default function ProductDetailPage() {
             Feel the Power — ₹99
           </button>
           <a
-            href="tel:+919844443844"
+            href="tel:+918892031480"
             className="flex items-center justify-center w-[44px] py-3 rounded-full bg-dark text-white active:bg-primary transition-colors flex-shrink-0 min-h-[44px]"
             aria-label="Call us"
           >

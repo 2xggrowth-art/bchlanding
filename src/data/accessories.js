@@ -132,7 +132,7 @@ export const serviceCenters = [
     city: "Bangalore",
     area: "HSR Layout",
     address: "Shop 42, 24th Main Road, Sector 2, HSR Layout",
-    phone: "9876543210",
+    phone: "8892031480",
     timings: "10 AM - 8 PM (Mon-Sat)"
   },
   {
@@ -140,7 +140,7 @@ export const serviceCenters = [
     city: "Bangalore",
     area: "Indiranagar",
     address: "123, 100 Feet Road, Indiranagar",
-    phone: "9876543211",
+    phone: "8892031480",
     timings: "9 AM - 7 PM (Mon-Sun)"
   },
   {
@@ -148,7 +148,7 @@ export const serviceCenters = [
     city: "Bangalore",
     area: "Koramangala",
     address: "456, 5th Block, Koramangala",
-    phone: "9876543212",
+    phone: "8892031480",
     timings: "10 AM - 8 PM (Tue-Sun)"
   },
   {
@@ -156,7 +156,7 @@ export const serviceCenters = [
     city: "Mumbai",
     area: "Andheri West",
     address: "Plot 78, Veera Desai Road, Andheri West",
-    phone: "9876543213",
+    phone: "8892031480",
     timings: "10 AM - 7 PM (Mon-Sat)"
   },
   {
@@ -164,7 +164,7 @@ export const serviceCenters = [
     city: "Mumbai",
     area: "Bandra",
     address: "12, Hill Road, Bandra West",
-    phone: "9876543214",
+    phone: "8892031480",
     timings: "9:30 AM - 8 PM (Mon-Sat)"
   },
   {
@@ -172,7 +172,7 @@ export const serviceCenters = [
     city: "Delhi",
     area: "Connaught Place",
     address: "Block E, Inner Circle, Connaught Place",
-    phone: "9876543215",
+    phone: "8892031480",
     timings: "10 AM - 8 PM (Mon-Sat)"
   },
   {
@@ -180,7 +180,7 @@ export const serviceCenters = [
     city: "Delhi",
     area: "Lajpat Nagar",
     address: "Central Market, Lajpat Nagar IV",
-    phone: "9876543216",
+    phone: "8892031480",
     timings: "10 AM - 7 PM (Tue-Sun)"
   },
   {
@@ -188,7 +188,7 @@ export const serviceCenters = [
     city: "Pune",
     area: "Koregaon Park",
     address: "Lane 7, North Main Road, Koregaon Park",
-    phone: "9876543217",
+    phone: "8892031480",
     timings: "9 AM - 7 PM (Mon-Sat)"
   },
   {
@@ -196,7 +196,7 @@ export const serviceCenters = [
     city: "Chennai",
     area: "T Nagar",
     address: "89, Usman Road, T Nagar",
-    phone: "9876543218",
+    phone: "8892031480",
     timings: "10 AM - 8 PM (Mon-Sat)"
   },
   {
@@ -204,7 +204,7 @@ export const serviceCenters = [
     city: "Hyderabad",
     area: "Banjara Hills",
     address: "Road No 12, Banjara Hills",
-    phone: "9876543219",
+    phone: "8892031480",
     timings: "10 AM - 7:30 PM (Mon-Sun)"
   }
 ];

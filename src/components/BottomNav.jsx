@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import ContactFormModal from './ContactFormModal';
 
-const WHATSAPP_NUMBER = '919844443844';
+const WHATSAPP_NUMBER = '918892031480';
 
 export default function BottomNav() {
   const location = useLocation();

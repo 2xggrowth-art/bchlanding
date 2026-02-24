@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 
 import { trackVisitor } from '../utils/visitor-tracker';
 
-const WHATSAPP_NUMBER = '919844443844';
+const WHATSAPP_NUMBER = '918892031480';
 
 export default function ExitIntentPopup() {
   const [show, setShow] = useState(false);
@@ -48,7 +48,7 @@ export default function ExitIntentPopup() {
 
   const handleCall = () => {
     trackVisitor('call_click', location.pathname);
-    window.location.href = 'tel:+919844443844';
+    window.location.href = 'tel:+918892031480';
     setShow(false);
   };
 

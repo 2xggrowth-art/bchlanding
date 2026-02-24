@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const WHATSAPP_NUMBER = '919844443844';
+const WHATSAPP_NUMBER = '918892031480';
 
 const contextMessages = {
   '/': 'Hi, I need help choosing a bicycle',

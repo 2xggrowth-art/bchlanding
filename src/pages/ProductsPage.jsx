@@ -17,7 +17,10 @@ const allCategory = {
 
 const tabCategories = [allCategory, ...categories];
 
-const WHATSAPP_NUMBER = '919876543210';
+const WHATSAPP_NUMBER = '918892031480';
+
+// Categories that don't have real products yet — show "Coming Soon" banner
+const COMING_SOON_CATEGORIES = ['kids', 'geared', 'mountain', 'city', 'accessories'];
 
 export default function ProductsPage() {
   const [searchParams] = useSearchParams();
@@ -125,19 +128,24 @@ export default function ProductsPage() {
     }));
   }, []);
 
+  const isComingSoon = COMING_SOON_CATEGORIES.includes(activeCategory);
+
   const filteredProducts = useMemo(() => {
-    if (activeCategory === 'accessories') {
-      return accessoryProducts;
+    if (COMING_SOON_CATEGORIES.includes(activeCategory)) {
+      return [];
     }
     let result = products;
     if (activeCategory !== 'all') {
       result = result.filter((p) => p.category === activeCategory);
+    } else {
+      // "All" tab — hide products from coming-soon categories
+      result = result.filter((p) => !COMING_SOON_CATEGORIES.includes(p.category));
     }
     if (activeSubCategory !== 'all' && activeSubCategories.length > 0) {
       result = result.filter((p) => p.subCategory === activeSubCategory);
     }
     return result;
-  }, [activeCategory, activeSubCategory, activeSubCategories, products, accessoryProducts]);
+  }, [activeCategory, activeSubCategory, activeSubCategories, products]);
 
   return (
     <div className="min-h-screen bg-gray-bg">
@@ -244,8 +252,75 @@ export default function ProductsPage() {
           </div>
         )}
 
+        {/* Coming Soon Banner for demo categories */}
+        {!loading && !error && isComingSoon && (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`coming-soon-${activeCategory}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center justify-center py-16 sm:py-24 px-4"
+            >
+              {/* Icon */}
+              <motion.div
+                initial={{ scale: 0.8 }}
+                animate={{ scale: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+                className="w-20 h-20 sm:w-24 sm:h-24 bg-primary/10 rounded-full flex items-center justify-center mb-6"
+              >
+                <svg className="w-10 h-10 sm:w-12 sm:h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </motion.div>
+
+              {/* Text */}
+              <motion.h2
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="font-display text-2xl sm:text-3xl font-bold text-dark mb-3 text-center"
+              >
+                Coming <span className="text-primary">Soon</span>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="text-gray-text text-sm sm:text-base max-w-md text-center mb-8 leading-relaxed"
+              >
+                We're updating our{' '}
+                <span className="font-semibold text-dark">
+                  {categories.find((c) => c.slug === activeCategory)?.name}
+                </span>{' '}
+                collection with exciting new models. Stay tuned!
+              </motion.p>
+
+              {/* Decorative line */}
+              <motion.div
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ duration: 0.5, delay: 0.4 }}
+                className="w-16 h-1 bg-primary/30 rounded-full mb-8"
+              />
+
+              {/* CTA — browse electric bikes */}
+              <motion.button
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+                onClick={() => handleCategoryChange('electric')}
+                className="px-6 py-3 bg-dark text-white rounded-full font-semibold text-sm hover:bg-primary transition-colors"
+              >
+                Browse Electric Bikes
+              </motion.button>
+            </motion.div>
+          </AnimatePresence>
+        )}
+
         {/* Products Grid */}
-        {!loading && !error && (
+        {!loading && !error && !isComingSoon && (
           <>
             <AnimatePresence mode="wait">
               <motion.div
